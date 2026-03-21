@@ -1,10 +1,10 @@
 <template>
     <div class="shell">
         <header class="header">
-            <h1 class="title">Model Explorer</h1>
+            <RouterLink to="/" class="brand">Model Explorer</RouterLink>
         </header>
         <main class="content">
-            <p class="placeholder">Model Explorer is installed and running.</p>
+            <RouterView />
         </main>
     </div>
 </template>
@@ -17,25 +17,30 @@
 }
 
 .header {
-    padding: 1rem 2rem;
+    padding: 0.875rem 2rem;
     border-bottom: 1px solid #1e293b;
     background: #0f172a;
+    display: flex;
+    align-items: center;
 }
 
-.title {
-    margin: 0;
-    font-size: 1.125rem;
+.brand {
+    font-size: 0.9375rem;
     font-weight: 600;
     color: #f1f5f9;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+}
+
+.brand:hover {
+    color: #60a5fa;
 }
 
 .content {
     flex: 1;
     padding: 2rem;
-}
-
-.placeholder {
-    color: #64748b;
-    font-size: 0.875rem;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
 }
 </style>

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url(config('model-explorer.path') . '/assets/app.css') }}">
 </head>
 <body>
+    <script>window.modelExplorerBasePath = '/{{ config('model-explorer.path') }}'</script>
     <div id="app"></div>
     <script type="module" src="{{ url(config('model-explorer.path') . '/assets/app.js') }}"></script>
 </body>
