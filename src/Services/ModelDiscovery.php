@@ -4,6 +4,7 @@ namespace OneLearningCommunity\LaravelModelExplorer\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Spatie\ModelInfo\ModelFinder;
 
 class ModelDiscovery
 {
@@ -36,62 +37,13 @@ class ModelDiscovery
             return [];
         }
 
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS)
-        );
+        $realPath = realpath($path) ?: $path;
 
-        $models = [];
-
-        foreach ($iterator as $file) {
-            if (! $file->isFile() || $file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $className = $this->fileToClassName($file->getRealPath(), $path);
-
-            if ($className === null) {
-                continue;
-            }
-
-            try {
-                $reflection = new \ReflectionClass($className);
-            } catch (\Throwable) {
-                continue;
-            }
-
-            if ($reflection->isAbstract() || ! $reflection->isSubclassOf(Model::class)) {
-                continue;
-            }
-
-            $models[] = $reflection->getName();
-        }
-
-        return $models;
-    }
-
-    private function fileToClassName(string $filePath, string $basePath): ?string
-    {
-        // Normalize both paths so that paths containing `..` or symlinks
-        // resolve correctly when stripping the base prefix from the file path.
-        $basePath = realpath($basePath) ?: $basePath;
-
-        // Derive the base namespace for this path.
-        // Standard case: path is under app_path(), namespace root is app()->getNamespace().
-        // Non-standard paths (e.g. workbench/) require the namespace to be inferable
-        // from composer's autoload-dev map — which Testbench registers at boot.
-        $baseNamespace = $this->resolveBaseNamespace($basePath);
-
-        $relative = Str::of($filePath)
-            ->replaceFirst($basePath, '')
-            ->replaceLast('.php', '')
-            ->trim(DIRECTORY_SEPARATOR)
-            ->replace(DIRECTORY_SEPARATOR, '\\');
-
-        if ($relative->isEmpty()) {
-            return null;
-        }
-
-        return rtrim($baseNamespace, '\\').'\\'.ltrim((string) $relative, '\\');
+        return ModelFinder::all(
+            directory: $realPath,
+            basePath: $realPath,
+            baseNamespace: $this->resolveBaseNamespace($path),
+        )->all();
     }
 
     private function resolveBaseNamespace(string $basePath): string

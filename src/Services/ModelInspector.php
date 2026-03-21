@@ -3,6 +3,7 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Services;
 
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
+use Spatie\ModelInfo\ModelInfo;
 
 class ModelInspector
 {
@@ -16,6 +17,7 @@ class ModelInspector
     public function inspect(string $className): ModelData
     {
         try {
+            $modelInfo = ModelInfo::forModel($className);
             $model = new $className();
         } catch (\Throwable $e) {
             throw new \RuntimeException("Could not instantiate model [{$className}]: {$e->getMessage()}", 0, $e);
@@ -24,7 +26,9 @@ class ModelInspector
         return new ModelData(
             className: $className,
             shortName: class_basename($className),
-            table: $model->getTable(),
+            table: $modelInfo->tableName,
+            attributes: $modelInfo->attributes,
+            relations: $modelInfo->relations,
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
             hidden: $model->getHidden(),

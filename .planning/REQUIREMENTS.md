@@ -22,11 +22,11 @@
 
 ### Attribute Introspection
 
-- [ ] **ATTR-01**: Developer can view a model's fillable and guarded attributes
-- [ ] **ATTR-02**: Developer can view a model's hidden attributes
-- [ ] **ATTR-03**: Developer can view a model's casts with their target types
-- [ ] **ATTR-04**: Developer can view a model's appended attributes
-- [ ] **ATTR-05**: Developer can see whether a model uses timestamps and the column names
+- [x] **ATTR-01**: Developer can view a model's fillable and guarded attributes
+- [x] **ATTR-02**: Developer can view a model's hidden attributes
+- [x] **ATTR-03**: Developer can view a model's casts with their target types
+- [x] **ATTR-04**: Developer can view a model's appended attributes
+- [x] **ATTR-05**: Developer can see whether a model uses timestamps and the column names
 
 ### Relationship Introspection
 
@@ -97,11 +97,11 @@
 | DISC-01 | Phase 2 | Complete |
 | DISC-02 | Phase 2 | Complete |
 | DISC-03 | Phase 2 | Complete |
-| ATTR-01 | Phase 2 | Pending |
-| ATTR-02 | Phase 2 | Pending |
-| ATTR-03 | Phase 2 | Pending |
-| ATTR-04 | Phase 2 | Pending |
-| ATTR-05 | Phase 2 | Pending |
+| ATTR-01 | Phase 2 | Complete |
+| ATTR-02 | Phase 2 | Complete |
+| ATTR-03 | Phase 2 | Complete |
+| ATTR-04 | Phase 2 | Complete |
+| ATTR-05 | Phase 2 | Complete |
 | REL-01 | Phase 3 | Pending |
 | REL-02 | Phase 3 | Pending |
 | REL-03 | Phase 3 | Pending |
