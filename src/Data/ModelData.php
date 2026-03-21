@@ -4,13 +4,12 @@ namespace OneLearningCommunity\LaravelModelExplorer\Data;
 
 use Illuminate\Support\Collection;
 use Spatie\ModelInfo\Attributes\Attribute;
-use Spatie\ModelInfo\Relations\Relation;
 
 readonly class ModelData
 {
     /**
      * @param  Collection<int, Attribute>  $attributes
-     * @param  Collection<int, Relation>  $relations
+     * @param  Collection<int, RelationData>  $relations
      * @param  string[]  $fillable
      * @param  string[]  $guarded
      * @param  string[]  $hidden

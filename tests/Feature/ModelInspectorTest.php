@@ -1,8 +1,8 @@
 <?php
 
+use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
-use Spatie\ModelInfo\Relations\Relation;
 use Workbench\App\Models\CustomTableModel;
 use Workbench\App\Models\NoTimestampsModel;
 use Workbench\App\Models\Post;
@@ -105,7 +105,7 @@ it('returns virtual attributes with appended flag set', function () {
         ->and($summaryAttr->appended)->toBeTrue();
 });
 
-it('returns a collection of Relation objects', function () {
+it('returns a collection of RelationData objects', function () {
     $inspector = new ModelInspector();
     $data = $inspector->inspect(Post::class);
 
@@ -113,8 +113,8 @@ it('returns a collection of Relation objects', function () {
 
     $userRelation = $data->relations->firstWhere('name', 'user');
     expect($userRelation)->not->toBeNull()
-        ->and($userRelation)->toBeInstanceOf(Relation::class)
-        ->and($userRelation->type)->toBe(\Illuminate\Database\Eloquent\Relations\BelongsTo::class)
+        ->and($userRelation)->toBeInstanceOf(RelationData::class)
+        ->and($userRelation->type)->toBe('BelongsTo')
         ->and($userRelation->related)->toBe(User::class);
 });
 
@@ -124,6 +124,24 @@ it('returns a hasMany relation for the user model', function () {
 
     $postsRelation = $data->relations->firstWhere('name', 'posts');
     expect($postsRelation)->not->toBeNull()
-        ->and($postsRelation->type)->toBe(\Illuminate\Database\Eloquent\Relations\HasMany::class)
+        ->and($postsRelation->type)->toBe('HasMany')
         ->and($postsRelation->related)->toBe(Post::class);
+});
+
+it('extracts foreign key and local key for a belongsTo relation', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $userRelation = $data->relations->firstWhere('name', 'user');
+    expect($userRelation->foreignKey)->toBe('user_id')
+        ->and($userRelation->localKey)->toBe('id');
+});
+
+it('extracts foreign key and local key for a hasMany relation', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(User::class);
+
+    $postsRelation = $data->relations->firstWhere('name', 'posts');
+    expect($postsRelation->foreignKey)->toBe('user_id')
+        ->and($postsRelation->localKey)->toBe('id');
 });

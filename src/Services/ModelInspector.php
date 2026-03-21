@@ -2,8 +2,14 @@
 
 namespace OneLearningCommunity\LaravelModelExplorer\Services;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
+use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use Spatie\ModelInfo\ModelInfo;
+use Spatie\ModelInfo\Relations\Relation;
 
 class ModelInspector
 {
@@ -28,7 +34,7 @@ class ModelInspector
             shortName: class_basename($className),
             table: $modelInfo->tableName,
             attributes: $modelInfo->attributes,
-            relations: $modelInfo->relations,
+            relations: $modelInfo->relations->map(fn (Relation $relation) => $this->buildRelationData($model, $relation)),
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
             hidden: $model->getHidden(),
@@ -38,5 +44,44 @@ class ModelInspector
             createdAtColumn: $model->usesTimestamps() ? $model->getCreatedAtColumn() : null,
             updatedAtColumn: $model->usesTimestamps() ? $model->getUpdatedAtColumn() : null,
         );
+    }
+
+    private function buildRelationData(Model $model, Relation $relation): RelationData
+    {
+        [$foreignKey, $localKey] = $this->extractKeys($model, $relation->name);
+
+        return new RelationData(
+            name: $relation->name,
+            type: class_basename($relation->type),
+            related: $relation->related,
+            foreignKey: $foreignKey,
+            localKey: $localKey,
+        );
+    }
+
+    /**
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function extractKeys(Model $model, string $relationName): array
+    {
+        try {
+            $instance = $model->{$relationName}();
+        } catch (\Throwable) {
+            return [null, null];
+        }
+
+        if ($instance instanceof HasOneOrMany) {
+            return [$instance->getForeignKeyName(), $instance->getLocalKeyName()];
+        }
+
+        if ($instance instanceof BelongsTo) {
+            return [$instance->getForeignKeyName(), $instance->getOwnerKeyName()];
+        }
+
+        if ($instance instanceof BelongsToMany) {
+            return [$instance->getForeignPivotKeyName(), $instance->getRelatedPivotKeyName()];
+        }
+
+        return [null, null];
     }
 }
