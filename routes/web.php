@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api\ModelsController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\AssetController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\ModelExplorerController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Middleware\Authorize;
@@ -14,6 +15,15 @@ Route::prefix(config('model-explorer.path').'/assets')
         Route::get('/{path}', AssetController::class)
             ->where('path', '.*')
             ->name('serve');
+    });
+
+// API routes — JSON endpoints for model discovery and inspection.
+Route::prefix(config('model-explorer.path').'/api')
+    ->middleware([...config('model-explorer.middleware', ['web']), Authorize::class])
+    ->name('model-explorer.api.')
+    ->group(function () {
+        Route::get('/models', [ModelsController::class, 'index'])->name('models.index');
+        Route::get('/models/{model}', [ModelsController::class, 'show'])->name('models.show');
     });
 
 // SPA shell — all non-asset requests are handled by the Vue router client-side.
