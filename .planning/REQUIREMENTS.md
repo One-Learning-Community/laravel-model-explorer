@@ -30,17 +30,17 @@
 
 ### Relationship Introspection
 
-- [ ] **REL-01**: Package detects relationship methods on a model via reflection
-- [ ] **REL-02**: Developer can view the type of each relationship (HasMany, BelongsTo, etc.)
-- [ ] **REL-03**: Developer can view the related model class for each relationship
-- [ ] **REL-04**: Developer can view the foreign key and local key for each relationship
+- [x] **REL-01**: Package detects relationship methods on a model via reflection
+- [x] **REL-02**: Developer can view the type of each relationship (HasMany, BelongsTo, etc.)
+- [x] **REL-03**: Developer can view the related model class for each relationship
+- [x] **REL-04**: Developer can view the foreign key and local key for each relationship
 
 ### API Layer
 
-- [ ] **API-01**: `GET /_model-explorer/api/models` returns a list of all discovered models as JSON
-- [ ] **API-02**: `GET /_model-explorer/api/models/{model}` returns full detail for a single model as JSON
-- [ ] **API-03**: API endpoints are protected by the same `Authorize` middleware as the SPA
-- [ ] **API-04**: API returns appropriate error responses for unknown models
+- [x] **API-01**: `GET /_model-explorer/api/models` returns a list of all discovered models as JSON
+- [x] **API-02**: `GET /_model-explorer/api/models/{model}` returns full detail for a single model as JSON
+- [x] **API-03**: API endpoints are protected by the same `Authorize` middleware as the SPA
+- [x] **API-04**: API returns appropriate error responses for unknown models
 
 ### Vue UI — Model List
 
@@ -102,14 +102,14 @@
 | ATTR-03 | Phase 2 | Complete |
 | ATTR-04 | Phase 2 | Complete |
 | ATTR-05 | Phase 2 | Complete |
-| REL-01 | Phase 3 | Pending |
-| REL-02 | Phase 3 | Pending |
-| REL-03 | Phase 3 | Pending |
-| REL-04 | Phase 3 | Pending |
-| API-01 | Phase 4 | Pending |
-| API-02 | Phase 4 | Pending |
-| API-03 | Phase 4 | Pending |
-| API-04 | Phase 4 | Pending |
+| REL-01 | Phase 3 | Complete |
+| REL-02 | Phase 3 | Complete |
+| REL-03 | Phase 3 | Complete |
+| REL-04 | Phase 3 | Complete |
+| API-01 | Phase 4 | Complete |
+| API-02 | Phase 4 | Complete |
+| API-03 | Phase 4 | Complete |
+| API-04 | Phase 4 | Complete |
 | UI-01 | Phase 5 | Pending |
 | UI-02 | Phase 5 | Pending |
 | UI-03 | Phase 5 | Pending |
@@ -121,10 +121,10 @@
 | GRAPH-03 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 31 total (6 complete, 25 pending)
+- v1 requirements: 31 total (22 complete, 9 pending)
 - Mapped to phases: 31
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after roadmap creation*
+*Last updated: 2026-03-20 after roadmap creation; 2026-03-20 — REL-01–04 and API-01–04 marked complete*
