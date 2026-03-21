@@ -7,7 +7,7 @@ use OneLearningCommunity\LaravelModelExplorer\Http\Middleware\Authorize;
 
 // Asset route — no auth middleware, assets are not sensitive.
 // Registered first so it takes priority over the SPA catch-all below.
-Route::prefix(config('model-explorer.path') . '/assets')
+Route::prefix(config('model-explorer.path').'/assets')
     ->middleware('web')
     ->name('model-explorer.assets.')
     ->group(function () {

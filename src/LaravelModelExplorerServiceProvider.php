@@ -3,7 +3,6 @@
 namespace OneLearningCommunity\LaravelModelExplorer;
 
 use Illuminate\Support\Facades\Gate;
-use OneLearningCommunity\LaravelModelExplorer\Facades\ModelExplorer;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
