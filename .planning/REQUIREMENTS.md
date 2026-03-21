@@ -44,15 +44,15 @@
 
 ### Vue UI — Model List
 
-- [ ] **UI-01**: Developer can view a searchable/filterable list of all discovered models
-- [ ] **UI-02**: Model list shows each model's class name and database table
-- [ ] **UI-03**: Developer can navigate from the list to a model detail view
+- [x] **UI-01**: Developer can view a searchable/filterable list of all discovered models
+- [x] **UI-02**: Model list shows each model's class name and database table
+- [x] **UI-03**: Developer can navigate from the list to a model detail view
 
 ### Vue UI — Model Detail
 
-- [ ] **UI-04**: Developer can view all attributes for a model (fillable, hidden, casts, appends)
-- [ ] **UI-05**: Developer can view all relationships for a model with type, related model, and keys
-- [ ] **UI-06**: Developer can navigate from a relationship to the related model's detail view
+- [x] **UI-04**: Developer can view all attributes for a model (fillable, hidden, casts, appends)
+- [x] **UI-05**: Developer can view all relationships for a model with type, related model, and keys
+- [x] **UI-06**: Developer can navigate from a relationship to the related model's detail view
 
 ### Relationship Graph
 
@@ -110,18 +110,18 @@
 | API-02 | Phase 4 | Complete |
 | API-03 | Phase 4 | Complete |
 | API-04 | Phase 4 | Complete |
-| UI-01 | Phase 5 | Pending |
-| UI-02 | Phase 5 | Pending |
-| UI-03 | Phase 5 | Pending |
-| UI-04 | Phase 5 | Pending |
-| UI-05 | Phase 5 | Pending |
-| UI-06 | Phase 5 | Pending |
+| UI-01 | Phase 5 | Complete |
+| UI-02 | Phase 5 | Complete |
+| UI-03 | Phase 5 | Complete |
+| UI-04 | Phase 5 | Complete |
+| UI-05 | Phase 5 | Complete |
+| UI-06 | Phase 5 | Complete |
 | GRAPH-01 | Phase 6 | Pending |
 | GRAPH-02 | Phase 6 | Pending |
 | GRAPH-03 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 31 total (22 complete, 9 pending)
+- v1 requirements: 31 total (28 complete, 3 pending)
 - Mapped to phases: 31
 - Unmapped: 0 ✓
 
