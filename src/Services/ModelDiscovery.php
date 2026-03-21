@@ -22,7 +22,8 @@ class ModelDiscovery
         $paths = config('model-explorer.model_paths', [app_path('Models')]);
 
         return collect($paths)
-            ->flatMap(fn (string $path) => $this->discoverIn($path))
+            ->sort()
+            ->flatMap(fn (string $path, string $namespace) => $this->discoverIn($namespace, $path))
             ->unique()
             ->values()
             ->all();
@@ -31,7 +32,7 @@ class ModelDiscovery
     /**
      * @return list<class-string<Model>>
      */
-    public function discoverIn(string $path): array
+    public function discoverIn(string $namespace, string $path): array
     {
         if (! is_dir($path)) {
             return [];
@@ -42,7 +43,7 @@ class ModelDiscovery
         return ModelFinder::all(
             directory: $realPath,
             basePath: $realPath,
-            baseNamespace: $this->resolveBaseNamespace($path),
+            baseNamespace: $namespace,
         )->all();
     }
 

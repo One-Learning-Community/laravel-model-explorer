@@ -40,7 +40,7 @@ return [
     | absolute. Defaults to the standard app/Models directory.
     */
     'model_paths' => [
-        app_path('Models'),
+        'App' => app_path('Models'),
     ],
 
 ];
