@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 2 of 6 (Model Discovery Engine)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-21 — Completed 02-01 (test infrastructure: fixture models and todo stubs)
+Last activity: 2026-03-21 — Completed 02-02 (ModelData DTO and ModelDiscovery service)
 
-Progress: [##░░░░░░░░] 20%
+Progress: [###░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [##░░░░░░░░] 20%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 4 | - | - |
-| 2. Model Discovery Engine | 1 | ~8 min | ~8 min |
+| 2. Model Discovery Engine | 2 | ~12 min | ~6 min |
 
 **Recent Trend:**
 - Last 5 plans: unknown
@@ -48,6 +48,8 @@ Recent decisions affecting current work:
 - Phase 1: Self-contained Vue 3 SPA — works across all Laravel frontend stacks (ADR-003)
 - Phases 2–4 before UI — backend introspection engine and API must exist before Phase 5 UI
 - Phase 2 / 02-01: Pest 4 todo() is a standalone function replacing it(), not callable inside a closure
+- Phase 2 / 02-02: resolveBaseNamespace() checks app_path() first; falls back to studly-cased package-root-relative path segments for workbench/test paths
+- Phase 2 / 02-02: fileToClassName() must realpath() both basePath and filePath to handle config paths with .. segments correctly
 
 ### Pending Todos
 
@@ -61,5 +63,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Completed 02-01-PLAN.md (test infrastructure for model discovery engine)
+Stopped at: Completed 02-02-PLAN.md (ModelData DTO and ModelDiscovery service)
 Resume file: None

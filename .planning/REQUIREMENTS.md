@@ -18,7 +18,7 @@
 
 - [x] **DISC-01**: Package scans all directories listed in `config('model-explorer.model_paths')` for Eloquent models
 - [x] **DISC-02**: Discovery safely handles non-model PHP classes and files without crashing
-- [ ] **DISC-03**: Discovery identifies a model's database table name
+- [x] **DISC-03**: Discovery identifies a model's database table name
 
 ### Attribute Introspection
 
@@ -96,7 +96,7 @@
 | FOUND-06 | Phase 1 | Complete |
 | DISC-01 | Phase 2 | Complete |
 | DISC-02 | Phase 2 | Complete |
-| DISC-03 | Phase 2 | Pending |
+| DISC-03 | Phase 2 | Complete |
 | ATTR-01 | Phase 2 | Pending |
 | ATTR-02 | Phase 2 | Pending |
 | ATTR-03 | Phase 2 | Pending |

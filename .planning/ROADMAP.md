@@ -100,7 +100,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Model Discovery Engine | 1/3 | In Progress|  |
+| 2. Model Discovery Engine | 2/3 | In Progress|  |
 | 3. Relationship Introspection | 0/TBD | Not started | - |
 | 4. API Layer | 0/TBD | Not started | - |
 | 5. Vue UI — Model List and Detail | 0/TBD | Not started | - |
