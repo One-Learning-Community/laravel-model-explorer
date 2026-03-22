@@ -6,8 +6,18 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AssetController
 {
-    /** @var string[] */
-    private const ALLOWED_EXTENSIONS = ['js', 'css', 'woff', 'woff2', 'ttf', 'svg', 'png', 'ico', 'map'];
+    /** @var array<string, string> */
+    private const MIME_TYPES = [
+        'js'    => 'application/javascript',
+        'css'   => 'text/css',
+        'woff'  => 'font/woff',
+        'woff2' => 'font/woff2',
+        'ttf'   => 'font/ttf',
+        'svg'   => 'image/svg+xml',
+        'png'   => 'image/png',
+        'ico'   => 'image/x-icon',
+        'map'   => 'application/json',
+    ];
 
     public function __invoke(string $path): BinaryFileResponse
     {
@@ -19,12 +29,14 @@ class AssetController
         }
 
         $extension = pathinfo($assetPath, PATHINFO_EXTENSION);
+        $mimeType = self::MIME_TYPES[$extension] ?? null;
 
-        if (! in_array($extension, self::ALLOWED_EXTENSIONS, strict: true)) {
+        if ($mimeType === null) {
             abort(404);
         }
 
         return response()->file($assetPath, [
+            'Content-Type'  => $mimeType,
             'Cache-Control' => 'public, max-age=31536000, immutable',
         ]);
     }
