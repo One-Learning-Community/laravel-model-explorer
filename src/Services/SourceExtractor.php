@@ -7,10 +7,11 @@ use ReflectionMethod;
 class SourceExtractor
 {
     /**
-     * Returns the dedented source and location metadata for the given method, or null
-     * when the source is unavailable (eval'd class, PHAR, unreadable file, etc.).
+     * Returns the dedented source (including any preceding PHPDoc block) and
+     * location metadata for the given method, or null when the source is
+     * unavailable (eval'd class, PHAR, unreadable file, etc.).
      *
-     * @return array{code: string, file: string, start_line: int}|null
+     * @return array{code: string, file: string, start_line: int, doc_summary: ?string}|null
      */
     public static function forMethod(ReflectionMethod $method): ?array
     {
@@ -26,19 +27,74 @@ class SourceExtractor
             return null;
         }
 
-        $startLine = $method->getStartLine();
+        $methodStart = $method->getStartLine(); // 1-based
+        $docComment = $method->getDocComment();
 
-        $body = array_slice(
+        // Default: snippet starts at the method declaration line.
+        $snippetStart = $methodStart;
+
+        // If there is a docblock, scan backwards to find its opening /** line,
+        // skipping over PHP 8 attributes (#[...]) on the way.
+        if ($docComment !== false) {
+            $idx = $methodStart - 2; // 0-based index of the line just before the method
+
+            while ($idx >= 0 && preg_match('/^\s*(#\[|$)/', $lines[$idx])) {
+                $idx--;
+            }
+
+            if ($idx >= 0 && str_contains($lines[$idx], '*/')) {
+                while ($idx >= 0 && ! str_contains($lines[$idx], '/**')) {
+                    $idx--;
+                }
+
+                if ($idx >= 0) {
+                    $snippetStart = $idx + 1; // 1-based
+                }
+            }
+        }
+
+        $codeLines = array_slice(
             $lines,
-            $startLine - 1,
-            $method->getEndLine() - $startLine + 1,
+            $snippetStart - 1,
+            $method->getEndLine() - $snippetStart + 1,
         );
 
         return [
-            'code' => self::dedent($body),
+            'code' => self::dedent($codeLines),
             'file' => $file,
-            'start_line' => $startLine,
+            'start_line' => $snippetStart,
+            'doc_summary' => $docComment !== false ? self::extractSummary($docComment) : null,
         ];
+    }
+
+    /**
+     * Extracts the summary line (first non-tag, non-empty line) from a PHPDoc comment,
+     * or null when no summary is present.
+     */
+    public static function docSummary(ReflectionMethod $method): ?string
+    {
+        $doc = $method->getDocComment();
+
+        return $doc !== false ? self::extractSummary($doc) : null;
+    }
+
+    /**
+     * Returns the summary line of a PHPDoc comment: the first non-empty line that
+     * does not begin with a @tag. Returns null when no summary is present.
+     */
+    private static function extractSummary(string $docComment): ?string
+    {
+        foreach (explode("\n", $docComment) as $line) {
+            // Strip leading docblock markers (/**, *, */) and trailing */
+            $stripped = preg_replace('/^\s*(\/\*{1,2}|\*\/|\*)\s*/', '', $line);
+            $stripped = trim(preg_replace('/\s*\*\/\s*$/', '', $stripped));
+
+            if ($stripped !== '' && ! str_starts_with($stripped, '@')) {
+                return $stripped;
+            }
+        }
+
+        return null;
     }
 
     /**

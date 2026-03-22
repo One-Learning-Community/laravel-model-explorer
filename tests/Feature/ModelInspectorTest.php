@@ -335,3 +335,60 @@ it('does not treat an untyped non-relation method as a relation', function () {
     $activateRelation = $data->relations->firstWhere('name', 'activate');
     expect($activateRelation)->toBeNull();
 });
+
+it('extracts a description from the PHPDoc summary of a scope', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'recent');
+    expect($scope->description)->toBe('Posts created within the given number of days.');
+});
+
+it('includes the docblock in the scope source snippet', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'recent');
+    expect($scope->snippet)->not->toBeNull()
+        ->and($scope->snippet['code'])->toContain('Posts created within the given number of days.')
+        ->and($scope->snippet['code'])->toContain('scopeRecent');
+});
+
+it('returns null description for a scope with no PHPDoc summary', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    // The published scope (defined in HasPublishedState) has no docblock in the workbench fixture.
+    $scope = $data->scopes->firstWhere('name', 'published');
+    expect($scope)->not->toBeNull()
+        ->and($scope->description)->toBeNull();
+});
+
+it('extracts a description from the PHPDoc summary of a relation', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $relation = $data->relations->firstWhere('name', 'user');
+    expect($relation->description)->toBe('The user who authored this post.');
+});
+
+it('extracts a source snippet for a relation method', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $relation = $data->relations->firstWhere('name', 'user');
+    expect($relation->snippet)->not->toBeNull()
+        ->and($relation->snippet['code'])->toContain('belongsTo')
+        ->and($relation->snippet['code'])->toContain('The user who authored this post.');
+});
+
+it('returns null description and null snippet for a relation with no PHPDoc', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    // The owner relation has no docblock.
+    $relation = $data->relations->firstWhere('name', 'owner');
+    expect($relation)->not->toBeNull()
+        ->and($relation->description)->toBeNull()
+        ->and($relation->snippet['doc_summary'])->toBeNull();
+});

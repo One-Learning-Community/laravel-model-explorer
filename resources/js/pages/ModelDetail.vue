@@ -95,7 +95,10 @@
                         </thead>
                         <tbody>
                             <tr v-for="attr in virtualAttrs" :key="attr.name">
-                                <td class="font-medium">{{ attr.name }}</td>
+                                <td class="font-medium">
+                                    {{ attr.name }}
+                                    <div v-if="attr.snippet?.doc_summary" class="text-xs text-base-content/50 font-mono font-normal mt-0.5">{{ attr.snippet.doc_summary }}</div>
+                                </td>
                                 <td class="font-mono text-xs text-base-content/50">{{ attr.cast }}</td>
                                 <td>
                                     <div class="flex gap-1 flex-wrap">
@@ -152,7 +155,10 @@
                                     </td>
                                 </tr>
                                 <tr v-for="scope in group.items" :key="scope.name">
-                                    <td class="font-mono text-sm">{{ scope.name }}</td>
+                                    <td class="font-mono text-sm">
+                                        {{ scope.name }}
+                                        <div v-if="scope.description" class="text-xs text-base-content/50 font-sans font-normal mt-0.5">{{ scope.description }}</div>
+                                    </td>
                                     <td class="font-mono text-xs text-base-content/60">
                                         <span v-if="!scope.parameters?.length" class="text-base-content/30">—</span>
                                         <span v-else>{{ formatScopeParams(scope.parameters) }}</span>
@@ -183,19 +189,23 @@
                                 <th>Related model</th>
                                 <th>Foreign key</th>
                                 <th>Local key</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             <template v-for="group in groupedRelations" :key="group.source ?? '__model__'">
                                 <tr v-if="group.label">
-                                    <td colspan="5" class="pt-4 pb-1">
+                                    <td colspan="6" class="pt-4 pb-1">
                                         <span class="text-xs text-base-content/40 flex items-center gap-1">
                                             via <span class="badge badge-ghost badge-xs font-mono" :title="group.source">{{ group.label }}</span>
                                         </span>
                                     </td>
                                 </tr>
                                 <tr v-for="rel in group.items" :key="rel.name">
-                                    <td class="font-mono text-sm">{{ rel.name }}</td>
+                                    <td class="font-mono text-sm">
+                                        {{ rel.name }}
+                                        <div v-if="rel.description" class="text-xs text-base-content/50 font-sans font-normal mt-0.5">{{ rel.description }}</div>
+                                    </td>
                                     <td>
                                         <span class="badge badge-xs gap-1" :class="relationColor(rel.type)" :title="rel.type">
                                             <component :is="relationIcon(rel.type)" v-if="relationIcon(rel.type)" :size="10" />
@@ -211,6 +221,13 @@
                                     </td>
                                     <td class="font-mono text-xs text-base-content/50">{{ rel.foreign_key ?? '—' }}</td>
                                     <td class="font-mono text-xs text-base-content/50">{{ rel.local_key ?? '—' }}</td>
+                                    <td>
+                                        <button
+                                            v-if="rel.snippet"
+                                            class="btn btn-xs btn-ghost font-mono"
+                                            @click="openSnippet(rel)"
+                                        >{ } source</button>
+                                    </td>
                                 </tr>
                             </template>
                         </tbody>

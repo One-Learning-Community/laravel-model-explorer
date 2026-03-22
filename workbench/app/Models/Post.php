@@ -37,11 +37,22 @@ class Post extends Model
         );
     }
 
+    /**
+     * Posts created within the given number of days.
+     *
+     * @param  Builder  $query
+     * @param  int  $days
+     * @param  bool  $published
+     * @return Builder
+     */
     public function scopeRecent(Builder $query, int $days = 30, bool $published = true): Builder
     {
         return $query->where('created_at', '>=', now()->subDays($days));
     }
 
+    /**
+     * The user who authored this post.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

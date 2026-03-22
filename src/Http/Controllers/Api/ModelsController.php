@@ -71,6 +71,7 @@ class ModelsController
                 'defined_in' => $scope->definedIn,
                 'parameters' => $scope->parameters,
                 'snippet' => $scope->snippet,
+                'description' => $scope->description,
             ])->values(),
             'attributes' => $data->attributes->map(fn (Attribute $attr) => array_merge(
                 $attr->toArray(),
@@ -83,6 +84,8 @@ class ModelsController
                 'foreign_key' => $rel->foreignKey,
                 'local_key' => $rel->localKey,
                 'defined_in' => $rel->definedIn,
+                'description' => $rel->description,
+                'snippet' => $rel->snippet,
             ])->values(),
         ];
     }

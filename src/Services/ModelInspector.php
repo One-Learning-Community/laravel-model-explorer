@@ -91,12 +91,17 @@ class ModelInspector
         try {
             return collect((new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC))
                 ->filter(fn (\ReflectionMethod $method) => (bool) preg_match('/^scope[A-Z]/', $method->getName()))
-                ->map(fn (\ReflectionMethod $method) => new ScopeData(
-                    name: lcfirst(substr($method->getName(), 5)),
-                    definedIn: $this->resolveMethodSource($className, $method->getName()),
-                    parameters: $this->extractScopeParameters($method),
-                    snippet: SourceExtractor::forMethod($method),
-                ))
+                ->map(function (\ReflectionMethod $method) use ($className): ScopeData {
+                    $snippet = SourceExtractor::forMethod($method);
+
+                    return new ScopeData(
+                        name: lcfirst(substr($method->getName(), 5)),
+                        definedIn: $this->resolveMethodSource($className, $method->getName()),
+                        parameters: $this->extractScopeParameters($method),
+                        snippet: $snippet,
+                        description: $snippet['doc_summary'] ?? SourceExtractor::docSummary($method),
+                    );
+                })
                 ->filter(function (ScopeData $scope) use ($excludedPrefixes): bool {
                     if ($scope->definedIn === null) {
                         return true;
@@ -158,6 +163,17 @@ class ModelInspector
     {
         [$foreignKey, $localKey] = $this->extractKeys($model, $relation->name);
 
+        $snippet = null;
+        $description = null;
+
+        try {
+            $refMethod = new \ReflectionMethod($modelClass, $relation->name);
+            $snippet = SourceExtractor::forMethod($refMethod);
+            $description = $snippet['doc_summary'] ?? SourceExtractor::docSummary($refMethod);
+        } catch (\Throwable) {
+            // ignore — relation method may not be directly on this class
+        }
+
         return new RelationData(
             name: $relation->name,
             type: class_basename($relation->type),
@@ -165,6 +181,8 @@ class ModelInspector
             foreignKey: $foreignKey,
             localKey: $localKey,
             definedIn: $this->resolveMethodSource($modelClass, $relation->name),
+            description: $description,
+            snippet: $snippet,
         );
     }
 
