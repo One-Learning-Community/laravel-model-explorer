@@ -1,5 +1,18 @@
 <template>
     <div>
+        <!-- Breadcrumb trail -->
+        <nav v-if="trail.length" class="flex items-center gap-1 text-xs mb-3 flex-wrap">
+            <template v-for="(entry, i) in trail" :key="i">
+                <RouterLink :to="trailLink(i)" class="link link-hover text-base-content/50 font-mono">
+                    {{ entry.display }}
+                </RouterLink>
+                <span class="text-base-content/30">›</span>
+            </template>
+            <span class="font-mono text-base-content/70">
+                {{ record ? `${record.short_name}#${record.key_value}` : (modelStructure?.short_name ?? '…') }}
+            </span>
+        </nav>
+
         <RouterLink
             :to="`/models/${route.params.model}`"
             class="link link-hover text-sm text-base-content/50 mb-6 inline-block"
@@ -49,11 +62,21 @@
 
             <!-- Record panel -->
             <template v-if="record">
-                <div class="flex items-center gap-3 mb-6">
+                <div class="flex items-center gap-3 mb-4">
                     <h2 class="text-lg font-semibold m-0">
                         {{ record.short_name }}
                         <span class="text-base-content/50 font-mono">#{{ record.key_value }}</span>
                     </h2>
+                </div>
+
+                <!-- Attribute filter -->
+                <div class="mb-6">
+                    <input
+                        v-model="attributeFilter"
+                        type="search"
+                        placeholder="Filter attributes by name or value…"
+                        class="input input-sm input-bordered font-mono w-72"
+                    />
                 </div>
 
                 <!-- Raw column attributes -->
@@ -63,16 +86,36 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th class="w-40">Name</th>
                                     <th>Value (raw)</th>
+                                    <th class="w-8"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="[name, value] in Object.entries(record.attributes)" :key="name">
+                                <tr v-if="!filteredAttributes.length">
+                                    <td colspan="3" class="text-base-content/30 text-xs italic">No matching attributes.</td>
+                                </tr>
+                                <tr v-for="[name, value] in filteredAttributes" :key="name" class="align-top">
                                     <td class="font-mono text-sm font-medium">{{ name }}</td>
-                                    <td class="font-mono text-sm text-base-content/70 max-w-md truncate">
-                                        <span v-if="formatValue(value) === '—'" class="text-base-content/30">—</span>
-                                        <span v-else>{{ formatValue(value) }}</span>
+                                    <td class="font-mono text-sm text-base-content/70">
+                                        <span v-if="value === null || value === undefined" class="text-base-content/30">—</span>
+                                        <template v-else>
+                                            <pre v-if="expandedCells[`attr:${name}`]" class="text-xs whitespace-pre-wrap break-all font-mono">{{ prettyValue(value) }}</pre>
+                                            <span v-else class="block max-w-sm truncate">{{ formatValue(value) }}</span>
+                                            <button
+                                                v-if="isLong(value)"
+                                                @click="toggleExpand(`attr:${name}`)"
+                                                class="btn btn-xs btn-ghost opacity-60 hover:opacity-100 mt-1"
+                                            >{{ expandedCells[`attr:${name}`] ? 'Less ↑' : 'More ↓' }}</button>
+                                        </template>
+                                    </td>
+                                    <td class="align-top">
+                                        <button
+                                            v-if="value !== null && value !== undefined"
+                                            @click="copyValue(`attr:${name}`, value)"
+                                            class="btn btn-xs btn-ghost opacity-40 hover:opacity-100"
+                                            :title="copiedCells[`attr:${name}`] ? 'Copied!' : 'Copy value'"
+                                        >{{ copiedCells[`attr:${name}`] ? '✓' : '⎘' }}</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -81,7 +124,7 @@
                 </section>
 
                 <!-- Accessor values (lazy) -->
-                <section v-if="accessorAttributes.length" class="mb-8">
+                <section v-if="accessorAttributes.length && filteredAccessorAttributes.length" class="mb-8">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-xs font-semibold uppercase tracking-widest text-base-content/40">
                             Accessor Values
@@ -102,37 +145,53 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th class="w-40">Name</th>
                                     <th>Value</th>
-                                    <th></th>
+                                    <th class="w-16"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="attr in accessorAttributes" :key="attr.name">
+                                <tr v-for="attr in filteredAccessorAttributes" :key="attr.name" class="align-top">
                                     <td class="font-mono text-sm font-medium">
                                         {{ attr.name }}
                                         <span v-if="attr.virtual" class="badge badge-ghost badge-xs ml-1">virtual</span>
                                     </td>
-                                    <td class="font-mono text-sm text-base-content/70 max-w-md">
+                                    <td class="font-mono text-sm text-base-content/70">
                                         <template v-if="accessorData[attr.name]">
                                             <span v-if="accessorData[attr.name].loading" class="loading loading-spinner loading-xs"></span>
                                             <span v-else-if="accessorData[attr.name].error" class="text-error text-xs">
                                                 Error: {{ accessorData[attr.name].error }}
                                             </span>
-                                            <span v-else class="truncate block max-w-md">
-                                                <span v-if="formatValue(accessorData[attr.name].value) === '—'" class="text-base-content/30">—</span>
-                                                <span v-else>{{ formatValue(accessorData[attr.name].value) }}</span>
-                                            </span>
+                                            <template v-else>
+                                                <span v-if="accessorData[attr.name].value === null || accessorData[attr.name].value === undefined" class="text-base-content/30">—</span>
+                                                <template v-else>
+                                                    <pre v-if="expandedCells[`accessor:${attr.name}`]" class="text-xs whitespace-pre-wrap break-all font-mono">{{ prettyValue(accessorData[attr.name].value) }}</pre>
+                                                    <span v-else class="block max-w-sm truncate">{{ formatValue(accessorData[attr.name].value) }}</span>
+                                                    <button
+                                                        v-if="isLong(accessorData[attr.name].value)"
+                                                        @click="toggleExpand(`accessor:${attr.name}`)"
+                                                        class="btn btn-xs btn-ghost opacity-60 hover:opacity-100 mt-1"
+                                                    >{{ expandedCells[`accessor:${attr.name}`] ? 'Less ↑' : 'More ↓' }}</button>
+                                                </template>
+                                            </template>
                                         </template>
                                         <span v-else class="text-base-content/20 text-xs">not loaded</span>
                                     </td>
-                                    <td>
-                                        <button
-                                            v-if="!accessorData[attr.name] || accessorData[attr.name].error"
-                                            @click="loadAccessor(attr.name)"
-                                            class="btn btn-xs btn-ghost"
-                                            :disabled="accessorData[attr.name]?.loading"
-                                        >Load</button>
+                                    <td class="align-top">
+                                        <div class="flex gap-1">
+                                            <button
+                                                v-if="!accessorData[attr.name] || accessorData[attr.name].error"
+                                                @click="loadAccessor(attr.name)"
+                                                class="btn btn-xs btn-ghost"
+                                                :disabled="accessorData[attr.name]?.loading"
+                                            >Load</button>
+                                            <button
+                                                v-else-if="accessorData[attr.name] && !accessorData[attr.name].loading && accessorData[attr.name].value !== null && accessorData[attr.name].value !== undefined"
+                                                @click="copyValue(`accessor:${attr.name}`, accessorData[attr.name].value)"
+                                                class="btn btn-xs btn-ghost opacity-40 hover:opacity-100"
+                                                :title="copiedCells[`accessor:${attr.name}`] ? 'Copied!' : 'Copy value'"
+                                            >{{ copiedCells[`accessor:${attr.name}`] ? '✓' : '⎘' }}</button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -191,8 +250,8 @@
                                                                 :key="name"
                                                             >
                                                                 <td class="font-mono font-medium w-40">{{ name }}</td>
-                                                                <td class="font-mono text-base-content/70">
-                                                                    <span v-if="formatValue(value) === '—'" class="text-base-content/30">—</span>
+                                                                <td class="font-mono text-base-content/70 max-w-xs truncate">
+                                                                    <span v-if="value === null || value === undefined" class="text-base-content/30">—</span>
                                                                     <span v-else>{{ formatValue(value) }}</span>
                                                                 </td>
                                                             </tr>
@@ -227,9 +286,9 @@
                                                                 <td
                                                                     v-for="col in manyRelationColumns(relationData[rel.name].data.records)"
                                                                     :key="col"
-                                                                    class="font-mono text-xs text-base-content/70"
+                                                                    class="font-mono text-xs text-base-content/70 max-w-32 truncate"
                                                                 >
-                                                                    <span v-if="formatValue(r.attributes[col]) === '—'" class="text-base-content/30">—</span>
+                                                                    <span v-if="r.attributes[col] === null || r.attributes[col] === undefined" class="text-base-content/30">—</span>
                                                                     <span v-else>{{ formatValue(r.attributes[col]) }}</span>
                                                                 </td>
                                                                 <td>
@@ -295,6 +354,11 @@ const searched = ref(false)
 const relationData = reactive({})
 const accessorData = reactive({})
 
+// Attribute filter + cell expand/copy state
+const attributeFilter = ref('')
+const expandedCells = reactive({})
+const copiedCells = reactive({})
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function encodeModel(className) {
@@ -305,15 +369,75 @@ function shortName(fqcn) {
     return fqcn.split('\\').pop()
 }
 
+function isDateLike(value) {
+    if (typeof value !== 'string' || value.length < 10 || value.length > 35) return false
+    return /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}:\d{2})?/.test(value)
+}
+
 function formatValue(value) {
     if (value === null || value === undefined) return '—'
     if (typeof value === 'boolean') return value ? 'true' : 'false'
     if (typeof value === 'object') return JSON.stringify(value)
+    if (isDateLike(value)) {
+        return String(value).replace('T', ' ').replace(/\.\d+/, '').replace(/Z$/, ' UTC')
+    }
     return String(value)
 }
 
+function prettyValue(value) {
+    if (value === null || value === undefined) return '—'
+    if (typeof value === 'object') return JSON.stringify(value, null, 2)
+    return String(value)
+}
+
+function isLong(value) {
+    if (value === null || value === undefined) return false
+    if (typeof value === 'object') return JSON.stringify(value).length > 80
+    return String(value).length > 80
+}
+
+function toggleExpand(key) {
+    if (expandedCells[key]) {
+        delete expandedCells[key]
+    } else {
+        expandedCells[key] = true
+    }
+}
+
+async function copyValue(key, value) {
+    const text = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)
+    try {
+        await navigator.clipboard.writeText(text)
+    } catch {
+        // Clipboard API unavailable (e.g. non-HTTPS) — silently ignore
+    }
+    copiedCells[key] = true
+    setTimeout(() => { delete copiedCells[key] }, 1500)
+}
+
 function recordLink(r) {
-    return `/models/${encodeModel(r.model_class)}/record?field=${r.key_field}&value=${r.key_value}`
+    const newTrail = [...trail.value, {
+        model_class: record.value.model_class,
+        key_field: record.value.key_field,
+        key_value: record.value.key_value,
+        display: `${record.value.short_name}#${record.value.key_value}`,
+    }]
+    const params = new URLSearchParams({
+        field: r.key_field,
+        value: r.key_value,
+        trail: JSON.stringify(newTrail),
+    })
+    return `/models/${encodeModel(r.model_class)}/record?${params}`
+}
+
+function trailLink(index) {
+    const entry = trail.value[index]
+    const truncatedTrail = trail.value.slice(0, index)
+    const params = new URLSearchParams({ field: entry.key_field, value: entry.key_value })
+    if (truncatedTrail.length) {
+        params.set('trail', JSON.stringify(truncatedTrail))
+    }
+    return `/models/${encodeModel(entry.model_class)}/record?${params}`
 }
 
 function manyRelationColumns(records) {
@@ -339,6 +463,16 @@ function relationColor(fqcn) {
     return RELATION_COLORS[shortName(fqcn)] ?? 'badge-ghost'
 }
 
+// ── Trail (breadcrumb navigation history) ────────────────────────────────────
+
+const trail = computed(() => {
+    try {
+        return JSON.parse(route.query.trail || '[]')
+    } catch {
+        return []
+    }
+})
+
 // ── Available lookup fields ───────────────────────────────────────────────────
 
 const availableLookupFields = computed(() => {
@@ -353,9 +487,6 @@ const availableLookupFields = computed(() => {
     return fields
 })
 
-// Attributes that have accessor methods: virtual (appended) attrs, or DB columns
-// with a known accessor override (snippet present). These are loaded lazily to
-// avoid triggering potential side effects automatically.
 const accessorAttributes = computed(() => {
     return (modelStructure.value?.attributes ?? [])
         .filter(a => a.virtual || a.snippet !== null)
@@ -364,6 +495,31 @@ const accessorAttributes = computed(() => {
 const allAccessorsLoading = computed(() =>
     accessorAttributes.value.some(a => accessorData[a.name]?.loading)
 )
+
+// ── Filtered attributes ───────────────────────────────────────────────────────
+
+const filteredAttributes = computed(() => {
+    const entries = Object.entries(record.value?.attributes ?? {})
+    if (!attributeFilter.value) return entries
+    const q = attributeFilter.value.toLowerCase()
+    return entries.filter(([name, value]) =>
+        name.toLowerCase().includes(q) ||
+        formatValue(value).toLowerCase().includes(q)
+    )
+})
+
+const filteredAccessorAttributes = computed(() => {
+    if (!attributeFilter.value) return accessorAttributes.value
+    const q = attributeFilter.value.toLowerCase()
+    return accessorAttributes.value.filter(attr => {
+        if (attr.name.toLowerCase().includes(q)) return true
+        const loaded = accessorData[attr.name]
+        if (loaded && !loaded.loading && !loaded.error) {
+            return formatValue(loaded.value).toLowerCase().includes(q)
+        }
+        return false
+    })
+})
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
@@ -388,8 +544,11 @@ async function submitLookup() {
     record.value = null
     recordError.value = null
     recordLoading.value = true
+    attributeFilter.value = ''
     for (const key of Object.keys(relationData)) { delete relationData[key] }
     for (const key of Object.keys(accessorData)) { delete accessorData[key] }
+    for (const key of Object.keys(expandedCells)) { delete expandedCells[key] }
+    for (const key of Object.keys(copiedCells)) { delete copiedCells[key] }
 
     const slug = route.params.model
     const params = new URLSearchParams({ field: selectedField.value, value: lookupValue.value })
@@ -401,7 +560,9 @@ async function submitLookup() {
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         record.value = await res.json()
-        router.replace({ query: { field: selectedField.value, value: lookupValue.value } })
+        const query = { field: selectedField.value, value: lookupValue.value }
+        if (route.query.trail) query.trail = route.query.trail
+        router.replace({ query })
         searched.value = true
     } catch (e) {
         recordError.value = e.message
@@ -481,8 +642,11 @@ async function init() {
     record.value = null
     searched.value = false
     recordError.value = null
+    attributeFilter.value = ''
     for (const key of Object.keys(relationData)) { delete relationData[key] }
     for (const key of Object.keys(accessorData)) { delete accessorData[key] }
+    for (const key of Object.keys(expandedCells)) { delete expandedCells[key] }
+    for (const key of Object.keys(copiedCells)) { delete copiedCells[key] }
 
     selectedField.value = route.query.field || ''
     lookupValue.value = route.query.value || ''
@@ -495,9 +659,8 @@ async function init() {
 
 onMounted(init)
 
-// Re-init when navigating to a different model. Also handles same-model navigation
-// (e.g. drilling into a related record of the same type) by detecting when the
-// query params changed externally rather than from our own router.replace call.
+// Re-init when navigating to a different model or when query params change externally
+// (e.g. drilling into a related record or navigating via breadcrumb trail).
 watch(
     () => ({ model: route.params.model, field: route.query.field, value: route.query.value }),
     async ({ model, field, value }, prev) => {
