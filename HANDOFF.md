@@ -12,29 +12,43 @@
 - `/graph` route + "Graph" nav link in `App.vue`
 
 ### RelationFinder — source scanning for untyped relations ✅
-- `src/Services/SourceExtractor.php` — shared helper; reads `ReflectionMethod` file lines, dedents, returns source block; returns `null` for eval'd/PHAR classes
-- `RelationFinder::hasRelationReturnType()` — untyped (`getReturnType() === null`) methods now use `SourceExtractor` + regex match against known relation method names instead of blind `rescue(fn() => $method->invoke($model))`
-- `RelationFinder::relations()` — still invokes matched methods (safe — already confirmed as relations) to get `getRelated()`; uses `get_class($relation)` as type string for untyped ones
+- `src/Services/SourceExtractor.php` — shared helper; reads `ReflectionMethod` file lines, dedents, returns `{code, file, start_line}`; returns `null` for eval'd/PHAR classes
+- `RelationFinder::hasRelationReturnType()` — untyped methods use `SourceExtractor` + regex match against known relation method names
+- `RelationFinder::relations()` — invokes matched methods to get `getRelated()`; uses `get_class($relation)` for untyped ones
 - Workbench fixtures: `Post::owner()` (untyped BelongsTo), `Post::activate()` (untyped non-relation)
 
 ### Accessor code snippets ✅
-- `ModelInspector::extractAccessorSnippets()` — iterates `virtual: true` attributes; detects old-style (`getFooAttribute`) and new-style (`foo(): Attribute`) methods via reflection; extracts source via `SourceExtractor`
-- `ModelData::$accessorSnippets` — `array<string, string>` keyed by attribute name
+- `ModelInspector::extractAccessorSnippets()` — old-style (`getFooAttribute`) and new-style (`foo(): Attribute`) via reflection + `SourceExtractor`
+- `ModelData::$accessorSnippets` — `array<string, array{code, file, start_line}>` keyed by attribute name
 - `ModelsController::serialize()` — merges `snippet` (or `null`) into each attribute's serialized array
-- `ModelDetail.vue` — Virtual Attributes section restored to table layout; adds a `{ } source` button per row when snippet available; clicking opens a DaisyUI `<dialog>` modal with Prism.js PHP-highlighted source (`prism-tomorrow` theme)
-- Workbench fixtures: `Post::excerpt()` (new-style Attribute::make virtual accessor), `Post::$appends` includes `excerpt`
+- `ModelDetail.vue` — `{ } source` button opens DaisyUI modal with Prism.js syntax highlighting, line numbers, and `filename:line` in header
+
+### Prism.js via vite-plugin-prismjs-plus ✅
+- Replaced manual import chain with `virtual:prismjs` (languages: php, plugins: line-numbers, theme: tomorrow)
+- Uses `Prism.highlightElement()` after modal opens so line-numbers plugin injects DOM nodes correctly
+
+### UX polish ✅
+- Traits sorted by short name (not FQCN)
+- Relations: single table across all groups; FQN in `title`; model-own relations first, then traits alpha
+- Global model search in navbar: fetches list once, filters by short name or FQCN, keyboard nav
+- ModelDetail sticky section nav with IntersectionObserver scroll spy
+
+### Bug fixes ✅
+- `discoverAll()` namespace bug — config is `namespace => path`; `discoverIn(path, namespace='')` now correct
+- `TestCase` updated to use `'Workbench\\App\\Models' => path` format
+- `app()->detectEnvironment()` replaced with `$this->app['env']` in tests
 
 ---
 
-## Pre-existing test failures (12 total, none introduced)
+## Remaining test failures (8 — pre-existing Mockery issue)
 
-| Count | File | Cause |
-|-------|------|-------|
-| 2 | `ModelsApiTest` | Empty index — `discoverAll()` flatMap passes array index as namespace |
-| 3 | `ModelsApiTest` | `BadMethodCallException` — Mockery + `detectEnvironment('production')` testbench bug |
-| 3 | `RouteAuthorizationTest` | Same `detectEnvironment('production')` Mockery bug |
-| 2 | `ModelDiscoveryTest` | Same discovery namespace issue |
-| 2 | `GraphApiTest` | Same `detectEnvironment('production')` Mockery bug |
+All 8 failing tests share the same root cause: `BadMethodCallException: Received Mockery_1_Illuminate_Console_OutputStyle::askQuestion()` from `SymfonyStyle::confirm()`. Triggered by tests that set `$this->app['env'] = 'production'` and make an HTTP request — something in the testbench request lifecycle calls `confirm()` on a Mockery-mocked OutputStyle. Needs deeper investigation; not caused by our code.
+
+| Count | File |
+|-------|------|
+| 3 | `ModelsApiTest` |
+| 3 | `RouteAuthorizationTest` |
+| 2 | `GraphApiTest` |
 
 ---
 
@@ -44,9 +58,9 @@
 
 **`ReflectionMethod::getDeclaringClass()` ≠ trait** — use `ReflectionClass::getTraits()` walk instead.
 
-**`RelationFinder` is wired via `ModelInspector::discoverRelations()`** — `ModelInfo::forModel()` is still used for attributes/table; only relations are replaced with our finder.
+**`RelationFinder` is wired via `ModelInspector::discoverRelations()`** — `ModelInfo::forModel()` is still used for attributes/table; only relations use our finder.
 
-**Prism.js import order matters** — must import `prism-markup` → `prism-clike` → `prism-php` explicitly (Vite doesn't always resolve the CommonJS peer deps automatically).
+**`vite-plugin-prismjs-plus` config** — `manual: true` is required; we call `Prism.highlightElement()` ourselves after modal opens.
 
 ---
 
@@ -55,14 +69,14 @@
 ```
 src/
   Data/
-    ModelData.php          — adds accessorSnippets: array<string, string>
+    ModelData.php          — accessorSnippets: array<string, array{code, file, start_line}>
     RelationData.php       — name, type, related, foreignKey, localKey, definedIn
     ScopeData.php          — name, definedIn
   Services/
-    ModelDiscovery.php     — finds model classes via ModelFinder::all()
+    ModelDiscovery.php     — discoverIn(path, namespace=''); config is namespace => path
     ModelInspector.php     — inspect(); extractAccessorSnippets(); findAccessorMethod()
-    RelationFinder.php     — source-scan for untyped relations; shared SourceExtractor
-    SourceExtractor.php    — static forMethod(); dedents source block
+    RelationFinder.php     — source-scan for untyped relations
+    SourceExtractor.php    — static forMethod() → {code, file, start_line}
   Http/Controllers/
     Api/ModelsController.php  — index(), show(); merges snippet into attribute output
     Api/GraphController.php   — graph() endpoint
@@ -70,25 +84,23 @@ src/
 config/model-explorer.php
 resources/js/
   router.js              — /, /models/:model, /graph
-  App.vue                — Models + Graph nav links
+  App.vue                — nav + global model search
   pages/
     ModelList.vue
-    ModelDetail.vue        — snippet modal with Prism.js highlighting
+    ModelDetail.vue        — sticky section nav, scroll spy, snippet modal
     ModelGraph.vue         — SVG force-directed graph
 tests/
   Feature/
     ModelInspectorTest.php — 29 tests, all pass
-    Api/ModelsApiTest.php  — 5 pass, 5 pre-existing fail (11 total — missing one? recount)
-    Api/GraphApiTest.php   — 3 pass, 2 pre-existing fail
-    ModelDiscoveryTest.php — pre-existing failures
-    RouteAuthorizationTest.php — pre-existing failures
+    ModelDiscoveryTest.php — 4 tests, all pass
+    Api/ModelsApiTest.php  — 8 pass, 3 fail (Mockery)
+    Api/GraphApiTest.php   — 3 pass, 2 fail (Mockery)
+    RouteAuthorizationTest.php — 4 pass, 3 fail (Mockery)
 ```
 
 ---
 
-## Possible next directions
+## Open items
 
-- Syntax highlight the relation `related` class links (already navigable, but could add type pill colour coding by relation type)
-- `discoverAll()` namespace bug fix — the flatMap passes array index (0) as namespace; fixing would make the index/graph API tests pass in test env
-- Accessor snippet: parse and separately display `get:` vs `set:` closures for new-style accessors
-- Caching the graph/inspect results keyed by model file mtimes
+- Investigate and fix the Mockery `BadMethodCallException` in production-environment tests
+- Relation type pill colour coding by relation type (BelongsTo, HasMany, etc.)
