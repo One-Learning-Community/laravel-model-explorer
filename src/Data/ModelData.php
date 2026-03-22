@@ -15,6 +15,7 @@ readonly class ModelData
      * @param  string[]  $hidden
      * @param  array<string, string>  $casts
      * @param  string[]  $appends
+     * @param  list<string>  $traits  Non-Illuminate traits used by the model (recursive).
      */
     public function __construct(
         public string $className,
@@ -30,5 +31,6 @@ readonly class ModelData
         public bool $usesTimestamps,
         public ?string $createdAtColumn,
         public ?string $updatedAtColumn,
+        public array $traits,
     ) {}
 }

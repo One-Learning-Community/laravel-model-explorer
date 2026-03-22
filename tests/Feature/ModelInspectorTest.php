@@ -3,6 +3,10 @@
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
+use Workbench\App\Models\Concerns\HasAuthor;
+use Workbench\App\Models\Concerns\HasOwner;
+use Workbench\App\Models\Concerns\HasPublishedState;
+use Workbench\App\Models\ExtendedPost;
 use Workbench\App\Models\CustomTableModel;
 use Workbench\App\Models\NoTimestampsModel;
 use Workbench\App\Models\Post;
@@ -144,4 +148,67 @@ it('extracts foreign key and local key for a hasMany relation', function () {
     $postsRelation = $data->relations->firstWhere('name', 'posts');
     expect($postsRelation->foreignKey)->toBe('user_id')
         ->and($postsRelation->localKey)->toBe('id');
+});
+
+it('returns non-Illuminate traits used by the model', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->traits)->toContain(HasPublishedState::class);
+});
+
+it('excludes internal Illuminate concern traits from the traits list', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $concernTraits = array_filter($data->traits, fn (string $t) => str_starts_with($t, 'Illuminate\Database\Eloquent\Concerns\\'));
+    expect($concernTraits)->toBeEmpty();
+});
+
+it('respects custom excluded_trait_prefixes from config', function () {
+    $original = config('model-explorer.excluded_trait_prefixes');
+    config()->set('model-explorer.excluded_trait_prefixes', [
+        'Workbench\App\Models\Concerns\\',
+    ]);
+
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    config()->set('model-explorer.excluded_trait_prefixes', $original);
+
+    expect($data->traits)->not->toContain(HasPublishedState::class)
+        ->and($data->traits)->not->toContain(HasAuthor::class);
+});
+
+it('sets definedIn to null for relations defined directly on the model', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $userRelation = $data->relations->firstWhere('name', 'user');
+    expect($userRelation->definedIn)->toBeNull();
+});
+
+it('sets definedIn to the trait FQCN for relations sourced from a trait', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $authorRelation = $data->relations->firstWhere('name', 'author');
+    expect($authorRelation)->not->toBeNull()
+        ->and($authorRelation->definedIn)->toBe(HasAuthor::class);
+});
+
+it('identifies the correct trait for a relation defined in a parent class trait', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(ExtendedPost::class);
+
+    $ownerRelation = $data->relations->firstWhere('name', 'owner');
+    expect($ownerRelation)->not->toBeNull()
+        ->and($ownerRelation->definedIn)->toBe(HasOwner::class);
+});
+
+it('returns an empty traits array for a model with no custom traits', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(User::class);
+
+    expect($data->traits)->toBeArray()->toBeEmpty();
 });

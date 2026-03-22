@@ -10,5 +10,6 @@ readonly class RelationData
         public string $related,
         public ?string $foreignKey,
         public ?string $localKey,
+        public ?string $definedIn,
     ) {}
 }

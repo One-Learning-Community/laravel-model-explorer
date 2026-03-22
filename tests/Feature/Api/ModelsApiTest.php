@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
+use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\User;
 
@@ -32,7 +33,7 @@ it('returns full model detail for a valid model slug', function () {
     $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
         ->assertOk()
         ->assertJsonFragment(['class' => Post::class, 'table' => 'posts'])
-        ->assertJsonStructure(['class', 'short_name', 'table', 'fillable', 'guarded', 'hidden', 'casts', 'appends', 'uses_timestamps', 'attributes', 'relations']);
+        ->assertJsonStructure(['class', 'short_name', 'table', 'fillable', 'guarded', 'hidden', 'casts', 'appends', 'uses_timestamps', 'traits', 'attributes', 'relations']);
 });
 
 it('includes relation metadata in model detail', function () {
@@ -46,7 +47,24 @@ it('includes relation metadata in model detail', function () {
             'related' => User::class,
             'foreign_key' => 'user_id',
             'local_key' => 'id',
+            'defined_in' => null,
         ]);
+});
+
+it('sets defined_in to null for relations on the model directly', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'user', 'defined_in' => null]);
+});
+
+it('sets defined_in to the trait FQCN for trait-sourced relations', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'author', 'defined_in' => HasAuthor::class]);
 });
 
 it('returns 404 json for an unknown model slug', function () {

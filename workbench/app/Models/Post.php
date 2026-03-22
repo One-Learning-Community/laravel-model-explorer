@@ -4,9 +4,13 @@ namespace Workbench\App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Workbench\App\Models\Concerns\HasAuthor;
+use Workbench\App\Models\Concerns\HasPublishedState;
 
 class Post extends Model
 {
+    use HasPublishedState, HasAuthor;
+
     protected $fillable = ['title', 'body', 'published_at'];
 
     protected $hidden = ['secret_key'];

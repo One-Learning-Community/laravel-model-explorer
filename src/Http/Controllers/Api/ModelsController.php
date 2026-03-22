@@ -67,6 +67,7 @@ class ModelsController
             'uses_timestamps' => $data->usesTimestamps,
             'created_at_column' => $data->createdAtColumn,
             'updated_at_column' => $data->updatedAtColumn,
+            'traits' => $data->traits,
             'attributes' => $data->attributes->map(fn (Attribute $attr) => $attr->toArray())->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [
                 'name' => $rel->name,
@@ -74,6 +75,7 @@ class ModelsController
                 'related' => $rel->related,
                 'foreign_key' => $rel->foreignKey,
                 'local_key' => $rel->localKey,
+                'defined_in' => $rel->definedIn,
             ])->values(),
         ];
     }

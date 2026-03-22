@@ -6,7 +6,10 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@tailwindcss/vite": "^4.2.2",
         "@vitejs/plugin-vue": "^5.2",
+        "daisyui": "^5.5.19",
+        "tailwindcss": "^4.2.2",
         "vite": "^6.0"
     },
     "dependencies": {

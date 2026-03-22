@@ -34,7 +34,7 @@ class ModelInspector
             shortName: class_basename($className),
             table: $modelInfo->tableName,
             attributes: $modelInfo->attributes,
-            relations: $modelInfo->relations->map(fn (Relation $relation) => $this->buildRelationData($model, $relation)),
+            relations: $modelInfo->relations->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
             hidden: $model->getHidden(),
@@ -43,10 +43,41 @@ class ModelInspector
             usesTimestamps: $model->usesTimestamps(),
             createdAtColumn: $model->usesTimestamps() ? $model->getCreatedAtColumn() : null,
             updatedAtColumn: $model->usesTimestamps() ? $model->getUpdatedAtColumn() : null,
+            traits: $this->extractTraits($className),
         );
     }
 
-    private function buildRelationData(Model $model, Relation $relation): RelationData
+    /**
+     * @param  class-string  $className
+     * @return list<string>
+     */
+    private function extractTraits(string $className): array
+    {
+        $excludedPrefixes = config('model-explorer.excluded_trait_prefixes', [
+            'Illuminate\Database\Eloquent\Concerns\\',
+            'Illuminate\Database\Eloquent\HasCollection',
+            'Illuminate\Support\Traits\\',
+        ]);
+
+        $traits = array_filter(
+            array_keys(class_uses_recursive($className)),
+            function (string $trait) use ($excludedPrefixes): bool {
+                foreach ($excludedPrefixes as $prefix) {
+                    if (str_starts_with($trait, $prefix)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            },
+        );
+
+        sort($traits);
+
+        return array_values($traits);
+    }
+
+    private function buildRelationData(string $modelClass, Model $model, Relation $relation): RelationData
     {
         [$foreignKey, $localKey] = $this->extractKeys($model, $relation->name);
 
@@ -56,7 +87,36 @@ class ModelInspector
             related: $relation->related,
             foreignKey: $foreignKey,
             localKey: $localKey,
+            definedIn: $this->resolveRelationSource($modelClass, $relation->name),
         );
+    }
+
+    /**
+     * Returns the FQCN of the trait that provides the relation method, or null when
+     * the method is declared directly on the model class itself.
+     *
+     * ReflectionMethod::getDeclaringClass() returns the using class for trait methods,
+     * not the trait itself. We check which of the model's direct traits defines the method.
+     */
+    private function resolveRelationSource(string $modelClass, string $methodName): ?string
+    {
+        try {
+            $reflection = new \ReflectionClass($modelClass);
+
+            while ($reflection && $reflection->getName() !== Model::class) {
+                foreach ($reflection->getTraits() as $traitName => $trait) {
+                    if ($trait->hasMethod($methodName)) {
+                        return $traitName;
+                    }
+                }
+
+                $reflection = $reflection->getParentClass() ?: null;
+            }
+        } catch (\Throwable) {
+            // ignore
+        }
+
+        return null;
     }
 
     /**

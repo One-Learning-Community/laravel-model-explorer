@@ -43,4 +43,22 @@ return [
         'App' => app_path('Models'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Excluded Trait Prefixes
+    |--------------------------------------------------------------------------
+    | Traits whose fully-qualified class name begins with any of these prefixes
+    | will be hidden from the Model Explorer UI. Add prefixes for any packages
+    | that introduce internal traits you don't want surfaced (e.g. ORMs,
+    | audit packages, or code-generation tools).
+    |
+    | The default excludes Laravel's internal model concern traits (HasAttributes,
+    | HasRelationships, etc.) while keeping useful traits like SoftDeletes visible.
+    */
+    'excluded_trait_prefixes' => [
+        'Illuminate\\Database\\Eloquent\\Concerns\\',
+        'Illuminate\\Database\\Eloquent\\HasCollection',
+        'Illuminate\\Support\\Traits\\',
+    ],
+
 ];

@@ -1,14 +1,4 @@
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
-}
-
-#app {
-    min-height: 100vh;
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: night;
 }

@@ -1,36 +1,39 @@
 <template>
     <div>
-        <div class="page-header">
-            <h1 class="page-title">Models</h1>
+        <div class="flex items-center justify-between mb-6 gap-4">
+            <h1 class="text-xl font-semibold m-0">Models</h1>
             <input
                 v-model="search"
-                class="search"
                 type="text"
                 placeholder="Filter models…"
+                class="input input-bordered input-sm w-60"
                 autofocus
             />
         </div>
 
-        <p v-if="error" class="error">{{ error }}</p>
-
-        <div v-else-if="loading" class="muted">Loading…</div>
+        <div v-if="error" role="alert" class="alert alert-error text-sm mb-4">{{ error }}</div>
+        <div v-else-if="loading" class="text-base-content/50 text-sm">Loading…</div>
 
         <template v-else>
-            <p v-if="filtered.length === 0" class="muted">No models match "{{ search }}".</p>
+            <p v-if="filtered.length === 0" class="text-base-content/50 text-sm">
+                No models match "{{ search }}".
+            </p>
 
-            <div v-else class="model-grid">
+            <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 mb-4">
                 <RouterLink
                     v-for="model in filtered"
                     :key="model.class"
                     :to="`/models/${encodeModel(model.class)}`"
-                    class="model-card"
+                    class="card card-border bg-base-200 hover:border-primary transition-colors no-underline"
                 >
-                    <span class="model-name">{{ model.short_name }}</span>
-                    <span class="model-table">{{ model.table }}</span>
+                    <div class="card-body p-4 gap-1">
+                        <span class="font-semibold text-base-content">{{ model.short_name }}</span>
+                        <span class="font-mono text-xs text-base-content/50">{{ model.table }}</span>
+                    </div>
                 </RouterLink>
             </div>
 
-            <p class="count">{{ filtered.length }} of {{ models.length }} models</p>
+            <p class="text-xs text-base-content/30 m-0">{{ filtered.length }} of {{ models.length }} models</p>
         </template>
     </div>
 </template>
@@ -67,91 +70,3 @@ onMounted(async () => {
     }
 })
 </script>
-
-<style scoped>
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
-}
-
-.page-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #f1f5f9;
-}
-
-.search {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    color: #e2e8f0;
-    font-size: 0.875rem;
-    padding: 0.5rem 0.75rem;
-    width: 240px;
-    outline: none;
-}
-
-.search::placeholder {
-    color: #64748b;
-}
-
-.search:focus {
-    border-color: #3b82f6;
-}
-
-.model-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.model-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 1rem 1.125rem;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: border-color 0.15s, background 0.15s;
-}
-
-.model-card:hover {
-    border-color: #3b82f6;
-    background: #1e3a5f;
-}
-
-.model-name {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #f1f5f9;
-}
-
-.model-table {
-    font-size: 0.75rem;
-    color: #64748b;
-    font-family: ui-monospace, monospace;
-}
-
-.count {
-    font-size: 0.75rem;
-    color: #475569;
-    margin: 0;
-}
-
-.muted {
-    color: #64748b;
-    font-size: 0.875rem;
-}
-
-.error {
-    color: #f87171;
-    font-size: 0.875rem;
-}
-</style>
