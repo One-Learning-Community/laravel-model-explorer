@@ -130,16 +130,42 @@
             <!-- Scopes -->
             <section v-if="model.scopes.length" id="scopes" class="mb-8 scroll-mt-16">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Scopes</h2>
-                <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
-                    <p v-if="group.label" class="text-xs text-base-content/40 mb-1 flex items-center gap-1">
-                        via <span class="badge badge-ghost badge-xs font-mono" :title="group.source">{{ group.label }}</span>
-                    </p>
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        <span v-for="scope in group.items" :key="scope.name" class="badge badge-ghost font-mono">
-                            {{ scope.name }}
-                        </span>
-                    </div>
-                </template>
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
+                                <tr v-if="group.label">
+                                    <td colspan="3" class="pt-4 pb-1">
+                                        <span class="text-xs text-base-content/40 flex items-center gap-1">
+                                            via <span class="badge badge-ghost badge-xs font-mono" :title="group.source">{{ group.label }}</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr v-for="scope in group.items" :key="scope.name">
+                                    <td class="font-mono text-sm">{{ scope.name }}</td>
+                                    <td class="font-mono text-xs text-base-content/60">
+                                        <span v-if="!scope.parameters?.length" class="text-base-content/30">—</span>
+                                        <span v-else>{{ formatScopeParams(scope.parameters) }}</span>
+                                    </td>
+                                    <td>
+                                        <button
+                                            v-if="scope.snippet"
+                                            class="btn btn-xs btn-ghost font-mono"
+                                            @click="openSnippet(scope)"
+                                        >{ } source</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <!-- Relations -->
@@ -326,6 +352,15 @@ const RELATION_ICONS = {
 
 function relationIcon(fqcn) {
     return RELATION_ICONS[shortName(fqcn)] ?? null
+}
+
+function formatScopeParams(params) {
+    return params.map(p => {
+        let s = `$${p.name}`
+        if (p.type) s = `${shortName(p.type)} ${s}`
+        if (p.has_default) s += ` = ${p.default}`
+        return s
+    }).join(', ')
 }
 
 // ── Section nav + scroll spy ─────────────────────────────────────────────────

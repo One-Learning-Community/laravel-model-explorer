@@ -2,6 +2,7 @@
 
 namespace Workbench\App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,11 @@ class Post extends Model
         return Attribute::make(
             get: fn () => substr($this->body ?? '', 0, 100),
         );
+    }
+
+    public function scopeRecent(Builder $query, int $days = 30, bool $published = true): Builder
+    {
+        return $query->where('created_at', '>=', now()->subDays($days));
     }
 
     public function user(): BelongsTo

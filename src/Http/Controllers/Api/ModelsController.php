@@ -69,6 +69,8 @@ class ModelsController
             'scopes' => $data->scopes->map(fn (ScopeData $scope) => [
                 'name' => $scope->name,
                 'defined_in' => $scope->definedIn,
+                'parameters' => $scope->parameters,
+                'snippet' => $scope->snippet,
             ])->values(),
             'attributes' => $data->attributes->map(fn (Attribute $attr) => array_merge(
                 $attr->toArray(),

@@ -94,6 +94,8 @@ class ModelInspector
                 ->map(fn (\ReflectionMethod $method) => new ScopeData(
                     name: lcfirst(substr($method->getName(), 5)),
                     definedIn: $this->resolveMethodSource($className, $method->getName()),
+                    parameters: $this->extractScopeParameters($method),
+                    snippet: SourceExtractor::forMethod($method),
                 ))
                 ->filter(function (ScopeData $scope) use ($excludedPrefixes): bool {
                     if ($scope->definedIn === null) {
@@ -115,6 +117,43 @@ class ModelInspector
         }
     }
 
+    /**
+     * Extract user-visible parameters from a scope method (skipping the leading $query param).
+     *
+     * @return array<int, array{name: string, type: ?string, has_default: bool, default: ?string}>
+     */
+    private function extractScopeParameters(\ReflectionMethod $method): array
+    {
+        $params = [];
+
+        foreach (array_slice($method->getParameters(), 1) as $param) {
+            $type = $param->getType();
+            $typeName = $type instanceof \ReflectionNamedType ? $type->getName() : null;
+            $hasDefault = $param->isOptional() && $param->isDefaultValueAvailable();
+            $default = null;
+
+            if ($hasDefault) {
+                $raw = $param->getDefaultValue();
+                $default = match (true) {
+                    is_null($raw)   => 'null',
+                    is_bool($raw)   => $raw ? 'true' : 'false',
+                    is_string($raw) => "'{$raw}'",
+                    is_array($raw)  => '[]',
+                    default         => (string) $raw,
+                };
+            }
+
+            $params[] = [
+                'name'        => $param->getName(),
+                'type'        => $typeName,
+                'has_default' => $hasDefault,
+                'default'     => $default,
+            ];
+        }
+
+        return $params;
+    }
+
     private function buildRelationData(string $modelClass, Model $model, Relation $relation): RelationData
     {
         [$foreignKey, $localKey] = $this->extractKeys($model, $relation->name);
@@ -130,16 +169,22 @@ class ModelInspector
     }
 
     /**
-     * Returns the FQCN of the trait that provides the method, or null when the method
-     * is declared directly on the model class (or a parent class without using a trait).
+     * Returns the FQCN of the trait or parent class that provides the method,
+     * or null when the method is declared directly on the model class itself.
      *
-     * ReflectionMethod::getDeclaringClass() returns the using class for trait methods,
-     * not the trait. We walk the class hierarchy checking each class's direct traits.
+     * Walk order at each level:
+     *  1. Check the class's direct traits — trait wins over direct declaration.
+     *  2. If past the target class and the method is declared here (not via trait),
+     *     return this class as the source.
+     *
+     * Note: ReflectionMethod::getDeclaringClass() returns the using class for trait
+     * methods, not the trait itself — hence the manual trait walk.
      */
     private function resolveMethodSource(string $modelClass, string $methodName): ?string
     {
         try {
             $reflection = new \ReflectionClass($modelClass);
+            $isTargetClass = true;
 
             while ($reflection && $reflection->getName() !== Model::class) {
                 foreach ($reflection->getTraits() as $traitName => $trait) {
@@ -148,6 +193,16 @@ class ModelInspector
                     }
                 }
 
+                // If we're in a parent class and the method is declared directly
+                // on it (not via a trait — already handled above), report the parent.
+                if (! $isTargetClass && $reflection->hasMethod($methodName)) {
+                    $declaringClass = $reflection->getMethod($methodName)->getDeclaringClass();
+                    if ($declaringClass->getName() === $reflection->getName()) {
+                        return $reflection->getName();
+                    }
+                }
+
+                $isTargetClass = false;
                 $reflection = $reflection->getParentClass() ?: null;
             }
         } catch (\Throwable) {

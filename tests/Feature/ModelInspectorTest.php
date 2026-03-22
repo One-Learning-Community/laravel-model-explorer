@@ -6,6 +6,7 @@ use Spatie\ModelInfo\Attributes\Attribute;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Concerns\HasOwner;
 use Workbench\App\Models\Concerns\HasPublishedState;
+use Workbench\App\Models\BasePost;
 use Workbench\App\Models\ExtendedPost;
 use Workbench\App\Models\CustomTableModel;
 use Workbench\App\Models\NoTimestampsModel;
@@ -221,6 +222,55 @@ it('returns scopes sorted alphabetically', function () {
     $sorted = $names;
     sort($sorted);
     expect($names)->toBe($sorted);
+});
+
+it('captures parameters for a scope with typed and defaulted arguments', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'recent');
+    expect($scope)->not->toBeNull()
+        ->and($scope->parameters)->toHaveCount(2)
+        ->and($scope->parameters[0])->toMatchArray(['name' => 'days', 'type' => 'int', 'has_default' => true, 'default' => '30'])
+        ->and($scope->parameters[1])->toMatchArray(['name' => 'published', 'type' => 'bool', 'has_default' => true, 'default' => 'true']);
+});
+
+it('captures an empty parameters array for a no-arg scope', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'published');
+    expect($scope)->not->toBeNull()
+        ->and($scope->parameters)->toBe([]);
+});
+
+it('captures a source snippet for a scope', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'recent');
+    expect($scope)->not->toBeNull()
+        ->and($scope->snippet)->not->toBeNull()
+        ->and($scope->snippet['code'])->toContain('scopeRecent')
+        ->and($scope->snippet['start_line'])->toBeInt();
+});
+
+it('sets definedIn to the parent class FQCN for a scope declared directly on a parent', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(ExtendedPost::class);
+
+    $scope = $data->scopes->firstWhere('name', 'draft');
+    expect($scope)->not->toBeNull()
+        ->and($scope->definedIn)->toBe(BasePost::class);
+});
+
+it('sets definedIn to null for a scope declared directly on the model itself', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'recent');
+    expect($scope)->not->toBeNull()
+        ->and($scope->definedIn)->toBeNull();
 });
 
 it('identifies the correct trait for a relation defined in a parent class trait', function () {
