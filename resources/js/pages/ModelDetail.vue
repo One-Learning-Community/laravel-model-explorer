@@ -106,6 +106,21 @@
                 </div>
             </section>
 
+            <!-- Scopes -->
+            <section class="mb-8" v-if="model.scopes.length">
+                <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Scopes</h2>
+                <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
+                    <p v-if="group.label" class="text-xs text-base-content/40 mb-1 flex items-center gap-1">
+                        via <span class="badge badge-ghost badge-xs font-mono" :title="group.source">{{ group.label }}</span>
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <span v-for="scope in group.items" :key="scope.name" class="badge badge-ghost font-mono">
+                            {{ scope.name }}
+                        </span>
+                    </div>
+                </template>
+            </section>
+
             <!-- Relations -->
             <section class="mb-8">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Relations</h2>
@@ -126,7 +141,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="rel in group.relations" :key="rel.name">
+                                    <tr v-for="rel in group.items" :key="rel.name">
                                         <td class="font-mono text-sm">{{ rel.name }}</td>
                                         <td><span class="badge badge-primary badge-xs">{{ rel.type }}</span></td>
                                         <td>
@@ -162,20 +177,22 @@ const error = ref(null)
 const dbColumns = computed(() => model.value?.attributes.filter(a => !a.virtual) ?? [])
 const virtualAttrs = computed(() => model.value?.attributes.filter(a => a.virtual) ?? [])
 
-const groupedRelations = computed(() => {
-    const relations = model.value?.relations ?? []
+function groupBySource(items) {
     const groups = {}
-    for (const rel of relations) {
-        const key = rel.defined_in ?? ''
+    for (const item of items) {
+        const key = item.defined_in ?? ''
         if (!groups[key]) groups[key] = []
-        groups[key].push(rel)
+        groups[key].push(item)
     }
-    return Object.entries(groups).map(([key, rels]) => ({
+    return Object.entries(groups).map(([key, members]) => ({
         source: key || null,
         label: key ? shortName(key) : null,
-        relations: rels,
+        items: members,
     }))
-})
+}
+
+const groupedRelations = computed(() => groupBySource(model.value?.relations ?? []))
+const groupedScopes = computed(() => groupBySource(model.value?.scopes ?? []))
 
 function encodeModel(className) {
     return btoa(className).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')

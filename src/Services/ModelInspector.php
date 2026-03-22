@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Support\Collection;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
+use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
 use Spatie\ModelInfo\ModelInfo;
 use Spatie\ModelInfo\Relations\Relation;
 
@@ -35,6 +37,7 @@ class ModelInspector
             table: $modelInfo->tableName,
             attributes: $modelInfo->attributes,
             relations: $modelInfo->relations->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
+            scopes: $this->extractScopes($className),
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
             hidden: $model->getHidden(),
@@ -53,11 +56,7 @@ class ModelInspector
      */
     private function extractTraits(string $className): array
     {
-        $excludedPrefixes = config('model-explorer.excluded_trait_prefixes', [
-            'Illuminate\Database\Eloquent\Concerns\\',
-            'Illuminate\Database\Eloquent\HasCollection',
-            'Illuminate\Support\Traits\\',
-        ]);
+        $excludedPrefixes = $this->excludedTraitPrefixes();
 
         $traits = array_filter(
             array_keys(class_uses_recursive($className)),
@@ -77,6 +76,41 @@ class ModelInspector
         return array_values($traits);
     }
 
+    /**
+     * @param  class-string  $className
+     * @return Collection<int, ScopeData>
+     */
+    private function extractScopes(string $className): Collection
+    {
+        $excludedPrefixes = $this->excludedTraitPrefixes();
+
+        try {
+            return collect((new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC))
+                ->filter(fn (\ReflectionMethod $method) => (bool) preg_match('/^scope[A-Z]/', $method->getName()))
+                ->map(fn (\ReflectionMethod $method) => new ScopeData(
+                    name: lcfirst(substr($method->getName(), 5)),
+                    definedIn: $this->resolveMethodSource($className, $method->getName()),
+                ))
+                ->filter(function (ScopeData $scope) use ($excludedPrefixes): bool {
+                    if ($scope->definedIn === null) {
+                        return true;
+                    }
+
+                    foreach ($excludedPrefixes as $prefix) {
+                        if (str_starts_with($scope->definedIn, $prefix)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
+                ->sortBy('name')
+                ->values();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
     private function buildRelationData(string $modelClass, Model $model, Relation $relation): RelationData
     {
         [$foreignKey, $localKey] = $this->extractKeys($model, $relation->name);
@@ -87,18 +121,18 @@ class ModelInspector
             related: $relation->related,
             foreignKey: $foreignKey,
             localKey: $localKey,
-            definedIn: $this->resolveRelationSource($modelClass, $relation->name),
+            definedIn: $this->resolveMethodSource($modelClass, $relation->name),
         );
     }
 
     /**
-     * Returns the FQCN of the trait that provides the relation method, or null when
-     * the method is declared directly on the model class itself.
+     * Returns the FQCN of the trait that provides the method, or null when the method
+     * is declared directly on the model class (or a parent class without using a trait).
      *
      * ReflectionMethod::getDeclaringClass() returns the using class for trait methods,
-     * not the trait itself. We check which of the model's direct traits defines the method.
+     * not the trait. We walk the class hierarchy checking each class's direct traits.
      */
-    private function resolveRelationSource(string $modelClass, string $methodName): ?string
+    private function resolveMethodSource(string $modelClass, string $methodName): ?string
     {
         try {
             $reflection = new \ReflectionClass($modelClass);
@@ -117,6 +151,18 @@ class ModelInspector
         }
 
         return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function excludedTraitPrefixes(): array
+    {
+        return config('model-explorer.excluded_trait_prefixes', [
+            'Illuminate\Database\Eloquent\Concerns\\',
+            'Illuminate\Database\Eloquent\HasCollection',
+            'Illuminate\Support\Traits\\',
+        ]);
     }
 
     /**

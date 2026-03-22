@@ -10,12 +10,13 @@ readonly class ModelData
     /**
      * @param  Collection<int, Attribute>  $attributes
      * @param  Collection<int, RelationData>  $relations
+     * @param  Collection<int, ScopeData>  $scopes
      * @param  string[]  $fillable
      * @param  string[]  $guarded
      * @param  string[]  $hidden
      * @param  array<string, string>  $casts
      * @param  string[]  $appends
-     * @param  list<string>  $traits  Non-Illuminate traits used by the model (recursive).
+     * @param  list<string>  $traits  Non-excluded traits used by the model (recursive).
      */
     public function __construct(
         public string $className,
@@ -23,6 +24,7 @@ readonly class ModelData
         public string $table,
         public Collection $attributes,
         public Collection $relations,
+        public Collection $scopes,
         public array $fillable,
         public array $guarded,
         public array $hidden,

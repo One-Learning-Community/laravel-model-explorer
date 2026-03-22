@@ -197,6 +197,32 @@ it('sets definedIn to the trait FQCN for relations sourced from a trait', functi
         ->and($authorRelation->definedIn)->toBe(HasAuthor::class);
 });
 
+it('returns scopes defined on a model', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $scope = $data->scopes->firstWhere('name', 'published');
+    expect($scope)->not->toBeNull()
+        ->and($scope->definedIn)->toBe(HasPublishedState::class);
+});
+
+it('returns an empty scopes collection for a model with no scopes', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(User::class);
+
+    expect($data->scopes)->toBeEmpty();
+});
+
+it('returns scopes sorted alphabetically', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $names = $data->scopes->pluck('name')->all();
+    $sorted = $names;
+    sort($sorted);
+    expect($names)->toBe($sorted);
+});
+
 it('identifies the correct trait for a relation defined in a parent class trait', function () {
     $inspector = new ModelInspector();
     $data = $inspector->inspect(ExtendedPost::class);

@@ -5,6 +5,7 @@ namespace OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
+use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
@@ -19,15 +20,11 @@ class ModelsController
     public function index(): JsonResponse
     {
         $models = collect($this->discovery->discoverAll())
-            ->map(function (string $className) {
-                $data = $this->inspector->inspect($className);
-
-                return [
-                    'class' => $data->className,
-                    'short_name' => $data->shortName,
-                    'table' => $data->table,
-                ];
-            })
+            ->map(fn (string $className) => [
+                'class' => $className,
+                'short_name' => class_basename($className),
+                'table' => (new $className())->getTable(),
+            ])
             ->values();
 
         return response()->json($models);
@@ -68,6 +65,10 @@ class ModelsController
             'created_at_column' => $data->createdAtColumn,
             'updated_at_column' => $data->updatedAtColumn,
             'traits' => $data->traits,
+            'scopes' => $data->scopes->map(fn (ScopeData $scope) => [
+                'name' => $scope->name,
+                'defined_in' => $scope->definedIn,
+            ])->values(),
             'attributes' => $data->attributes->map(fn (Attribute $attr) => $attr->toArray())->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [
                 'name' => $rel->name,
