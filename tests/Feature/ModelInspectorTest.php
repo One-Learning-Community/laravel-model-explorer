@@ -327,6 +327,23 @@ it('does not include a snippet for non-virtual (database) columns', function () 
     expect($data->accessorSnippets)->not->toHaveKey('body');
 });
 
+it('sets defined_in to null for an accessor defined directly on the model', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->accessorSnippets['summary']['defined_in'])->toBeNull()
+        ->and($data->accessorSnippets['excerpt']['defined_in'])->toBeNull();
+});
+
+it('sets defined_in to the trait FQCN for an accessor defined in a trait', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->accessorSnippets)->toHaveKey('published_label')
+        ->and($data->accessorSnippets['published_label']['defined_in'])
+        ->toBe(\Workbench\App\Models\Concerns\HasPublishedState::class);
+});
+
 it('does not treat an untyped non-relation method as a relation', function () {
     // Post::activate() has no return type and no relation call — must not appear in relations.
     $inspector = new ModelInspector();

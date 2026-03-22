@@ -75,7 +75,10 @@ class ModelsController
             ])->values(),
             'attributes' => $data->attributes->map(fn (Attribute $attr) => array_merge(
                 $attr->toArray(),
-                ['snippet' => $data->accessorSnippets[$attr->name] ?? null],
+                [
+                    'snippet'     => $data->accessorSnippets[$attr->name] ?? null,
+                    'defined_in'  => $data->accessorSnippets[$attr->name]['defined_in'] ?? null,
+                ],
             ))->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [
                 'name' => $rel->name,

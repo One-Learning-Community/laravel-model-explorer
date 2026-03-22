@@ -296,7 +296,10 @@ class ModelInspector
             $snippet = SourceExtractor::forMethod($method);
 
             if ($snippet !== null) {
-                $snippets[$attribute->name] = $snippet;
+                $snippets[$attribute->name] = array_merge(
+                    $snippet,
+                    ['defined_in' => $this->resolveMethodSource($className, $method->getName())],
+                );
             }
         }
 

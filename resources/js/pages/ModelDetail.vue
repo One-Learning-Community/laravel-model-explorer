@@ -39,9 +39,9 @@
 
             <!-- Columns -->
             <section id="columns" class="mb-8 scroll-mt-16">
-                <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Columns</h2>
+                <h2 class="font-semibold uppercase tracking-widest text-base-content/40 mb-3">Columns</h2>
                 <div class="overflow-x-auto" v-if="dbColumns.length">
-                    <table class="table table-sm">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -82,9 +82,9 @@
 
             <!-- Virtual attributes / accessors -->
             <section v-if="virtualAttrs.length" id="virtual-attrs" class="mb-8 scroll-mt-16">
-                <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Virtual Attributes</h2>
+                <h2 class="font-semibold uppercase tracking-widest text-base-content/40 mb-3">Virtual Attributes</h2>
                 <div class="overflow-x-auto">
-                    <table class="table table-sm">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -94,81 +94,33 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="attr in virtualAttrs" :key="attr.name">
-                                <td class="font-medium">
-                                    {{ attr.name }}
-                                    <div v-if="attr.snippet?.doc_summary" class="text-xs text-base-content/50 font-mono font-normal mt-0.5">{{ attr.snippet.doc_summary }}</div>
-                                </td>
-                                <td class="font-mono text-xs text-base-content/50">{{ attr.cast }}</td>
-                                <td>
-                                    <div class="flex gap-1 flex-wrap">
-                                        <span v-if="attr.appended" class="badge badge-primary badge-xs">appended</span>
-                                        <span v-if="attr.fillable" class="badge badge-success badge-xs">fillable</span>
-                                        <span v-if="attr.hidden" class="badge badge-warning badge-xs">hidden</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button
-                                        v-if="attr.snippet"
-                                        class="btn btn-xs btn-ghost font-mono"
-                                        @click="openSnippet(attr)"
-                                    >{ } source</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Traits -->
-            <section v-if="model.traits.length" id="traits" class="mb-8 scroll-mt-16">
-                <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Traits</h2>
-                <div class="flex flex-wrap gap-2">
-                    <span
-                        v-for="trait in model.traits"
-                        :key="trait"
-                        class="badge badge-ghost font-mono"
-                        :title="trait"
-                    >{{ shortName(trait) }}</span>
-                </div>
-            </section>
-
-            <!-- Scopes -->
-            <section v-if="model.scopes.length" id="scopes" class="mb-8 scroll-mt-16">
-                <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Scopes</h2>
-                <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Parameters</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
-                                <tr v-if="group.label">
-                                    <td colspan="3" class="pt-4 pb-1">
-                                        <span class="text-xs text-base-content/40 flex items-center gap-1">
-                                            via <span class="badge badge-ghost badge-xs font-mono" :title="group.source">{{ group.label }}</span>
+                            <template v-for="group in groupedVirtualAttrs" :key="group.source ?? '__model__'">
+                                <tr v-if="group.label" class="bg-base-200/40">
+                                    <td colspan="4" class="py-2">
+                                        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                            via <span class="badge badge-neutral badge-sm font-mono normal-case tracking-normal" :title="group.source">{{ group.label }}</span>
                                         </span>
                                     </td>
                                 </tr>
-                                <tr v-for="scope in group.items" :key="scope.name">
-                                    <td class="font-mono text-sm">
-                                        {{ scope.name }}
-                                        <div v-if="scope.description" class="text-xs text-base-content/50 font-sans font-normal mt-0.5">{{ scope.description }}</div>
+                                <tr v-for="attr in group.items" :key="attr.name">
+                                    <td class="font-medium">
+                                        {{ attr.name }}
+                                        <div v-if="attr.snippet?.doc_summary" class="text-xs text-base-content/50 font-mono font-normal mt-0.5">{{ attr.snippet.doc_summary }}</div>
                                     </td>
-                                    <td class="font-mono text-xs text-base-content/60">
-                                        <span v-if="!scope.parameters?.length" class="text-base-content/30">—</span>
-                                        <span v-else>{{ formatScopeParams(scope.parameters) }}</span>
+                                    <td class="font-mono text-xs text-base-content/50">{{ attr.cast }}</td>
+                                    <td>
+                                        <div class="flex gap-1 flex-wrap">
+                                            <span v-if="attr.appended" class="badge badge-primary badge-xs">appended</span>
+                                            <span v-if="attr.fillable" class="badge badge-success badge-xs">fillable</span>
+                                            <span v-if="attr.hidden" class="badge badge-warning badge-xs">hidden</span>
+                                        </div>
                                     </td>
                                     <td>
                                         <button
-                                            v-if="scope.snippet"
+                                            v-if="attr.snippet"
                                             class="btn btn-xs btn-ghost font-mono"
-                                            @click="openSnippet(scope)"
-                                        >{ } source</button>
+                                            @click="openSnippet(attr)"
+                                        >{ }</button>
                                     </td>
                                 </tr>
                             </template>
@@ -179,9 +131,9 @@
 
             <!-- Relations -->
             <section id="relations" class="mb-8 scroll-mt-16">
-                <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Relations</h2>
+                <h2 class="font-semibold uppercase tracking-widest text-base-content/40 mb-3">Relations</h2>
                 <div class="overflow-x-auto" v-if="groupedRelations.length">
-                    <table class="table table-sm">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>Method</th>
@@ -194,10 +146,10 @@
                         </thead>
                         <tbody>
                             <template v-for="group in groupedRelations" :key="group.source ?? '__model__'">
-                                <tr v-if="group.label">
-                                    <td colspan="6" class="pt-4 pb-1">
-                                        <span class="text-xs text-base-content/40 flex items-center gap-1">
-                                            via <span class="badge badge-ghost badge-xs font-mono" :title="group.source">{{ group.label }}</span>
+                                <tr v-if="group.label" class="bg-base-200/40">
+                                    <td colspan="6" class="py-2">
+                                        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                            via <span class="badge badge-neutral badge-sm font-mono normal-case tracking-normal" :title="group.source">{{ group.label }}</span>
                                         </span>
                                     </td>
                                 </tr>
@@ -226,7 +178,7 @@
                                             v-if="rel.snippet"
                                             class="btn btn-xs btn-ghost font-mono"
                                             @click="openSnippet(rel)"
-                                        >{ } source</button>
+                                        >{ }</button>
                                     </td>
                                 </tr>
                             </template>
@@ -236,6 +188,63 @@
                 <p v-else class="text-sm text-base-content/50">No relationships detected.</p>
             </section>
         </template>
+
+        <!-- Scopes -->
+        <section v-if="model.scopes.length" id="scopes" class="mb-8 scroll-mt-16">
+            <h2 class="font-semibold uppercase tracking-widest text-base-content/40 mb-3">Scopes</h2>
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Parameters</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
+                        <tr v-if="group.label" class="bg-base-200/40">
+                            <td colspan="3" class="py-2">
+                                        <span class="text-xs font-semibold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                            via <span class="badge badge-neutral badge-sm font-mono normal-case tracking-normal" :title="group.source">{{ group.label }}</span>
+                                        </span>
+                            </td>
+                        </tr>
+                        <tr v-for="scope in group.items" :key="scope.name">
+                            <td class="font-mono">
+                                {{ scope.name }}
+                                <div v-if="scope.description" class="text-xs text-base-content/50 font-sans font-normal mt-0.5">{{ scope.description }}</div>
+                            </td>
+                            <td class="font-mono text-xs text-base-content/60">
+                                <span v-if="!scope.parameters?.length" class="text-base-content/30">—</span>
+                                <span v-else>{{ formatScopeParams(scope.parameters) }}</span>
+                            </td>
+                            <td>
+                                <button
+                                    v-if="scope.snippet"
+                                    class="btn btn-xs btn-ghost font-mono"
+                                    @click="openSnippet(scope)"
+                                >{ }</button>
+                            </td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Traits -->
+        <section v-if="model.traits.length" id="traits" class="mb-8 scroll-mt-16">
+            <h2 class="font-semibold uppercase tracking-widest text-base-content/40 mb-3">Traits</h2>
+            <div class="flex flex-wrap gap-2">
+                    <span
+                        v-for="trait in model.traits"
+                        :key="trait"
+                        class="badge badge-ghost font-mono"
+                        :title="trait"
+                    >{{ shortName(trait) }}</span>
+            </div>
+        </section>
     </div>
 
     <!-- Accessor source modal -->
@@ -264,13 +273,21 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import Prism from 'virtual:prismjs'
+import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import Prism from "virtual:prismjs";
 import {
-    Link, GitBranch, Link2, GitFork,
-    ArrowUpLeft, Share2, Diamond, DiamondPlus, Layers, Shuffle,
-} from 'lucide-vue-next'
+    ArrowUpLeft,
+    Diamond,
+    DiamondPlus,
+    GitBranch,
+    GitFork,
+    Layers,
+    Link,
+    Link2,
+    Share2,
+    Shuffle
+} from "lucide-vue-next";
 
 const route = useRoute()
 const model = ref(null)
@@ -302,6 +319,17 @@ function snippetFileLabel(snippet) {
 
 const dbColumns = computed(() => model.value?.attributes.filter(a => !a.virtual) ?? [])
 const virtualAttrs = computed(() => model.value?.attributes.filter(a => a.virtual) ?? [])
+const groupedVirtualAttrs = computed(() => {
+    const groups = groupBySource(virtualAttrs.value)
+    for (const group of groups) {
+        group.items.sort((a, b) => a.name.localeCompare(b.name))
+    }
+    return groups.sort((a, b) => {
+        if (a.source === null) return -1
+        if (b.source === null) return 1
+        return (a.label ?? '').localeCompare(b.label ?? '')
+    })
+})
 
 function groupBySource(items) {
     const groups = {}
@@ -390,10 +418,10 @@ const activeSection = ref('columns')
 const navSections = computed(() => {
     if (!model.value) return []
     const s = [{ id: 'columns', label: 'Columns' }]
-    if (virtualAttrs.value.length)  s.push({ id: 'virtual-attrs', label: 'Virtual Attrs' })
-    if (model.value.traits.length)  s.push({ id: 'traits',        label: 'Traits' })
-    if (model.value.scopes.length)  s.push({ id: 'scopes',        label: 'Scopes' })
+    if (virtualAttrs.value.length)  s.push({ id: 'virtual-attrs', label: 'Virtual Attributes' })
     s.push({ id: 'relations', label: 'Relations' })
+    if (model.value.scopes.length)  s.push({ id: 'scopes',        label: 'Scopes' })
+    if (model.value.traits.length)  s.push({ id: 'traits',        label: 'Traits' })
     return s
 })
 
