@@ -4,6 +4,7 @@ namespace Workbench\App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Workbench\App\Models\Concerns\HasAuthor;
@@ -62,6 +63,24 @@ class Post extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** The author of this post as a Model instance — exercises model-return serialisation. */
+    public function authorModel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => User::find($this->user_id),
+        );
+    }
+
+    /** All posts by the same author — exercises collection-return serialisation. */
+    public function siblingPosts(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->user_id
+                ? static::where('user_id', $this->user_id)->where('id', '!=', $this->id)->get()
+                : new Collection(),
+        );
     }
 
     // No return type and not a relation — must not appear in relations list.

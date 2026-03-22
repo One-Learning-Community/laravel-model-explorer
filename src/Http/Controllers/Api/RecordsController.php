@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Spatie\ModelInfo\ModelInfo;
 
 class RecordsController
 {
@@ -123,11 +125,11 @@ class RecordsController
                 return response()->json(['message' => 'Record not found.'], 404);
             }
 
-            $known = array_merge(array_keys($record->getAttributes()), $record->getAppends());
+            $known = $this->knownAttributes($record);
 
-            // If no names requested, default to all appended virtual attributes.
+            // If no names requested, default to all virtual attributes.
             if (empty($names)) {
-                $names = $record->getAppends();
+                $names = array_diff($known, array_keys($record->getAttributes()));
             }
 
             $results = [];
@@ -138,7 +140,7 @@ class RecordsController
                 }
 
                 try {
-                    $results[$name] = ['value' => $record->{$name}, 'error' => null];
+                    $results[$name] = ['value' => $this->serializeAccessorValue($record->{$name}), 'error' => null];
                 } catch (\Throwable $e) {
                     $results[$name] = ['value' => null, 'error' => $e->getMessage()];
                 }
@@ -169,16 +171,16 @@ class RecordsController
                 return response()->json(['message' => 'Record not found.'], 404);
             }
 
-            // Validate the attribute is a known column or appended virtual attribute,
+            // Validate the attribute is a known column or virtual attribute,
             // not an arbitrary method name.
-            $known = array_merge(array_keys($record->getAttributes()), $record->getAppends());
+            $known = $this->knownAttributes($record);
 
             if (! in_array($attribute, $known, strict: true)) {
                 return response()->json(['message' => 'Attribute not found.'], 404);
             }
 
             try {
-                $value = $record->{$attribute};
+                $value = $this->serializeAccessorValue($record->{$attribute});
             } catch (\Throwable $e) {
                 return response()->json(['name' => $attribute, 'value' => null, 'error' => $e->getMessage()]);
             }
@@ -221,6 +223,55 @@ class RecordsController
         } finally {
             DB::rollBack();
         }
+    }
+
+    /**
+     * Normalises an accessor return value for the API response.
+     *
+     * If the value is a single Eloquent Model it is wrapped as a to-one record payload.
+     * If the value is a Collection it is wrapped as a to-many record payload (capped at 15
+     * items to avoid oversized responses; the full count is included so the UI can show it).
+     * All other values are returned unchanged.
+     */
+    private function serializeAccessorValue(mixed $value): mixed
+    {
+        if ($value instanceof Model) {
+            return ['type' => 'one', 'record' => $this->buildRecordPayload($value)];
+        }
+
+        if ($value instanceof Collection && $value->first() instanceof Model) {
+            $total = $value->count();
+            $records = $value
+                ->take(15)
+                ->filter(fn ($item) => $item instanceof Model)
+                ->map(fn (Model $m) => $this->buildRecordPayload($m))
+                ->values();
+
+            return ['type' => 'many', 'records' => $records, 'total' => $total];
+        }
+
+        return $value;
+    }
+
+    /**
+     * Names of all known resolvable attributes for the given record: raw columns plus
+     * virtual attributes as defined by ModelInfo (consistent with ModelData/ModelInspector).
+     *
+     * @return list<string>
+     */
+    private function knownAttributes(Model $record): array
+    {
+        try {
+            $virtualNames = ModelInfo::forModel(get_class($record))
+                ->attributes
+                ->filter(fn ($attr) => $attr->virtual)
+                ->pluck('name')
+                ->all();
+        } catch (\Throwable) {
+            $virtualNames = $record->getAppends();
+        }
+
+        return array_merge(array_keys($record->getAttributes()), $virtualNames);
     }
 
     private function isToOneRelation(Relation $relation): bool

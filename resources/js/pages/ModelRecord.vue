@@ -156,12 +156,72 @@
                                         {{ attr.name }}
                                         <span v-if="attr.virtual" class="badge badge-ghost badge-xs ml-1">virtual</span>
                                     </td>
-                                    <td class="font-mono text-sm text-base-content/70">
+                                    <td class="font-mono text-sm text-base-content/70" :colspan="isModelResult(accessorData[attr.name]?.value) ? 2 : 1">
                                         <template v-if="accessorData[attr.name]">
                                             <span v-if="accessorData[attr.name].loading" class="loading loading-spinner loading-xs"></span>
                                             <span v-else-if="accessorData[attr.name].error" class="text-error text-xs">
                                                 Error: {{ accessorData[attr.name].error }}
                                             </span>
+                                            <template v-else-if="accessorData[attr.name].value?.type === 'one'">
+                                                <p v-if="!accessorData[attr.name].value.record" class="text-sm text-base-content/50">—</p>
+                                                <template v-else>
+                                                    <div class="overflow-x-auto mt-1">
+                                                        <table class="table table-xs">
+                                                            <tbody>
+                                                                <tr
+                                                                    v-for="[col, val] in Object.entries(accessorData[attr.name].value.record.attributes)"
+                                                                    :key="col"
+                                                                >
+                                                                    <td class="font-mono font-medium w-40">{{ col }}</td>
+                                                                    <td class="font-mono text-base-content/70 max-w-xs truncate">
+                                                                        <span v-if="val === null || val === undefined" class="text-base-content/30">—</span>
+                                                                        <span v-else>{{ formatValue(val) }}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <RouterLink
+                                                            :to="recordLink(accessorData[attr.name].value.record)"
+                                                            class="link link-primary text-xs"
+                                                        >View {{ accessorData[attr.name].value.record.short_name }} #{{ accessorData[attr.name].value.record.key_value }} →</RouterLink>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                            <template v-else-if="accessorData[attr.name].value?.type === 'many'">
+                                                <p v-if="!accessorData[attr.name].value.records.length" class="text-sm text-base-content/50">No records.</p>
+                                                <template v-else>
+                                                    <div class="overflow-auto max-h-64 mt-1">
+                                                        <table class="table table-xs">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th v-for="col in manyRelationColumns(accessorData[attr.name].value.records)" :key="col">{{ col }}</th>
+                                                                    <th></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr v-for="r in accessorData[attr.name].value.records" :key="r.key_value">
+                                                                    <td
+                                                                        v-for="col in manyRelationColumns(accessorData[attr.name].value.records)"
+                                                                        :key="col"
+                                                                        class="font-mono text-xs text-base-content/70 max-w-32 truncate"
+                                                                    >
+                                                                        <span v-if="r.attributes[col] === null || r.attributes[col] === undefined" class="text-base-content/30">—</span>
+                                                                        <span v-else>{{ formatValue(r.attributes[col]) }}</span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <RouterLink :to="recordLink(r)" class="link link-primary text-xs">View →</RouterLink>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <p v-if="accessorData[attr.name].value.total > accessorData[attr.name].value.records.length" class="text-xs text-base-content/40 mt-1">
+                                                        Showing {{ accessorData[attr.name].value.records.length }} of {{ accessorData[attr.name].value.total }}
+                                                    </p>
+                                                </template>
+                                            </template>
                                             <template v-else>
                                                 <span v-if="accessorData[attr.name].value === null || accessorData[attr.name].value === undefined" class="text-base-content/30">—</span>
                                                 <template v-else>
@@ -177,7 +237,7 @@
                                         </template>
                                         <span v-else class="text-base-content/20 text-xs">not loaded</span>
                                     </td>
-                                    <td class="align-top">
+                                    <td v-if="!isModelResult(accessorData[attr.name]?.value)" class="align-top">
                                         <div class="flex gap-1">
                                             <button
                                                 v-if="!accessorData[attr.name] || accessorData[attr.name].error"
@@ -438,6 +498,10 @@ function trailLink(index) {
         params.set('trail', JSON.stringify(truncatedTrail))
     }
     return `/models/${encodeModel(entry.model_class)}/record?${params}`
+}
+
+function isModelResult(value) {
+    return value && (value.type === 'one' || value.type === 'many')
 }
 
 function manyRelationColumns(records) {

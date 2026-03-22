@@ -244,6 +244,62 @@ it('returns 422 when record_key is missing from the relation endpoint', function
     )->assertUnprocessable();
 });
 
+it('resolves a non-appended virtual accessor (defined via ModelInfo) via the attribute endpoint', function () {
+    // published_label is defined in HasPublishedState via Attribute::make() but is NOT in $appends.
+    // Prior to the fix, $known used getAppends() and would return 404 for this attribute.
+    app()->detectEnvironment(fn () => 'local');
+    $post = Post::forceCreate(['title' => 'T', 'body' => 'B', 'is_published' => false]);
+
+    $response = $this->getJson(
+        '/_model-explorer/api/models/'.recordsModelSlug(Post::class).'/record/attributes/published_label?record_key='.$post->id
+    )->assertOk();
+
+    expect($response->json('name'))->toBe('published_label')
+        ->and($response->json('value'))->toBe('Draft');
+});
+
+it('wraps a Model-returning accessor as a to-one record payload', function () {
+    app()->detectEnvironment(fn () => 'local');
+    $user = User::forceCreate([]);
+    $post = Post::forceCreate(['title' => 'T', 'body' => 'B', 'user_id' => $user->id]);
+
+    $response = $this->getJson(
+        '/_model-explorer/api/models/'.recordsModelSlug(Post::class).'/record/attributes/author_model?record_key='.$post->id
+    )->assertOk();
+
+    expect($response->json('name'))->toBe('author_model')
+        ->and($response->json('value.type'))->toBe('one')
+        ->and($response->json('value.record.key_value'))->toBe($user->id)
+        ->and($response->json('value.record.short_name'))->toBe('User');
+});
+
+it('wraps a Collection-returning accessor as a to-many record payload', function () {
+    app()->detectEnvironment(fn () => 'local');
+    $user = User::forceCreate([]);
+    $post1 = Post::forceCreate(['title' => 'P1', 'body' => 'B', 'user_id' => $user->id]);
+    $post2 = Post::forceCreate(['title' => 'P2', 'body' => 'B', 'user_id' => $user->id]);
+
+    $response = $this->getJson(
+        '/_model-explorer/api/models/'.recordsModelSlug(Post::class).'/record/attributes/sibling_posts?record_key='.$post1->id
+    )->assertOk();
+
+    expect($response->json('value.type'))->toBe('many')
+        ->and($response->json('value.total'))->toBe(1)
+        ->and($response->json('value.records.0.key_value'))->toBe($post2->id);
+});
+
+it('wraps a null Model-returning accessor as a to-one payload with null record', function () {
+    app()->detectEnvironment(fn () => 'local');
+    $post = Post::forceCreate(['title' => 'T', 'body' => 'B', 'user_id' => null]);
+
+    $response = $this->getJson(
+        '/_model-explorer/api/models/'.recordsModelSlug(Post::class).'/record/attributes/author_model?record_key='.$post->id
+    )->assertOk();
+
+    // User::find(null) returns null — scalar null, not a Model, so value is just null
+    expect($response->json('value'))->toBeNull();
+});
+
 it('returns 403 on the record endpoint when the gate denies access', function () {
     app()->detectEnvironment(fn () => 'production');
 
