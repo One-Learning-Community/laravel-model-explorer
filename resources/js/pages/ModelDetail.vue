@@ -8,7 +8,7 @@
         <div v-else-if="loading" class="text-base-content/50 text-sm">Loading…</div>
 
         <template v-else-if="model">
-            <div class="flex items-start justify-between gap-4 mb-8">
+            <div class="flex items-start justify-between gap-4 mb-6">
                 <div>
                     <h1 class="text-2xl font-bold m-0 mb-1">{{ model.short_name }}</h1>
                     <span class="font-mono text-xs text-base-content/50">{{ model.class }}</span>
@@ -21,8 +21,21 @@
                 </div>
             </div>
 
+            <!-- Section nav -->
+            <nav v-if="navSections.length > 1" class="sticky top-12 z-10 -mx-8 px-8 bg-base-100 border-b border-base-300 mb-8 flex gap-1">
+                <button
+                    v-for="section in navSections"
+                    :key="section.id"
+                    @click="scrollToSection(section.id)"
+                    class="px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer"
+                    :class="activeSection === section.id
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-base-content/50 hover:text-base-content'"
+                >{{ section.label }}</button>
+            </nav>
+
             <!-- Columns -->
-            <section class="mb-8">
+            <section id="columns" class="mb-8 scroll-mt-24">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Columns</h2>
                 <div class="overflow-x-auto" v-if="dbColumns.length">
                     <table class="table table-sm">
@@ -65,7 +78,7 @@
             </section>
 
             <!-- Virtual attributes / accessors -->
-            <section class="mb-8" v-if="virtualAttrs.length">
+            <section v-if="virtualAttrs.length" id="virtual-attrs" class="mb-8 scroll-mt-24">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Virtual Attributes</h2>
                 <div class="overflow-x-auto">
                     <table class="table table-sm">
@@ -102,7 +115,7 @@
             </section>
 
             <!-- Traits -->
-            <section class="mb-8" v-if="model.traits.length">
+            <section v-if="model.traits.length" id="traits" class="mb-8 scroll-mt-24">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Traits</h2>
                 <div class="flex flex-wrap gap-2">
                     <span
@@ -115,7 +128,7 @@
             </section>
 
             <!-- Scopes -->
-            <section class="mb-8" v-if="model.scopes.length">
+            <section v-if="model.scopes.length" id="scopes" class="mb-8 scroll-mt-24">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Scopes</h2>
                 <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
                     <p v-if="group.label" class="text-xs text-base-content/40 mb-1 flex items-center gap-1">
@@ -130,7 +143,7 @@
             </section>
 
             <!-- Relations -->
-            <section class="mb-8">
+            <section id="relations" class="mb-8 scroll-mt-24">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Relations</h2>
                 <div class="overflow-x-auto" v-if="groupedRelations.length">
                     <table class="table table-sm">
@@ -200,7 +213,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Prism from 'virtual:prismjs'
 
@@ -208,6 +221,8 @@ const route = useRoute()
 const model = ref(null)
 const loading = ref(true)
 const error = ref(null)
+
+// ── Snippet modal ────────────────────────────────────────────────────────────
 
 const snippetModal = ref(null)
 const snippetAttr = ref(null)
@@ -227,6 +242,8 @@ function snippetFileLabel(snippet) {
     if (!snippet?.file) return ''
     return snippet.file.split('/').pop() + ':' + snippet.start_line
 }
+
+// ── Computed data ────────────────────────────────────────────────────────────
 
 const dbColumns = computed(() => model.value?.attributes.filter(a => !a.virtual) ?? [])
 const virtualAttrs = computed(() => model.value?.attributes.filter(a => a.virtual) ?? [])
@@ -266,6 +283,54 @@ function shortName(fqcn) {
     return fqcn.split('\\').pop()
 }
 
+// ── Section nav + scroll spy ─────────────────────────────────────────────────
+
+const activeSection = ref('columns')
+
+const navSections = computed(() => {
+    if (!model.value) return []
+    const s = [{ id: 'columns', label: 'Columns' }]
+    if (virtualAttrs.value.length)  s.push({ id: 'virtual-attrs', label: 'Virtual Attrs' })
+    if (model.value.traits.length)  s.push({ id: 'traits',        label: 'Traits' })
+    if (model.value.scopes.length)  s.push({ id: 'scopes',        label: 'Scopes' })
+    s.push({ id: 'relations', label: 'Relations' })
+    return s
+})
+
+let observer = null
+
+function initScrollSpy() {
+    if (observer) observer.disconnect()
+
+    const visible = new Set()
+
+    observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+            entry.isIntersecting
+                ? visible.add(entry.target.id)
+                : visible.delete(entry.target.id)
+        }
+        const first = navSections.value.find(s => visible.has(s.id))
+        if (first) activeSection.value = first.id
+    }, {
+        // Band from just below sticky nav (~90px) down to 40% of viewport
+        rootMargin: '-90px 0px -60% 0px',
+    })
+
+    for (const s of navSections.value) {
+        const el = document.getElementById(s.id)
+        if (el) observer.observe(el)
+    }
+}
+
+function scrollToSection(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+}
+
+onUnmounted(() => observer?.disconnect())
+
+// ── Load ─────────────────────────────────────────────────────────────────────
+
 async function load(slug) {
     loading.value = true
     error.value = null
@@ -275,6 +340,8 @@ async function load(slug) {
         if (res.status === 404) throw new Error('Model not found.')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         model.value = await res.json()
+        activeSection.value = 'columns'
+        nextTick(initScrollSpy)
     } catch (e) {
         error.value = e.message
     } finally {
@@ -282,6 +349,5 @@ async function load(slug) {
     }
 }
 
-onMounted(() => load(route.params.model))
-watch(() => route.params.model, slug => { if (slug) load(slug) })
+watch(() => route.params.model, slug => { if (slug) load(slug) }, { immediate: true })
 </script>

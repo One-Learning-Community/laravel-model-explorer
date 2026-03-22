@@ -12,9 +12,108 @@
                     Graph
                 </RouterLink>
             </div>
+
+            <!-- Model search -->
+            <div class="relative ml-auto" ref="searchContainer">
+                <input
+                    v-model="searchQuery"
+                    @focus="searchOpen = true"
+                    @keydown.escape="closeSearch"
+                    @keydown.down.prevent="moveSelection(1)"
+                    @keydown.up.prevent="moveSelection(-1)"
+                    @keydown.enter.prevent="selectCurrent"
+                    type="text"
+                    placeholder="Jump to model…"
+                    class="input input-sm w-52 font-mono text-xs"
+                />
+                <ul
+                    v-if="searchOpen && filteredModels.length"
+                    class="absolute right-0 top-full mt-1 w-72 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto p-1"
+                >
+                    <li
+                        v-for="(model, i) in filteredModels"
+                        :key="model.class"
+                        @mousedown.prevent="navigateTo(model)"
+                        class="px-3 py-2 rounded cursor-pointer flex items-baseline gap-2"
+                        :class="i === selectedIndex ? 'bg-base-200' : 'hover:bg-base-200'"
+                    >
+                        <span class="text-sm font-medium">{{ model.short_name }}</span>
+                        <span class="text-xs text-base-content/40 font-mono truncate">{{ model.table }}</span>
+                    </li>
+                </ul>
+            </div>
         </div>
         <main class="flex-1 p-8 max-w-6xl w-full mx-auto">
             <RouterView />
         </main>
     </div>
 </template>
+
+<script setup>
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const models = ref([])
+const searchQuery = ref('')
+const searchOpen = ref(false)
+const selectedIndex = ref(0)
+const searchContainer = ref(null)
+
+const filteredModels = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase()
+    const list = q
+        ? models.value.filter(m =>
+            m.short_name.toLowerCase().includes(q) ||
+            m.class.toLowerCase().includes(q)
+          )
+        : models.value
+    return list.slice(0, 10)
+})
+
+watch(filteredModels, () => { selectedIndex.value = 0 })
+
+function encodeModel(className) {
+    return btoa(className).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+}
+
+function navigateTo(model) {
+    router.push(`/models/${encodeModel(model.class)}`)
+    closeSearch()
+}
+
+function closeSearch() {
+    searchOpen.value = false
+    searchQuery.value = ''
+    selectedIndex.value = 0
+}
+
+function moveSelection(dir) {
+    const max = filteredModels.value.length - 1
+    selectedIndex.value = Math.max(0, Math.min(max, selectedIndex.value + dir))
+}
+
+function selectCurrent() {
+    const model = filteredModels.value[selectedIndex.value]
+    if (model) navigateTo(model)
+}
+
+function handleClickOutside(e) {
+    if (searchContainer.value && !searchContainer.value.contains(e.target)) {
+        searchOpen.value = false
+    }
+}
+
+onMounted(async () => {
+    document.addEventListener('mousedown', handleClickOutside)
+    try {
+        const res = await fetch(`${window.modelExplorerBasePath}/api/models`)
+        if (res.ok) models.value = await res.json()
+    } catch {}
+})
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutside)
+})
+</script>
