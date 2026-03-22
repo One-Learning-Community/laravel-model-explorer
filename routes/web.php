@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api\GraphController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api\ModelsController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\AssetController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\ModelExplorerController;
@@ -24,6 +25,7 @@ Route::prefix(config('model-explorer.path').'/api')
     ->group(function () {
         Route::get('/models', [ModelsController::class, 'index'])->name('models.index');
         Route::get('/models/{model}', [ModelsController::class, 'show'])->name('models.show');
+        Route::get('/graph', GraphController::class)->name('graph');
     });
 
 // SPA shell — all non-asset requests are handled by the Vue router client-side.

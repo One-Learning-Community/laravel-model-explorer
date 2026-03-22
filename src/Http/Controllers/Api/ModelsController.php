@@ -69,7 +69,10 @@ class ModelsController
                 'name' => $scope->name,
                 'defined_in' => $scope->definedIn,
             ])->values(),
-            'attributes' => $data->attributes->map(fn (Attribute $attr) => $attr->toArray())->values(),
+            'attributes' => $data->attributes->map(fn (Attribute $attr) => array_merge(
+                $attr->toArray(),
+                ['snippet' => $data->accessorSnippets[$attr->name] ?? null],
+            ))->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [
                 'name' => $rel->name,
                 'type' => $rel->type,

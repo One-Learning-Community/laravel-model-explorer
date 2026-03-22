@@ -2,14 +2,17 @@
 
 namespace OneLearningCommunity\LaravelModelExplorer\Services;
 
+use Illuminate\Database\Eloquent\Casts\Attribute as EloquentAttribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
+use Spatie\ModelInfo\Attributes\Attribute;
 use Spatie\ModelInfo\ModelInfo;
 use Spatie\ModelInfo\Relations\Relation;
 
@@ -36,7 +39,7 @@ class ModelInspector
             shortName: class_basename($className),
             table: $modelInfo->tableName,
             attributes: $modelInfo->attributes,
-            relations: $modelInfo->relations->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
+            relations: $this->discoverRelations($className, $modelInfo)->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
             scopes: $this->extractScopes($className),
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
@@ -47,6 +50,7 @@ class ModelInspector
             createdAtColumn: $model->usesTimestamps() ? $model->getCreatedAtColumn() : null,
             updatedAtColumn: $model->usesTimestamps() ? $model->getUpdatedAtColumn() : null,
             traits: $this->extractTraits($className),
+            accessorSnippets: $this->extractAccessorSnippets($className, $modelInfo->attributes),
         );
     }
 
@@ -71,7 +75,7 @@ class ModelInspector
             },
         );
 
-        sort($traits);
+        usort($traits, fn (string $a, string $b) => class_basename($a) <=> class_basename($b));
 
         return array_values($traits);
     }
@@ -189,5 +193,75 @@ class ModelInspector
         }
 
         return [null, null];
+    }
+
+    /**
+     * For each virtual attribute, attempt to locate its accessor method and extract
+     * the source snippet. Supports both old-style (getFooAttribute) and new-style
+     * (foo(): Attribute) accessors.
+     *
+     * @param  Collection<int, Attribute>  $attributes
+     * @return array<string, array{code: string, file: string, start_line: int}>
+     */
+    private function extractAccessorSnippets(string $className, Collection $attributes): array
+    {
+        $snippets = [];
+
+        try {
+            $reflection = new \ReflectionClass($className);
+        } catch (\Throwable) {
+            return $snippets;
+        }
+
+        foreach ($attributes->filter(fn (Attribute $attr) => $attr->virtual) as $attribute) {
+            $method = $this->findAccessorMethod($reflection, $attribute->name);
+
+            if ($method === null) {
+                continue;
+            }
+
+            $snippet = SourceExtractor::forMethod($method);
+
+            if ($snippet !== null) {
+                $snippets[$attribute->name] = $snippet;
+            }
+        }
+
+        return $snippets;
+    }
+
+    /**
+     * Locates the accessor method for the given attribute name.
+     *
+     * Checks old-style (getFooAttribute) first, then new-style (foo(): Attribute).
+     */
+    private function findAccessorMethod(\ReflectionClass $reflection, string $attributeName): ?\ReflectionMethod
+    {
+        // Old-style: getFooBarAttribute()
+        $oldStyle = 'get' . Str::studly($attributeName) . 'Attribute';
+
+        if ($reflection->hasMethod($oldStyle)) {
+            return $reflection->getMethod($oldStyle);
+        }
+
+        // New-style: foo(): \Illuminate\Database\Eloquent\Casts\Attribute
+        $newStyle = Str::camel($attributeName);
+
+        if ($reflection->hasMethod($newStyle)) {
+            $method = $reflection->getMethod($newStyle);
+            $returnType = $method->getReturnType();
+
+            if ($returnType instanceof \ReflectionNamedType &&
+                is_a($returnType->getName(), EloquentAttribute::class, true)) {
+                return $method;
+            }
+        }
+
+        return null;
+    }
+
+    private function discoverRelations(string $className, ModelInfo $modelInfo): Collection
+    {
+        return RelationFinder::forModel($className);
     }
 }

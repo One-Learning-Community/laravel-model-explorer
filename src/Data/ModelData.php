@@ -17,6 +17,7 @@ readonly class ModelData
      * @param  array<string, string>  $casts
      * @param  string[]  $appends
      * @param  list<string>  $traits  Non-excluded traits used by the model (recursive).
+     * @param  array<string, array{code: string, file: string, start_line: int}>  $accessorSnippets  Attribute name → source metadata.
      */
     public function __construct(
         public string $className,
@@ -34,5 +35,6 @@ readonly class ModelData
         public ?string $createdAtColumn,
         public ?string $updatedAtColumn,
         public array $traits,
+        public array $accessorSnippets = [],
     ) {}
 }

@@ -57,7 +57,7 @@ it('returns appended attributes', function () {
     $inspector = new ModelInspector();
     $data = $inspector->inspect(Post::class);
 
-    expect($data->appends)->toBe(['summary']);
+    expect($data->appends)->toBe(['summary', 'excerpt']);
 });
 
 it('returns usesTimestamps true and column names for a standard model', function () {
@@ -237,4 +237,51 @@ it('returns an empty traits array for a model with no custom traits', function (
     $data = $inspector->inspect(User::class);
 
     expect($data->traits)->toBeArray()->toBeEmpty();
+});
+
+it('discovers relations without a declared return type via source scanning', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $ownerRelation = $data->relations->firstWhere('name', 'owner');
+    expect($ownerRelation)->not->toBeNull()
+        ->and($ownerRelation->type)->toBe('BelongsTo')
+        ->and($ownerRelation->related)->toBe(User::class);
+});
+
+it('extracts a snippet for an old-style accessor', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->accessorSnippets)->toHaveKey('summary');
+    expect($data->accessorSnippets['summary']['code'])->toContain('getSummaryAttribute');
+    expect($data->accessorSnippets['summary'])->toHaveKey('file');
+    expect($data->accessorSnippets['summary'])->toHaveKey('start_line');
+});
+
+it('extracts a snippet for a new-style Attribute::make() accessor', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->accessorSnippets)->toHaveKey('excerpt');
+    expect($data->accessorSnippets['excerpt']['code'])->toContain('Attribute::make');
+    expect($data->accessorSnippets['excerpt'])->toHaveKey('file');
+    expect($data->accessorSnippets['excerpt'])->toHaveKey('start_line');
+});
+
+it('does not include a snippet for non-virtual (database) columns', function () {
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->accessorSnippets)->not->toHaveKey('title');
+    expect($data->accessorSnippets)->not->toHaveKey('body');
+});
+
+it('does not treat an untyped non-relation method as a relation', function () {
+    // Post::activate() has no return type and no relation call — must not appear in relations.
+    $inspector = new ModelInspector();
+    $data = $inspector->inspect(Post::class);
+
+    $activateRelation = $data->relations->firstWhere('name', 'activate');
+    expect($activateRelation)->toBeNull();
 });
