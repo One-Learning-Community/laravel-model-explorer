@@ -44,7 +44,7 @@
                                 text-anchor="middle"
                                 font-size="9"
                                 class="fill-base-content/40 pointer-events-none"
-                            >{{ edge.type }}</text>
+                            >{{ edge.shortType }}</text>
                         </g>
 
                         <!-- Nodes -->
@@ -133,6 +133,7 @@ const edges = computed(() => {
                     target: rel.related,
                     rel: rel.name,
                     type: rel.type,
+                    shortType: rel.type.split('\\').pop(),
                 })
             }
         }

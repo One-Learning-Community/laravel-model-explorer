@@ -25,6 +25,7 @@ class ModelsController
                 'short_name' => class_basename($className),
                 'table' => (new $className())->getTable(),
             ])
+            ->sortBy('short_name')
             ->values();
 
         return response()->json($models);

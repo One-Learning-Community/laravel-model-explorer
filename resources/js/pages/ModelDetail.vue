@@ -22,12 +22,12 @@
             </div>
 
             <!-- Section nav -->
-            <nav v-if="navSections.length > 1" class="sticky top-12 z-10 -mx-8 px-8 bg-base-100 border-b border-base-300 mb-8 flex gap-1">
+            <nav v-if="navSections.length > 1" class="sticky top-0 z-10 -mx-8 px-8 bg-base-100 border-b border-base-300 mb-8 flex gap-1">
                 <button
                     v-for="section in navSections"
                     :key="section.id"
                     @click="scrollToSection(section.id)"
-                    class="px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer"
+                    class="px-4 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer"
                     :class="activeSection === section.id
                         ? 'border-primary text-primary'
                         : 'border-transparent text-base-content/50 hover:text-base-content'"
@@ -35,7 +35,7 @@
             </nav>
 
             <!-- Columns -->
-            <section id="columns" class="mb-8 scroll-mt-24">
+            <section id="columns" class="mb-8 scroll-mt-16">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Columns</h2>
                 <div class="overflow-x-auto" v-if="dbColumns.length">
                     <table class="table table-sm">
@@ -78,7 +78,7 @@
             </section>
 
             <!-- Virtual attributes / accessors -->
-            <section v-if="virtualAttrs.length" id="virtual-attrs" class="mb-8 scroll-mt-24">
+            <section v-if="virtualAttrs.length" id="virtual-attrs" class="mb-8 scroll-mt-16">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Virtual Attributes</h2>
                 <div class="overflow-x-auto">
                     <table class="table table-sm">
@@ -115,7 +115,7 @@
             </section>
 
             <!-- Traits -->
-            <section v-if="model.traits.length" id="traits" class="mb-8 scroll-mt-24">
+            <section v-if="model.traits.length" id="traits" class="mb-8 scroll-mt-16">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Traits</h2>
                 <div class="flex flex-wrap gap-2">
                     <span
@@ -128,7 +128,7 @@
             </section>
 
             <!-- Scopes -->
-            <section v-if="model.scopes.length" id="scopes" class="mb-8 scroll-mt-24">
+            <section v-if="model.scopes.length" id="scopes" class="mb-8 scroll-mt-16">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Scopes</h2>
                 <template v-for="group in groupedScopes" :key="group.source ?? '__model__'">
                     <p v-if="group.label" class="text-xs text-base-content/40 mb-1 flex items-center gap-1">
@@ -143,7 +143,7 @@
             </section>
 
             <!-- Relations -->
-            <section id="relations" class="mb-8 scroll-mt-24">
+            <section id="relations" class="mb-8 scroll-mt-16">
                 <h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40 mb-3">Relations</h2>
                 <div class="overflow-x-auto" v-if="groupedRelations.length">
                     <table class="table table-sm">
@@ -167,7 +167,12 @@
                                 </tr>
                                 <tr v-for="rel in group.items" :key="rel.name">
                                     <td class="font-mono text-sm">{{ rel.name }}</td>
-                                    <td><span class="badge badge-primary badge-xs">{{ rel.type }}</span></td>
+                                    <td>
+                                        <span class="badge badge-xs gap-1" :class="relationColor(rel.type)" :title="rel.type">
+                                            <component :is="relationIcon(rel.type)" v-if="relationIcon(rel.type)" :size="10" />
+                                            {{ shortName(rel.type) }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <RouterLink
                                             :to="`/models/${encodeModel(rel.related)}`"
@@ -216,6 +221,10 @@
 import { ref, computed, nextTick, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Prism from 'virtual:prismjs'
+import {
+    Link, GitBranch, Link2, GitFork,
+    ArrowUpLeft, Share2, Diamond, DiamondPlus, Layers, Shuffle,
+} from 'lucide-vue-next'
 
 const route = useRoute()
 const model = ref(null)
@@ -283,6 +292,42 @@ function shortName(fqcn) {
     return fqcn.split('\\').pop()
 }
 
+const RELATION_COLORS = {
+    HasOne:        'badge-info',
+    HasMany:       'badge-primary',
+    HasOneThrough:  'badge-info',
+    HasManyThrough: 'badge-primary',
+    BelongsTo:     'badge-secondary',
+    BelongsToMany: 'badge-accent',
+    MorphTo:       'badge-warning',
+    MorphOne:      'badge-warning',
+    MorphMany:     'badge-warning',
+    MorphToMany:   'badge-error',
+    MorphedByMany: 'badge-error',
+}
+
+function relationColor(fqcn) {
+    return RELATION_COLORS[shortName(fqcn)] ?? 'badge-ghost'
+}
+
+const RELATION_ICONS = {
+    HasOne:         Link,
+    HasMany:        GitBranch,
+    HasOneThrough:  Link2,
+    HasManyThrough: GitFork,
+    BelongsTo:      ArrowUpLeft,
+    BelongsToMany:  Share2,
+    MorphTo:        Diamond,
+    MorphOne:       DiamondPlus,
+    MorphMany:      Layers,
+    MorphToMany:    Shuffle,
+    MorphedByMany:  Shuffle,
+}
+
+function relationIcon(fqcn) {
+    return RELATION_ICONS[shortName(fqcn)] ?? null
+}
+
 // ── Section nav + scroll spy ─────────────────────────────────────────────────
 
 const activeSection = ref('columns')
@@ -297,37 +342,33 @@ const navSections = computed(() => {
     return s
 })
 
-let observer = null
+// Threshold: section is "active" when its top edge is at or above this px from viewport top.
+// Matches the sticky nav height (~48px) plus a small buffer.
+const SCROLL_THRESHOLD = 64
+
+function updateActiveSection() {
+    const ids = navSections.value.map(s => s.id)
+    let active = ids[0]
+    for (const id of ids) {
+        const el = document.getElementById(id)
+        if (el && el.getBoundingClientRect().top <= SCROLL_THRESHOLD) {
+            active = id
+        }
+    }
+    activeSection.value = active
+}
 
 function initScrollSpy() {
-    if (observer) observer.disconnect()
-
-    const visible = new Set()
-
-    observer = new IntersectionObserver(entries => {
-        for (const entry of entries) {
-            entry.isIntersecting
-                ? visible.add(entry.target.id)
-                : visible.delete(entry.target.id)
-        }
-        const first = navSections.value.find(s => visible.has(s.id))
-        if (first) activeSection.value = first.id
-    }, {
-        // Band from just below sticky nav (~90px) down to 40% of viewport
-        rootMargin: '-90px 0px -60% 0px',
-    })
-
-    for (const s of navSections.value) {
-        const el = document.getElementById(s.id)
-        if (el) observer.observe(el)
-    }
+    window.addEventListener('scroll', updateActiveSection, { passive: true })
+    updateActiveSection()
 }
 
 function scrollToSection(id) {
+    activeSection.value = id
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 }
 
-onUnmounted(() => observer?.disconnect())
+onUnmounted(() => window.removeEventListener('scroll', updateActiveSection))
 
 // ── Load ─────────────────────────────────────────────────────────────────────
 
