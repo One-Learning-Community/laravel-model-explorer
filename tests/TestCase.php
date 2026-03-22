@@ -34,7 +34,7 @@ class TestCase extends Orchestra
         ]);
         config()->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         config()->set('model-explorer.model_paths', [
-            __DIR__.'/../workbench/app/Models',
+            'Workbench\\App\\Models' => __DIR__.'/../workbench/app/Models',
         ]);
     }
 

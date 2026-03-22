@@ -11,9 +11,8 @@ class ModelDiscovery
     /**
      * Discover all concrete Eloquent model classes across all configured paths.
      *
-     * Namespace resolution assumes configured paths fall under app_path() and map
-     * to the application's root namespace (app()->getNamespace()). Paths outside
-     * app_path() are not supported in v1 — see model_paths config documentation.
+     * Config format: associative array of namespace => absolute path.
+     * e.g. ['App\\Models' => '/path/to/app/Models']
      *
      * @return list<class-string<Model>>
      */
@@ -23,7 +22,7 @@ class ModelDiscovery
 
         return collect($paths)
             ->sort()
-            ->flatMap(fn (string $path, string $namespace) => $this->discoverIn($namespace, $path))
+            ->flatMap(fn (string $path, string $namespace) => $this->discoverIn($path, $namespace))
             ->unique()
             ->values()
             ->all();
@@ -32,7 +31,7 @@ class ModelDiscovery
     /**
      * @return list<class-string<Model>>
      */
-    public function discoverIn(string $namespace, string $path): array
+    public function discoverIn(string $path, string $namespace = ''): array
     {
         if (! is_dir($path)) {
             return [];
