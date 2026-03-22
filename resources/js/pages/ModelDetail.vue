@@ -18,6 +18,9 @@
                     <span class="badge" :class="model.uses_timestamps ? 'badge-success' : 'badge-ghost'">
                         {{ model.uses_timestamps ? 'timestamps' : 'no timestamps' }}
                     </span>
+                    <RouterLink :to="`/models/${route.params.model}/record`" class="btn btn-xs btn-ghost">
+                        Look up record
+                    </RouterLink>
                 </div>
             </div>
 

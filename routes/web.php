@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api\GraphController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api\ModelsController;
+use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api\RecordsController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\AssetController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Controllers\ModelExplorerController;
 use OneLearningCommunity\LaravelModelExplorer\Http\Middleware\Authorize;
@@ -25,6 +26,10 @@ Route::prefix(config('model-explorer.path').'/api')
     ->group(function () {
         Route::get('/models', [ModelsController::class, 'index'])->name('models.index');
         Route::get('/models/{model}', [ModelsController::class, 'show'])->name('models.show');
+        Route::get('/models/{model}/record', [RecordsController::class, 'show'])->name('records.show');
+        Route::get('/models/{model}/record/relations/{relation}', [RecordsController::class, 'relation'])->name('records.relation');
+        Route::get('/models/{model}/record/attributes', [RecordsController::class, 'attributes'])->name('records.attributes');
+        Route::get('/models/{model}/record/attributes/{attribute}', [RecordsController::class, 'attribute'])->name('records.attribute');
         Route::get('/graph', GraphController::class)->name('graph');
     });
 
