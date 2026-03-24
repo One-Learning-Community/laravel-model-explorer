@@ -40,6 +40,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { encodeModel } from '../utils/model.js'
 
 const models = ref([])
 const search = ref('')
@@ -53,10 +54,6 @@ const filtered = computed(() => {
         m => m.short_name.toLowerCase().includes(q) || m.class.toLowerCase().includes(q)
     )
 })
-
-function encodeModel(className) {
-    return btoa(className).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
 
 onMounted(async () => {
     try {

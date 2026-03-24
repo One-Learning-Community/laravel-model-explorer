@@ -93,6 +93,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { encodeModel } from '../utils/model.js'
 
 const router = useRouter()
 const svgEl = ref(null)
@@ -182,10 +183,6 @@ function edgeMid(edge) {
         return { x: 0, y: 0 }
     }
     return { x: (s._x + t._x) / 2, y: (s._y + t._y) / 2 }
-}
-
-function encodeModel(className) {
-    return btoa(className).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 }
 
 function navigateTo(node) {

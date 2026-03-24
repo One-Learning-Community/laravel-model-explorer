@@ -52,6 +52,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { encodeModel } from './utils/model.js'
 
 const router = useRouter()
 
@@ -73,10 +74,6 @@ const filteredModels = computed(() => {
 })
 
 watch(filteredModels, () => { selectedIndex.value = 0 })
-
-function encodeModel(className) {
-    return btoa(className).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
 
 function navigateTo(model) {
     router.push(`/models/${encodeModel(model.class)}`)
