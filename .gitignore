@@ -14,6 +14,8 @@ yarn-error.log
 .phpunit.cache
 .phpunit.result.cache
 /build
+docs-site/.vitepress/cache
+docs-site/.vitepress/dist
 
 # IDE Helper
 _ide_helper.php
