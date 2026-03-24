@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## Initial Published Release - 2026-03-24
+
+**Full Changelog**: https://github.com/One-Learning-Community/laravel-model-explorer/commits/v0.2.0
+
 ## v0.2.0 - 2026-03-24
 
 ### What's new
