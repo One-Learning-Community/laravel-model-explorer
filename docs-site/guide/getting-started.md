@@ -12,7 +12,7 @@ Laravel Model Explorer is a zero-config developer tool that gives you a browser-
 Install the package via Composer:
 
 ```bash
-composer require onelearningcommunity/laravel-model-explorer
+composer require --dev onelearningcommunity/laravel-model-explorer
 ```
 
 The package auto-discovers and registers itself. No service provider needs to be added manually.
