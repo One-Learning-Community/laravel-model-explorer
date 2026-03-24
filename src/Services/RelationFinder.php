@@ -102,7 +102,7 @@ class RelationFinder
             return false;
         }
 
-        $pattern = '/\$this->(' . implode('|', self::RELATION_METHODS) . ')\s*\(/';
+        $pattern = '/\$this->('.implode('|', self::RELATION_METHODS).')\s*\(/';
 
         return (bool) preg_match($pattern, $source['code']);
     }

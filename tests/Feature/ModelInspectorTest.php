@@ -1,34 +1,35 @@
 <?php
 
+use Illuminate\Support\Collection;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
+use Workbench\App\Models\BasePost;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Concerns\HasOwner;
 use Workbench\App\Models\Concerns\HasPublishedState;
-use Workbench\App\Models\BasePost;
-use Workbench\App\Models\ExtendedPost;
 use Workbench\App\Models\CustomTableModel;
+use Workbench\App\Models\ExtendedPost;
 use Workbench\App\Models\NoTimestampsModel;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\User;
 
 it('returns the correct database table name for a standard model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->table)->toBe('posts');
 });
 
 it('returns the correct table name when the model overrides protected $table', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(CustomTableModel::class);
 
     expect($data->table)->toBe('custom_table');
 });
 
 it('returns fillable and guarded attributes', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->fillable)->toBe(['title', 'body', 'published_at'])
@@ -36,14 +37,14 @@ it('returns fillable and guarded attributes', function () {
 });
 
 it('returns hidden attributes', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->hidden)->toBe(['secret_key']);
 });
 
 it('returns casts with their target types', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->casts)
@@ -55,14 +56,14 @@ it('returns casts with their target types', function () {
 });
 
 it('returns appended attributes', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->appends)->toBe(['summary', 'excerpt']);
 });
 
 it('returns usesTimestamps true and column names for a standard model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->usesTimestamps)->toBeTrue()
@@ -71,7 +72,7 @@ it('returns usesTimestamps true and column names for a standard model', function
 });
 
 it('returns usesTimestamps false and null column names when timestamps are disabled', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(NoTimestampsModel::class);
 
     expect($data->usesTimestamps)->toBeFalse()
@@ -80,10 +81,10 @@ it('returns usesTimestamps false and null column names when timestamps are disab
 });
 
 it('returns a collection of Attribute objects with column metadata', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
-    expect($data->attributes)->toBeInstanceOf(\Illuminate\Support\Collection::class)
+    expect($data->attributes)->toBeInstanceOf(Collection::class)
         ->and($data->attributes->first())->toBeInstanceOf(Attribute::class);
 
     $titleAttr = $data->attributes->firstWhere('name', 'title');
@@ -101,7 +102,7 @@ it('returns a collection of Attribute objects with column metadata', function ()
 });
 
 it('returns virtual attributes with appended flag set', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $summaryAttr = $data->attributes->firstWhere('name', 'summary');
@@ -111,10 +112,10 @@ it('returns virtual attributes with appended flag set', function () {
 });
 
 it('returns a collection of RelationData objects', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
-    expect($data->relations)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($data->relations)->toBeInstanceOf(Collection::class);
 
     $userRelation = $data->relations->firstWhere('name', 'user');
     expect($userRelation)->not->toBeNull()
@@ -124,7 +125,7 @@ it('returns a collection of RelationData objects', function () {
 });
 
 it('returns a hasMany relation for the user model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(User::class);
 
     $postsRelation = $data->relations->firstWhere('name', 'posts');
@@ -134,7 +135,7 @@ it('returns a hasMany relation for the user model', function () {
 });
 
 it('extracts foreign key and local key for a belongsTo relation', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $userRelation = $data->relations->firstWhere('name', 'user');
@@ -143,7 +144,7 @@ it('extracts foreign key and local key for a belongsTo relation', function () {
 });
 
 it('extracts foreign key and local key for a hasMany relation', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(User::class);
 
     $postsRelation = $data->relations->firstWhere('name', 'posts');
@@ -152,14 +153,14 @@ it('extracts foreign key and local key for a hasMany relation', function () {
 });
 
 it('returns non-Illuminate traits used by the model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->traits)->toContain(HasPublishedState::class);
 });
 
 it('excludes internal Illuminate concern traits from the traits list', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $concernTraits = array_filter($data->traits, fn (string $t) => str_starts_with($t, 'Illuminate\Database\Eloquent\Concerns\\'));
@@ -172,7 +173,7 @@ it('respects custom excluded_trait_prefixes from config', function () {
         'Workbench\App\Models\Concerns\\',
     ]);
 
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     config()->set('model-explorer.excluded_trait_prefixes', $original);
@@ -182,7 +183,7 @@ it('respects custom excluded_trait_prefixes from config', function () {
 });
 
 it('sets definedIn to null for relations defined directly on the model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $userRelation = $data->relations->firstWhere('name', 'user');
@@ -190,7 +191,7 @@ it('sets definedIn to null for relations defined directly on the model', functio
 });
 
 it('sets definedIn to the trait FQCN for relations sourced from a trait', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $authorRelation = $data->relations->firstWhere('name', 'author');
@@ -199,7 +200,7 @@ it('sets definedIn to the trait FQCN for relations sourced from a trait', functi
 });
 
 it('returns scopes defined on a model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'published');
@@ -208,14 +209,14 @@ it('returns scopes defined on a model', function () {
 });
 
 it('returns an empty scopes collection for a model with no scopes', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(User::class);
 
     expect($data->scopes)->toBeEmpty();
 });
 
 it('returns scopes sorted alphabetically', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $names = $data->scopes->pluck('name')->all();
@@ -225,7 +226,7 @@ it('returns scopes sorted alphabetically', function () {
 });
 
 it('captures parameters for a scope with typed and defaulted arguments', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'recent');
@@ -236,7 +237,7 @@ it('captures parameters for a scope with typed and defaulted arguments', functio
 });
 
 it('captures an empty parameters array for a no-arg scope', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'published');
@@ -245,7 +246,7 @@ it('captures an empty parameters array for a no-arg scope', function () {
 });
 
 it('captures a source snippet for a scope', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'recent');
@@ -256,7 +257,7 @@ it('captures a source snippet for a scope', function () {
 });
 
 it('sets definedIn to the parent class FQCN for a scope declared directly on a parent', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(ExtendedPost::class);
 
     $scope = $data->scopes->firstWhere('name', 'draft');
@@ -265,7 +266,7 @@ it('sets definedIn to the parent class FQCN for a scope declared directly on a p
 });
 
 it('sets definedIn to null for a scope declared directly on the model itself', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'recent');
@@ -274,7 +275,7 @@ it('sets definedIn to null for a scope declared directly on the model itself', f
 });
 
 it('identifies the correct trait for a relation defined in a parent class trait', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(ExtendedPost::class);
 
     $ownerRelation = $data->relations->firstWhere('name', 'owner');
@@ -283,14 +284,14 @@ it('identifies the correct trait for a relation defined in a parent class trait'
 });
 
 it('returns an empty traits array for a model with no custom traits', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(User::class);
 
     expect($data->traits)->toBeArray()->toBeEmpty();
 });
 
 it('discovers relations without a declared return type via source scanning', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $ownerRelation = $data->relations->firstWhere('name', 'owner');
@@ -300,7 +301,7 @@ it('discovers relations without a declared return type via source scanning', fun
 });
 
 it('extracts a snippet for an old-style accessor', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->accessorSnippets)->toHaveKey('summary');
@@ -310,7 +311,7 @@ it('extracts a snippet for an old-style accessor', function () {
 });
 
 it('extracts a snippet for a new-style Attribute::make() accessor', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->accessorSnippets)->toHaveKey('excerpt');
@@ -320,7 +321,7 @@ it('extracts a snippet for a new-style Attribute::make() accessor', function () 
 });
 
 it('does not include a snippet for non-virtual (database) columns', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->accessorSnippets)->not->toHaveKey('title');
@@ -328,7 +329,7 @@ it('does not include a snippet for non-virtual (database) columns', function () 
 });
 
 it('sets defined_in to null for an accessor defined directly on the model', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->accessorSnippets['summary']['defined_in'])->toBeNull()
@@ -336,17 +337,17 @@ it('sets defined_in to null for an accessor defined directly on the model', func
 });
 
 it('sets defined_in to the trait FQCN for an accessor defined in a trait', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->accessorSnippets)->toHaveKey('published_label')
         ->and($data->accessorSnippets['published_label']['defined_in'])
-        ->toBe(\Workbench\App\Models\Concerns\HasPublishedState::class);
+        ->toBe(HasPublishedState::class);
 });
 
 it('does not treat an untyped non-relation method as a relation', function () {
     // Post::activate() has no return type and no relation call — must not appear in relations.
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $activateRelation = $data->relations->firstWhere('name', 'activate');
@@ -354,7 +355,7 @@ it('does not treat an untyped non-relation method as a relation', function () {
 });
 
 it('extracts a description from the PHPDoc summary of a scope', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'recent');
@@ -362,7 +363,7 @@ it('extracts a description from the PHPDoc summary of a scope', function () {
 });
 
 it('includes the docblock in the scope source snippet', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $scope = $data->scopes->firstWhere('name', 'recent');
@@ -372,7 +373,7 @@ it('includes the docblock in the scope source snippet', function () {
 });
 
 it('returns null description for a scope with no PHPDoc summary', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     // The published scope (defined in HasPublishedState) has no docblock in the workbench fixture.
@@ -382,7 +383,7 @@ it('returns null description for a scope with no PHPDoc summary', function () {
 });
 
 it('extracts a description from the PHPDoc summary of a relation', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $relation = $data->relations->firstWhere('name', 'user');
@@ -390,7 +391,7 @@ it('extracts a description from the PHPDoc summary of a relation', function () {
 });
 
 it('extracts a source snippet for a relation method', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     $relation = $data->relations->firstWhere('name', 'user');
@@ -400,7 +401,7 @@ it('extracts a source snippet for a relation method', function () {
 });
 
 it('returns null description and null snippet for a relation with no PHPDoc', function () {
-    $inspector = new ModelInspector();
+    $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     // The owner relation has no docblock.

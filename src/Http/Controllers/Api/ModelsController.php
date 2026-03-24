@@ -23,7 +23,7 @@ class ModelsController
             ->map(fn (string $className) => [
                 'class' => $className,
                 'short_name' => class_basename($className),
-                'table' => (new $className())->getTable(),
+                'table' => (new $className)->getTable(),
             ])
             ->sortBy('short_name')
             ->values();
@@ -76,8 +76,8 @@ class ModelsController
             'attributes' => $data->attributes->map(fn (Attribute $attr) => array_merge(
                 $attr->toArray(),
                 [
-                    'snippet'     => $data->accessorSnippets[$attr->name] ?? null,
-                    'defined_in'  => $data->accessorSnippets[$attr->name]['defined_in'] ?? null,
+                    'snippet' => $data->accessorSnippets[$attr->name] ?? null,
+                    'defined_in' => $data->accessorSnippets[$attr->name]['defined_in'] ?? null,
                 ],
             ))->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [

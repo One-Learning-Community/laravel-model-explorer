@@ -12,7 +12,7 @@ use Workbench\App\Models\Concerns\HasPublishedState;
 
 class Post extends Model
 {
-    use HasPublishedState, HasAuthor;
+    use HasAuthor, HasPublishedState;
 
     protected $fillable = ['title', 'body', 'published_at'];
 
@@ -40,11 +40,6 @@ class Post extends Model
 
     /**
      * Posts created within the given number of days.
-     *
-     * @param  Builder  $query
-     * @param  int  $days
-     * @param  bool  $published
-     * @return Builder
      */
     public function scopeRecent(Builder $query, int $days = 30, bool $published = true): Builder
     {
@@ -79,7 +74,7 @@ class Post extends Model
         return Attribute::make(
             get: fn () => $this->user_id
                 ? static::where('user_id', $this->user_id)->where('id', '!=', $this->id)->get()
-                : new Collection(),
+                : new Collection,
         );
     }
 

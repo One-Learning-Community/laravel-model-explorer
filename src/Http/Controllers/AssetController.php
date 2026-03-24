@@ -8,15 +8,15 @@ class AssetController
 {
     /** @var array<string, string> */
     private const MIME_TYPES = [
-        'js'    => 'application/javascript',
-        'css'   => 'text/css',
-        'woff'  => 'font/woff',
+        'js' => 'application/javascript',
+        'css' => 'text/css',
+        'woff' => 'font/woff',
         'woff2' => 'font/woff2',
-        'ttf'   => 'font/ttf',
-        'svg'   => 'image/svg+xml',
-        'png'   => 'image/png',
-        'ico'   => 'image/x-icon',
-        'map'   => 'application/json',
+        'ttf' => 'font/ttf',
+        'svg' => 'image/svg+xml',
+        'png' => 'image/png',
+        'ico' => 'image/x-icon',
+        'map' => 'application/json',
     ];
 
     public function __invoke(string $path): BinaryFileResponse
@@ -36,7 +36,7 @@ class AssetController
         }
 
         return response()->file($assetPath, [
-            'Content-Type'  => $mimeType,
+            'Content-Type' => $mimeType,
             'Cache-Control' => 'public, max-age=31536000, immutable',
         ]);
     }

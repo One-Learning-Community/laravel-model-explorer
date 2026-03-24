@@ -94,7 +94,6 @@ it('returns 404 on model list when the package is disabled', function () {
 });
 
 it('allows gate override to grant access to api in non-local environment', function () {
-//    app()->detectEnvironment(fn () => 'production');
     Gate::define('viewModelExplorer', fn ($user = null) => true);
 
     $this->getJson('/_model-explorer/api/models')

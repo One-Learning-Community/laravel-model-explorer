@@ -29,7 +29,7 @@ class ModelInspector
     {
         try {
             $modelInfo = ModelInfo::forModel($className);
-            $model = new $className();
+            $model = new $className;
         } catch (\Throwable $e) {
             throw new \RuntimeException("Could not instantiate model [{$className}]: {$e->getMessage()}", 0, $e);
         }
@@ -140,19 +140,19 @@ class ModelInspector
             if ($hasDefault) {
                 $raw = $param->getDefaultValue();
                 $default = match (true) {
-                    is_null($raw)   => 'null',
-                    is_bool($raw)   => $raw ? 'true' : 'false',
+                    is_null($raw) => 'null',
+                    is_bool($raw) => $raw ? 'true' : 'false',
                     is_string($raw) => "'{$raw}'",
-                    is_array($raw)  => '[]',
-                    default         => (string) $raw,
+                    is_array($raw) => '[]',
+                    default => (string) $raw,
                 };
             }
 
             $params[] = [
-                'name'        => $param->getName(),
-                'type'        => $typeName,
+                'name' => $param->getName(),
+                'type' => $typeName,
                 'has_default' => $hasDefault,
-                'default'     => $default,
+                'default' => $default,
             ];
         }
 
@@ -314,7 +314,7 @@ class ModelInspector
     private function findAccessorMethod(\ReflectionClass $reflection, string $attributeName): ?\ReflectionMethod
     {
         // Old-style: getFooBarAttribute()
-        $oldStyle = 'get' . Str::studly($attributeName) . 'Attribute';
+        $oldStyle = 'get'.Str::studly($attributeName).'Attribute';
 
         if ($reflection->hasMethod($oldStyle)) {
             return $reflection->getMethod($oldStyle);

@@ -31,7 +31,7 @@ class RecordsController
             return response()->json(['message' => 'The value field is required.'], 422);
         }
 
-        $field = $request->query('field') ?: (new $className())->getKeyName();
+        $field = $request->query('field') ?: (new $className)->getKeyName();
 
         return $this->withinSafeRead(function () use ($className, $field, $value): JsonResponse {
             $record = $className::query()->where($field, $value)->first();
