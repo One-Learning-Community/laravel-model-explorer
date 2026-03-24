@@ -13,8 +13,18 @@
                 </RouterLink>
             </div>
 
+            <!-- Theme toggle -->
+            <button
+                @click="toggleTheme"
+                class="btn btn-ghost btn-sm btn-square ml-auto"
+                :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            >
+                <Sun v-if="isDark" :size="16" />
+                <Moon v-else :size="16" />
+            </button>
+
             <!-- Model search -->
-            <div class="relative ml-auto" ref="searchContainer">
+            <div class="relative" ref="searchContainer">
                 <input
                     v-model="searchQuery"
                     @focus="searchOpen = true"
@@ -52,9 +62,24 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Moon, Sun } from 'lucide-vue-next'
 import { encodeModel } from './utils/model.js'
 
 const router = useRouter()
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'model-explorer-theme'
+const isDark = ref(document.documentElement.getAttribute('data-theme') === 'night')
+
+function toggleTheme() {
+    isDark.value = !isDark.value
+    const theme = isDark.value ? 'night' : 'light'
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(STORAGE_KEY, theme)
+}
+
+// ── Model search ──────────────────────────────────────────────────────────────
 
 const models = ref([])
 const searchQuery = ref('')
