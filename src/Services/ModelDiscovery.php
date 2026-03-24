@@ -17,7 +17,7 @@ class ModelDiscovery
      */
     public function discoverAll(): array
     {
-        $paths = config('model-explorer.model_paths', [app_path('Models')]);
+        $paths = config('model-explorer.model_paths');
 
         return collect($paths)
             ->sort()

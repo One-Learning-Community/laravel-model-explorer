@@ -50,7 +50,7 @@ Middleware applied to all Model Explorer routes. The `Authorize` middleware (gat
 
 ```php
 'model_paths' => [
-    'App' => app_path('Models'),
+    'App' => app_path(),
 ],
 ```
 
@@ -58,7 +58,7 @@ Directories scanned for Eloquent models. The key is the root namespace for that 
 
 ```php
 'model_paths' => [
-    'App'     => app_path('Models'),
+    'App'     => app_path(),
     'Modules' => base_path('modules'),
 ],
 ```

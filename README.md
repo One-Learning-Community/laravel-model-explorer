@@ -70,8 +70,8 @@ return [
     // Directories scanned for Eloquent models (add more for DDD layouts, packages, etc.)
     // Keys are the root namespace, values are absolute directory paths.
     'model_paths' => [
-        'App'             => app_path('Models'),
-        // 'Domain\\Billing' => base_path('src/Billing/Models'),
+        'App'             => app_path(),
+        // 'Domain\\Billing' => base_path('src/Billing'),
     ],
 
     // Traits whose FQN begins with these prefixes will be hidden in the UI
