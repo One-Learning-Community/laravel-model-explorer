@@ -19,6 +19,11 @@
                                 <span class="font-medium">{{ attr.name }}</span>
                                 <span v-if="attr.primary" class="badge badge-primary badge-xs">PK</span>
                                 <span v-if="attr.increments" class="badge badge-ghost badge-xs">auto</span>
+                                <span
+                                    v-if="foreignKeyMap[attr.name]"
+                                    class="badge badge-secondary badge-xs"
+                                    :title="`FK → ${foreignKeyMap[attr.name].related}`"
+                                >FK</span>
                             </div>
                         </td>
                         <td class="font-mono text-xs text-base-content/50">{{ attr.type }}</td>
@@ -45,5 +50,6 @@
 <script setup>
 defineProps({
     columns: { type: Array, required: true },
+    foreignKeyMap: { type: Object, default: () => ({}) },
 })
 </script>

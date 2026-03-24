@@ -30,7 +30,7 @@
                 @navigate="scrollToSection"
             />
 
-            <ColumnsTable :columns="dbColumns" />
+            <ColumnsTable :columns="dbColumns" :foreign-key-map="foreignKeyMap" />
             <VirtualAttributesTable :grouped-attrs="groupedVirtualAttrs" @view-snippet="snippetModal.open" />
             <RelationsTable :grouped-relations="groupedRelations" @view-snippet="snippetModal.open" />
             <ScopesTable :grouped-scopes="groupedScopes" @view-snippet="snippetModal.open" />
@@ -103,6 +103,18 @@ const groupedRelations = computed(() => {
 })
 
 const groupedScopes = computed(() => groupBySource(model.value?.scopes ?? []))
+
+// Map of column name → relation for FK columns that live on this model's table.
+// Only BelongsTo and MorphTo have the FK on the local table.
+const foreignKeyMap = computed(() => {
+    const map = {}
+    for (const rel of model.value?.relations ?? []) {
+        if ((rel.type === 'BelongsTo' || rel.type === 'MorphTo') && rel.foreign_key) {
+            map[rel.foreign_key] = rel
+        }
+    }
+    return map
+})
 
 // ── Section nav + scroll spy ──────────────────────────────────────────────────
 
