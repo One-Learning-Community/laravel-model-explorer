@@ -15,7 +15,7 @@ A Laravel package that gives developers a browser-based interface to explore the
 |---|---|
 | PHP | 8.4+, Laravel 11–13 |
 | Frontend | Vue 3, Vite 6, Vue Router |
-| UI | DaisyUI v5 + Tailwind v4, fixed **night** theme |
+| UI | DaisyUI v5 + Tailwind v4, `light` + `night` themes; auto-detected from `prefers-color-scheme`, toggled via navbar |
 | Icons | lucide-vue-next |
 | Syntax highlighting | vite-plugin-prismjs-plus (language: php; plugin: line-numbers; theme: tomorrow) |
 | Key runtime dep | spatie/laravel-model-info v2 (column introspection) |
@@ -28,7 +28,7 @@ Architectural decisions are recorded in `docs/adr/`:
 |---|---|
 | [001](docs/adr/001-route-served-assets.md) | Assets served via PHP route — no `vendor:publish` |
 | [002](docs/adr/002-gate-based-authorization.md) | Gate `viewModelExplorer` with local-env default + `enabled` kill switch |
-| [003](docs/adr/003-self-contained-vue3-spa.md) | Self-contained Vue 3 + Vite SPA; compiled assets committed to repo |
+| [003](docs/adr/003-self-contained-vue3-spa.md) | Self-contained Vue 3 + Vite SPA; compiled assets generated at build/publish time (`public/` is gitignored) |
 | [004](docs/adr/004-spatie-model-info-for-column-introspection.md) | `spatie/laravel-model-info` v2 for DB column data |
 | [005](docs/adr/005-reflection-source-scanning-for-relation-discovery.md) | Two-pass relation detection: typed return hints + regex source scanning |
 | [006](docs/adr/006-within-safe-read-for-live-record-browsing.md) | `withinSafeRead()` — `withoutEvents()` + rolled-back transaction for safe DB reads |
@@ -55,7 +55,7 @@ Filter by name:
 ./vendor/bin/pest --filter "resolves a to-one relation"
 ```
 
-All tests should pass. Previously some 403/production-environment tests were failing with a Mockery `askQuestion` error — this was caused by the production environment setup prompting for confirmation during test runs, which conflicted with Mockery. This has been resolved.
+All tests should pass.
 
 ## Package Structure
 
@@ -115,6 +115,8 @@ npm run build
 
 During development you can use `npm run dev` for watch mode, but the package serves compiled assets from `public/` so a build is needed for changes to be picked up when testing via the browser.
 
+`public/` is gitignored. CI runs `npm ci && npm run build` before the test suite. Running tests locally without building first will cause the asset-serving test to fail.
+
 ## Key Conventions
 
 - **Model slugs in URLs**: class names are base64url-encoded — JS: `btoa(className).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')` / PHP: `base64_decode(strtr($slug, '-_', '+/'))`. See ADR-008.
@@ -126,3 +128,7 @@ During development you can use `npm run dev` for watch mode, but the package ser
 - **Relation badge colours** (DaisyUI): `badge-info` = HasOne/HasMany, `badge-secondary` = BelongsTo, `badge-accent` = BelongsToMany, `badge-warning` = MorphTo/MorphOne/MorphMany, `badge-error` = MorphToMany/MorphedByMany.
 - **Vue Router reuse**: `ModelRecord.vue` handles same-component navigation via a `watch` on `{ model, field, value }` — `onMounted` alone is not sufficient.
 - **Prism.js**: `manual: true` is required in vite-plugin-prismjs-plus config; always call `Prism.highlightElement()` manually after opening a snippet modal so the line-numbers plugin injects DOM nodes correctly.
+- **FK badge colour**: FK columns in the Columns table use `badge-secondary` (same as BelongsTo relation badges) to signal the connection visually.
+- **Policy lookup**: `ModelInspector` uses `Gate::policies()` (the registered class map) to find a model's policy — never `Gate::getPolicyFor()`, which instantiates the policy.
+- **Theme**: `window.modelExplorerVersion` and the initial `data-theme` are both set by inline scripts in `app.blade.php` before the stylesheet loads to avoid flash. Do not move them after the `<link>` tag.
+- **Search keyboard shortcut**: the global `/` / `Cmd+K` handler in `App.vue` skips when `document.activeElement` is an `INPUT`, `TEXTAREA`, or `contentEditable` element — preserve this guard in any edits.

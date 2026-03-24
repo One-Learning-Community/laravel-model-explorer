@@ -1,6 +1,6 @@
 # ADR-009: Recommended Updates Before Publishing
 
-- **Status:** Proposed
+- **Status:** Accepted (in progress)
 - **Date:** 2026-03-24
 
 ## Context
@@ -11,39 +11,40 @@ A review of the package prior to public release identified a set of improvements
 
 ### High Priority
 
-#### README / installation docs
-The package has no `README.md`. Consumers have no documented path for installation, gate configuration, or config options. A minimal README covering `composer require`, service-provider auto-discovery, gate setup, and the `model-explorer` config file is essential before any public release.
+#### ~~README / installation docs~~ ✓ Done — v0.2.0
+README expanded with requirements section, zero-setup callout, `MODEL_EXPLORER_ENABLED` env var documentation, and a multi-directory `model_paths` example.
 
-#### Composite primary key hint in record browser
-Models that declare a composite primary key (multiple columns marked as the primary key) will 404 silently in the record browser when a lookup is attempted. `find()` with a single scalar key does not work for composite keys. The UI should detect composite-key models and display an explanatory message rather than a silent 404.
-
-Detection approach: inspect `getKeyName()` on a fresh model instance — if it returns an array, the key is composite.
+#### ~~Composite primary key hint in record browser~~ ✓ Done — v0.2.0
+`key_name` (string or array) is now included in the `/api/models/{model}` response. `ModelRecord.vue` shows a warning banner when `key_name` is an array, explaining that lookup works but relation drilling may not function correctly.
 
 ### Medium Priority
 
-#### Dark / light mode auto-respect
-The package hardcodes the `night` DaisyUI theme via `data-theme="night"` on the `<html>` element in `app.blade.php`. This looks jarring when a host application uses a light theme. The SPA should default to `prefers-color-scheme` (or no override) so it inherits the host's colour scheme, with an optional `theme` config key for explicit overrides.
+#### ~~Dark / light mode auto-respect~~ ✓ Done — v0.2.0
+Hardcoded `data-theme="night"` removed. Theme is now auto-detected from `prefers-color-scheme` on first load via an inline flash-prevention script; a sun/moon toggle in the navbar persists the choice to `localStorage`. Both `light` and `night` DaisyUI themes are compiled in.
 
-#### "Reset view" button on relationship graph
-The force-directed graph supports pan and zoom but provides no way to reset to the initial view once the user has drifted far from the origin. A "Reset view" button overlaid on the graph container should restore `pan` and `zoom` to their initial values.
+#### ~~"Reset view" button on relationship graph~~ ✓ Done — v0.2.0
+"Reset view" button added to the graph header. Stores the initial centred pan position on load and restores it along with `zoom = 1`.
 
 #### Config: exclude specific model classes
 The package currently supports only path-based exclusions via `model_paths`. Consumers frequently want to suppress noise from third-party models shipped by packages such as Telescope, Passport, or Horizon. An `excluded_models` config key accepting an array of fully-qualified class names (or wildcard namespace prefixes) would cover this without requiring consumers to manipulate `model_paths`.
 
+#### ~~FK column identification~~ ✓ Done — v0.2.0 (partial)
+FK columns are now identified in the Columns table with an `FK` badge derived from `BelongsTo`/`MorphTo` relation metadata. The tooltip shows the related class name.
+
 #### FK column links in Columns table
-When a column name follows the `{relation}_id` convention and the referenced model exists in the discovered set, the Columns table could render the column name as a link to that model's detail page. This would make the column/relation relationship visually navigable without the user needing to cross-reference the Relations section manually.
+The next step: render FK column names as links to the related model's detail page when the related class exists in the discovered set.
 
 ### Lower Priority
 
-#### Keyboard shortcut for search
-The model-list search input has no keyboard shortcut. A `/` or `Cmd+K` binding to focus the search field is a standard developer-tool convention that would improve navigation speed.
+#### ~~Keyboard shortcut for search~~ ✓ Done — v0.2.0
+`/` and `Cmd+K`/`Ctrl+K` focus the navbar search from anywhere in the app. Search also now matches table names in addition to class names.
 
-#### Model policy display
-If a model has a bound Policy registered with Laravel's `Gate`, the detail page could show the policy class name (and optionally its defined methods). This surfaces authorization context that is otherwise invisible in the browser.
+#### ~~Model policy display~~ ✓ Done — v0.2.0
+When a policy is registered via `Gate::policy()`, a `policy: PolicyName` badge appears in the model detail header with the fully-qualified class name as a tooltip. Uses `Gate::policies()` — no instantiation.
 
-#### Package version in the UI
-A small footer note showing the installed package version (read from `composer.json` or a generated constant) would help users file accurate bug reports and correlate behaviour with release notes.
+#### ~~Package version in the UI~~ ✓ Done — v0.2.0
+`Composer\InstalledVersions::getPrettyVersion()` embedded in the Blade shell as `window.modelExplorerVersion`; rendered as a subtle footer across all pages.
 
 ## Consequences
 
-None of the above items changes existing behaviour. Each is independently implementable and shippable. The recommended sequencing is: README first (required for any public release), composite-key hint second (prevents silent 404 confusion), then the remaining items in priority order.
+Items still outstanding: per-class model exclusions (`excluded_models` config) and FK column links (navigation from a FK badge to the related model's detail page). Both are independently implementable.
