@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\User;
 
@@ -301,8 +300,6 @@ it('wraps a null Model-returning accessor as a to-one payload with null record',
 });
 
 it('returns 403 on the record endpoint when the gate denies access', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $this->getJson(
         '/_model-explorer/api/models/'.recordsModelSlug(Post::class).'/record?field=id&value=1'
     )->assertForbidden();

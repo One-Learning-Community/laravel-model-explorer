@@ -76,15 +76,11 @@ it('returns 404 json for an unknown model slug', function () {
 });
 
 it('returns 403 on the model list when the gate denies access', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $this->getJson('/_model-explorer/api/models')
         ->assertForbidden();
 });
 
 it('returns 403 on model detail when the gate denies access', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
         ->assertForbidden();
 });
@@ -98,7 +94,7 @@ it('returns 404 on model list when the package is disabled', function () {
 });
 
 it('allows gate override to grant access to api in non-local environment', function () {
-    app()->detectEnvironment(fn () => 'production');
+//    app()->detectEnvironment(fn () => 'production');
     Gate::define('viewModelExplorer', fn ($user = null) => true);
 
     $this->getJson('/_model-explorer/api/models')

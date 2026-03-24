@@ -54,7 +54,7 @@ Filter by name:
 ./vendor/bin/pest --filter "resolves a to-one relation"
 ```
 
-**Known pre-existing failure:** The 403/production-environment tests fail with a Mockery error (`askQuestion` not expected) across all API test files. This is a pre-existing issue unrelated to any changes — do not spend time debugging it.
+All tests should pass. Previously some 403/production-environment tests were failing with a Mockery `askQuestion` error — this was caused by the production environment setup prompting for confirmation during test runs, which conflicted with Mockery. This has been resolved.
 
 ## Package Structure
 

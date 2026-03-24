@@ -10,15 +10,11 @@ it('allows access in a local environment', function () {
 });
 
 it('denies access in a non-local environment without a gate override', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $this->get('/_model-explorer')
         ->assertForbidden();
 });
 
 it('allows access in a non-local environment when the gate is overridden to permit', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     // $user = null is required — Laravel's Gate short-circuits to false for
     // unauthenticated requests when the callback accepts no user parameter.
     Gate::define('viewModelExplorer', fn ($user = null) => true);
@@ -36,8 +32,6 @@ it('returns 404 when the package is disabled', function () {
 });
 
 it('serves assets without requiring authorization', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $this->get('/_model-explorer/assets/app.js')
         ->assertOk()
         ->assertHeader('Content-Type', 'application/javascript');

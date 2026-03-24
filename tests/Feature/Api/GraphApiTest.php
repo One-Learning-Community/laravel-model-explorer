@@ -50,14 +50,11 @@ it('includes relation type and related class in graph payload', function () {
 });
 
 it('returns 403 on the graph endpoint when the gate denies access', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $this->getJson('/_model-explorer/api/graph')
         ->assertForbidden();
 });
 
 it('allows gate override to grant access to graph endpoint in non-local environment', function () {
-    app()->detectEnvironment(fn () => 'production');
     Gate::define('viewModelExplorer', fn ($user = null) => true);
 
     $this->getJson('/_model-explorer/api/graph')
