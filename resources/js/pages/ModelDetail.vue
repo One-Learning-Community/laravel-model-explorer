@@ -47,16 +47,16 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { shortName } from '../utils/model.js'
-import SourceCodeModal from '../components/SourceCodeModal.vue'
-import SectionNav from '../components/detail/SectionNav.vue'
-import ColumnsTable from '../components/detail/ColumnsTable.vue'
-import VirtualAttributesTable from '../components/detail/VirtualAttributesTable.vue'
-import RelationsTable from '../components/detail/RelationsTable.vue'
-import ScopesTable from '../components/detail/ScopesTable.vue'
-import TraitsList from '../components/detail/TraitsList.vue'
+import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { shortName } from "../utils/model.js";
+import SourceCodeModal from "../components/SourceCodeModal.vue";
+import SectionNav from "../components/detail/SectionNav.vue";
+import ColumnsTable from "../components/detail/ColumnsTable.vue";
+import VirtualAttributesTable from "../components/detail/VirtualAttributesTable.vue";
+import RelationsTable from "../components/detail/RelationsTable.vue";
+import ScopesTable from "../components/detail/ScopesTable.vue";
+import TraitsList from "../components/detail/TraitsList.vue";
 
 const route = useRoute()
 const model = ref(null)
@@ -170,7 +170,15 @@ async function load(slug) {
     model.value = null
     try {
         const res = await fetch(`${window.modelExplorerBasePath}/api/models/${slug}`)
-        if (res.status === 404) throw new Error('Model not found.')
+        if (res.status === 404) {
+            var data = await res.json();
+            if (data.message === 'Model not found') {
+                error.value = 'Model not found'
+            } else {
+                error.value = 'Failed to load model: ' + data.message
+            }
+            return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         model.value = await res.json()
         activeSection.value = 'columns'

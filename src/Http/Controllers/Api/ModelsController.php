@@ -41,8 +41,8 @@ class ModelsController
 
         try {
             $data = $this->inspector->inspect($className);
-        } catch (\RuntimeException) {
-            return response()->json(['message' => 'Model not found.'], 404);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
         }
 
         return response()->json($this->serialize($data));

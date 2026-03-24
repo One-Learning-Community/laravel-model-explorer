@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -31,6 +32,8 @@ class ModelInspector
         try {
             $modelInfo = ModelInfo::forModel($className);
             $model = new $className;
+        } catch (QueryException $e) {
+            throw new \RuntimeException("Failed to query model [{$className}]: {$e->getMessage()}", 0, $e);
         } catch (\Throwable $e) {
             throw new \RuntimeException("Could not instantiate model [{$className}]: {$e->getMessage()}", 0, $e);
         }
