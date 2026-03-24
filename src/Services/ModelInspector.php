@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
@@ -34,6 +35,8 @@ class ModelInspector
             throw new \RuntimeException("Could not instantiate model [{$className}]: {$e->getMessage()}", 0, $e);
         }
 
+        $policies = Gate::policies();
+
         return new ModelData(
             className: $className,
             shortName: class_basename($className),
@@ -52,6 +55,7 @@ class ModelInspector
             updatedAtColumn: $model->usesTimestamps() ? $model->getUpdatedAtColumn() : null,
             traits: $this->extractTraits($className),
             accessorSnippets: $this->extractAccessorSnippets($className, $modelInfo->attributes),
+            policyClass: $policies[$className] ?? null,
         );
     }
 

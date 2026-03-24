@@ -14,7 +14,10 @@
     <link rel="stylesheet" href="{{ url(config('model-explorer.path') . '/assets/app.css') }}">
 </head>
 <body>
-    <script>window.modelExplorerBasePath = '/{{ config('model-explorer.path') }}'</script>
+    <script>
+        window.modelExplorerBasePath = '/{{ config('model-explorer.path') }}';
+        window.modelExplorerVersion = '{{ \Composer\InstalledVersions::getPrettyVersion('onelearningcommunity/laravel-model-explorer') ?? 'dev' }}';
+    </script>
     <div id="app"></div>
     <script type="module" src="{{ url(config('model-explorer.path') . '/assets/app.js') }}"></script>
 </body>

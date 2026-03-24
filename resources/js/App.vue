@@ -26,6 +26,7 @@
             <!-- Model search -->
             <div class="relative" ref="searchContainer">
                 <input
+                    ref="searchInput"
                     v-model="searchQuery"
                     @focus="searchOpen = true"
                     @keydown.escape="closeSearch"
@@ -56,6 +57,9 @@
         <main class="flex-1 p-8 max-w-6xl w-full mx-auto">
             <RouterView />
         </main>
+        <footer class="text-center py-3 text-xs text-base-content/20">
+            Model Explorer {{ version }}
+        </footer>
     </div>
 </template>
 
@@ -79,6 +83,10 @@ function toggleTheme() {
     localStorage.setItem(STORAGE_KEY, theme)
 }
 
+// ── Version ───────────────────────────────────────────────────────────────────
+
+const version = window.modelExplorerVersion ?? ''
+
 // ── Model search ──────────────────────────────────────────────────────────────
 
 const models = ref([])
@@ -86,13 +94,15 @@ const searchQuery = ref('')
 const searchOpen = ref(false)
 const selectedIndex = ref(0)
 const searchContainer = ref(null)
+const searchInput = ref(null)
 
 const filteredModels = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
     const list = q
         ? models.value.filter(m =>
             m.short_name.toLowerCase().includes(q) ||
-            m.class.toLowerCase().includes(q)
+            m.class.toLowerCase().includes(q) ||
+            m.table.toLowerCase().includes(q)
           )
         : models.value
     return list.slice(0, 10)
@@ -127,8 +137,22 @@ function handleClickOutside(e) {
     }
 }
 
+function handleGlobalKeydown(e) {
+    // Don't steal keystrokes when the user is typing in an input/textarea
+    const tag = document.activeElement?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) {
+        return
+    }
+    if (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) {
+        e.preventDefault()
+        searchInput.value?.focus()
+        searchOpen.value = true
+    }
+}
+
 onMounted(async () => {
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleGlobalKeydown)
     try {
         const res = await fetch(`${window.modelExplorerBasePath}/api/models`)
         if (res.ok) models.value = await res.json()
@@ -137,5 +161,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
     document.removeEventListener('mousedown', handleClickOutside)
+    document.removeEventListener('keydown', handleGlobalKeydown)
 })
 </script>

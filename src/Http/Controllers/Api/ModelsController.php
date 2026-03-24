@@ -66,6 +66,7 @@ class ModelsController
             'uses_timestamps' => $data->usesTimestamps,
             'created_at_column' => $data->createdAtColumn,
             'updated_at_column' => $data->updatedAtColumn,
+            'policy' => $data->policyClass,
             'traits' => $data->traits,
             'scopes' => $data->scopes->map(fn (ScopeData $scope) => [
                 'name' => $scope->name,

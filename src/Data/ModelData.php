@@ -38,5 +38,6 @@ readonly class ModelData
         public ?string $updatedAtColumn,
         public array $traits,
         public array $accessorSnippets = [],
+        public ?string $policyClass = null,
     ) {}
 }

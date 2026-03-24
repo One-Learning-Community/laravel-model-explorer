@@ -2,9 +2,14 @@
     <div>
         <div class="flex items-center justify-between mb-6 gap-4">
             <h1 class="text-xl font-semibold m-0">Relationship Graph</h1>
-            <span v-if="!loading && !error" class="text-xs text-base-content/30">
-                {{ nodes.length }} models · {{ edges.length }} relationships
-            </span>
+            <div v-if="!loading && !error" class="flex items-center gap-3">
+                <span class="text-xs text-base-content/30">
+                    {{ nodes.length }} models · {{ edges.length }} relationships
+                </span>
+                <button v-if="nodes.length" @click="resetView" class="btn btn-xs btn-ghost">
+                    Reset view
+                </button>
+            </div>
         </div>
 
         <div v-if="error" role="alert" class="alert alert-error text-sm mb-4">{{ error }}</div>
@@ -115,8 +120,14 @@ const error = ref(null)
 // Pan / zoom
 const pan = ref({ x: 0, y: 0 })
 const zoom = ref(1)
+let initialPan = { x: 0, y: 0 }
 let panning = false
 let panStart = { x: 0, y: 0 }
+
+function resetView() {
+    pan.value = { ...initialPan }
+    zoom.value = 1
+}
 
 // Derived node/edge lists read by the template
 const nodes = computed(() =>
@@ -324,7 +335,8 @@ onMounted(async () => {
         // Start panned to the SVG centre
         const svg = svgEl.value
         if (svg) {
-            pan.value = { x: svg.clientWidth / 2, y: svg.clientHeight / 2 }
+            initialPan = { x: svg.clientWidth / 2, y: svg.clientHeight / 2 }
+            pan.value = { ...initialPan }
         }
     } catch (e) {
         error.value = `Failed to load graph: ${e.message}`

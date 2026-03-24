@@ -13,11 +13,16 @@
                     <h1 class="text-2xl font-bold m-0 mb-1">{{ model.short_name }}</h1>
                     <span class="font-mono text-xs text-base-content/50">{{ model.class }}</span>
                 </div>
-                <div class="flex gap-2 items-center pt-1 shrink-0">
+                <div class="flex gap-2 items-center pt-1 shrink-0 flex-wrap justify-end">
                     <span class="badge badge-ghost font-mono">{{ model.table }}</span>
                     <span class="badge" :class="model.uses_timestamps ? 'badge-success' : 'badge-ghost'">
                         {{ model.uses_timestamps ? 'timestamps' : 'no timestamps' }}
                     </span>
+                    <span
+                        v-if="model.policy"
+                        class="badge badge-info font-mono"
+                        :title="model.policy"
+                    >policy: {{ shortName(model.policy) }}</span>
                     <RouterLink :to="`/models/${route.params.model}/record`" class="btn btn-xs btn-ghost">
                         Look up record
                     </RouterLink>
