@@ -111,10 +111,10 @@ const activeSection = ref('columns')
 const navSections = computed(() => {
     if (!model.value) return []
     const s = [{ id: 'columns', label: 'Columns' }]
-    if (virtualAttrs.value.length)  s.push({ id: 'virtual-attrs', label: 'Virtual Attributes' })
-    s.push({ id: 'relations', label: 'Relations' })
-    if (model.value.scopes.length)  s.push({ id: 'scopes',  label: 'Scopes' })
-    if (model.value.traits.length)  s.push({ id: 'traits',  label: 'Traits' })
+    if (virtualAttrs.value.length)       s.push({ id: 'virtual-attrs', label: 'Virtual Attributes' })
+    if (model.value.relations.length)    s.push({ id: 'relations',     label: 'Relations' })
+    if (model.value.scopes.length)       s.push({ id: 'scopes',        label: 'Scopes' })
+    if (model.value.traits.length)       s.push({ id: 'traits',        label: 'Traits' })
     return s
 })
 
@@ -133,6 +133,7 @@ function updateActiveSection() {
 }
 
 function initScrollSpy() {
+    window.removeEventListener('scroll', updateActiveSection)
     window.addEventListener('scroll', updateActiveSection, { passive: true })
     updateActiveSection()
 }

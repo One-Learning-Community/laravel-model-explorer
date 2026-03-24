@@ -34,6 +34,7 @@ Architectural decisions are recorded in `docs/adr/`:
 | [006](docs/adr/006-within-safe-read-for-live-record-browsing.md) | `withinSafeRead()` — `withoutEvents()` + rolled-back transaction for safe DB reads |
 | [007](docs/adr/007-lazy-accessor-resolution.md) | Accessor values resolved lazily via separate API endpoints |
 | [008](docs/adr/008-base64url-model-slugs.md) | Model class names base64url-encoded as URL slugs |
+| [009](docs/adr/009-recommended-updates.md) | Recommended updates before publishing (README, composite-key hint, dark mode, graph reset, etc.) |
 
 ## Testing
 

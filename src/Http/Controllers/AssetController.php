@@ -22,6 +22,11 @@ class AssetController
     public function __invoke(string $path): BinaryFileResponse
     {
         $publicPath = realpath(__DIR__.'/../../../public');
+
+        if ($publicPath === false) {
+            abort(404);
+        }
+
         $assetPath = realpath($publicPath.'/'.$path);
 
         if (! $assetPath || ! str_starts_with($assetPath, $publicPath)) {

@@ -18,7 +18,11 @@
         <template v-else-if="modelStructure">
             <h1 class="text-2xl font-bold mb-6">Record Lookup — {{ modelStructure.short_name }}</h1>
 
+            <div v-if="!availableLookupFields.length" role="alert" class="alert alert-info text-sm mb-8">
+                This model has no primary key or unique columns — records cannot be looked up by field.
+            </div>
             <RecordLookupForm
+                v-else
                 :available-fields="availableLookupFields"
                 v-model:selected-field="selectedField"
                 v-model:lookup-value="lookupValue"

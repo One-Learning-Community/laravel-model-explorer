@@ -53,6 +53,7 @@ defineProps({
 const emit = defineEmits(['view-snippet'])
 
 function formatScopeParams(params) {
+    if (!params?.length) return ''
     return params.map(p => {
         let s = `$${p.name}`
         if (p.type) s = `${shortName(p.type)} ${s}`

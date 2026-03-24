@@ -10,6 +10,12 @@
         <div v-if="error" role="alert" class="alert alert-error text-sm mb-4">{{ error }}</div>
         <div v-else-if="loading" class="text-base-content/50 text-sm">Loading…</div>
 
+        <template v-else-if="!nodes.length">
+            <div role="alert" class="alert alert-info text-sm">
+                No models found. Make sure your <code>model_paths</code> config is pointing to a directory with Eloquent models.
+            </div>
+        </template>
+
         <template v-else>
             <div class="bg-base-200 rounded-xl border border-base-300 overflow-hidden" style="height: 72vh">
                 <svg
