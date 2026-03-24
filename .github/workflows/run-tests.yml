@@ -4,17 +4,25 @@ on:
   push:
     paths:
       - '**.php'
+      - 'resources/js/**'
+      - 'resources/css/**'
       - '.github/workflows/run-tests.yml'
       - 'phpunit.xml.dist'
       - 'composer.json'
       - 'composer.lock'
+      - 'package.json'
+      - 'vite.config.js'
   pull_request:
     paths:
       - '**.php'
+      - 'resources/js/**'
+      - 'resources/css/**'
       - '.github/workflows/run-tests.yml'
       - 'phpunit.xml.dist'
       - 'composer.json'
       - 'composer.lock'
+      - 'package.json'
+      - 'vite.config.js'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,6 +62,18 @@ jobs:
         run: |
           echo "::add-matcher::${{ runner.tool_cache }}/php.json"
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
 
       - name: Install dependencies
         run: |

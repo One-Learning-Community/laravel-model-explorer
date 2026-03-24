@@ -38,6 +38,7 @@ class ModelInspector
             className: $className,
             shortName: class_basename($className),
             table: $modelInfo->tableName,
+            keyName: $model->getKeyName(),
             attributes: $modelInfo->attributes,
             relations: $this->discoverRelations($className, $modelInfo)->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
             scopes: $this->extractScopes($className),

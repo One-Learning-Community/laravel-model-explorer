@@ -18,6 +18,10 @@
         <template v-else-if="modelStructure">
             <h1 class="text-2xl font-bold mb-6">Record Lookup — {{ modelStructure.short_name }}</h1>
 
+            <div v-if="isCompositeKey" role="alert" class="alert alert-warning text-sm mb-6">
+                This model uses a composite primary key. Record lookup by individual field works, but drilling into relations from a record may not function correctly.
+            </div>
+
             <div v-if="!availableLookupFields.length" role="alert" class="alert alert-info text-sm mb-8">
                 This model has no primary key or unique columns — records cannot be looked up by field.
             </div>
@@ -113,6 +117,8 @@ const trail = computed(() => {
 })
 
 // ── Computed ──────────────────────────────────────────────────────────────────
+
+const isCompositeKey = computed(() => Array.isArray(modelStructure.value?.key_name))
 
 const availableLookupFields = computed(() => {
     const attrs = modelStructure.value?.attributes ?? []

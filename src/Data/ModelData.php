@@ -23,6 +23,8 @@ readonly class ModelData
         public string $className,
         public string $shortName,
         public string $table,
+        /** @var string|list<string> */
+        public string|array $keyName,
         public Collection $attributes,
         public Collection $relations,
         public Collection $scopes,

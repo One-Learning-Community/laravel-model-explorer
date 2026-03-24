@@ -6,6 +6,13 @@
 
 A developer tool for Laravel that gives you a browsable UI to explore your Eloquent models — their attributes, casts, relations, scopes, traits, and live data — without reading code.
 
+**Zero setup beyond Composer install.** No `vendor:publish`, no frontend tooling required in your application.
+
+## Requirements
+
+- PHP 8.4+
+- Laravel 11, 12, or 13
+
 ## Features
 
 - **Model list** — searchable grid of all discovered Eloquent models
@@ -35,6 +42,12 @@ Gate::define('viewModelExplorer', function (User $user): bool {
 });
 ```
 
+To disable the explorer entirely regardless of the gate, set the environment variable:
+
+```env
+MODEL_EXPLORER_ENABLED=false
+```
+
 ## Configuration
 
 Publish the config file to customise behaviour:
@@ -55,8 +68,10 @@ return [
     'middleware' => ['web'],
 
     // Directories scanned for Eloquent models (add more for DDD layouts, packages, etc.)
+    // Keys are the root namespace, values are absolute directory paths.
     'model_paths' => [
-        'App' => app_path('Models'),
+        'App'             => app_path('Models'),
+        // 'Domain\\Billing' => base_path('src/Billing/Models'),
     ],
 
     // Traits whose FQN begins with these prefixes will be hidden in the UI

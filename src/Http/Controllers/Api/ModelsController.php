@@ -57,6 +57,7 @@ class ModelsController
             'class' => $data->className,
             'short_name' => $data->shortName,
             'table' => $data->table,
+            'key_name' => $data->keyName,
             'fillable' => $data->fillable,
             'guarded' => $data->guarded,
             'hidden' => $data->hidden,
