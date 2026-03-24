@@ -46,10 +46,10 @@
                         :key="model.class"
                         @mousedown.prevent="navigateTo(model)"
                         class="px-3 py-2 rounded cursor-pointer flex items-baseline gap-2"
-                        :class="i === selectedIndex ? 'bg-base-200' : 'hover:bg-base-200'"
+                        :class="i === selectedIndex ? 'bg-primary text-primary-content' : 'hover:bg-base-200'"
                     >
                         <span class="text-sm font-medium">{{ model.short_name }}</span>
-                        <span class="text-xs text-base-content/40 font-mono truncate">{{ model.table }}</span>
+                        <span class="text-xs font-mono truncate" :class="i === selectedIndex ? 'text-primary-content/60' : 'text-base-content/40'">{{ model.table }}</span>
                     </li>
                 </ul>
             </div>

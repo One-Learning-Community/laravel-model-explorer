@@ -5,7 +5,7 @@
             <span
                 v-for="trait in traits"
                 :key="trait"
-                class="badge badge-ghost font-mono"
+                class="badge badge-neutral font-mono"
                 :title="trait"
             >{{ shortName(trait) }}</span>
         </div>
