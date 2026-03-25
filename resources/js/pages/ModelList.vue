@@ -51,7 +51,9 @@ const filtered = computed(() => {
     const q = search.value.toLowerCase()
     if (!q) return models.value
     return models.value.filter(
-        m => m.short_name.toLowerCase().includes(q) || m.class.toLowerCase().includes(q)
+        m => m.short_name.toLowerCase().includes(q)
+            || m.class.toLowerCase().includes(q)
+            || m.table.toLowerCase().includes(q)
     )
 })
 
