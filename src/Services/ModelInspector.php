@@ -15,7 +15,7 @@ use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
 use Spatie\ModelInfo\Attributes\Attribute;
-use Spatie\ModelInfo\ModelInfo;
+use Spatie\ModelInfo\Attributes\AttributeFinder;
 use Spatie\ModelInfo\Relations\Relation;
 
 class ModelInspector
@@ -30,8 +30,9 @@ class ModelInspector
     public function inspect(string $className): ModelData
     {
         try {
-            $modelInfo = ModelInfo::forModel($className);
             $model = new $className;
+            $modelAttributes = AttributeFinder::forModel($className);
+            $modelRelations = RelationFinder::forModel($className);
         } catch (QueryException $e) {
             throw new \RuntimeException("Failed to query model [{$className}]: {$e->getMessage()}", 0, $e);
         } catch (\Throwable $e) {
@@ -43,10 +44,10 @@ class ModelInspector
         return new ModelData(
             className: $className,
             shortName: class_basename($className),
-            table: $modelInfo->tableName,
+            table: $model->getTable(),
             keyName: $model->getKeyName(),
-            attributes: $modelInfo->attributes,
-            relations: $this->discoverRelations($className, $modelInfo)->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
+            attributes: $modelAttributes,
+            relations: $modelRelations->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
             scopes: $this->extractScopes($className),
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
@@ -57,7 +58,7 @@ class ModelInspector
             createdAtColumn: $model->usesTimestamps() ? $model->getCreatedAtColumn() : null,
             updatedAtColumn: $model->usesTimestamps() ? $model->getUpdatedAtColumn() : null,
             traits: $this->extractTraits($className),
-            accessorSnippets: $this->extractAccessorSnippets($className, $modelInfo->attributes),
+            accessorSnippets: $this->extractAccessorSnippets($className, $modelAttributes),
             policyClass: $policies[$className] ?? null,
         );
     }
@@ -342,10 +343,5 @@ class ModelInspector
         }
 
         return null;
-    }
-
-    private function discoverRelations(string $className, ModelInfo $modelInfo): Collection
-    {
-        return RelationFinder::forModel($className);
     }
 }
