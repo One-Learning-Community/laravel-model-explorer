@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## v0.2.1 Release - 2026-03-25
+
+Resolve errors with models using some third party packages for advanced relations.
+
+**Full Changelog**: https://github.com/One-Learning-Community/laravel-model-explorer/compare/v0.2.0...v0.2.1
+
 ## Initial Published Release - 2026-03-24
 
 **Full Changelog**: https://github.com/One-Learning-Community/laravel-model-explorer/commits/v0.2.0
