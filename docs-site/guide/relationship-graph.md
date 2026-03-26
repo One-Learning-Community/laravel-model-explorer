@@ -1,5 +1,7 @@
 # Relationship Graph
 
+![Relationship Graph](/screenshots/model-graph.png)
+
 The Relationship Graph renders every model and every relationship in your application as an interactive, force-directed diagram.
 
 ## Navigating the Graph

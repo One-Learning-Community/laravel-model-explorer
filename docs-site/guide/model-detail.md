@@ -1,5 +1,7 @@
 # Model Detail
 
+![Model Detail](/screenshots/model-detail.png)
+
 The Model Detail view gives you the full structure of a single Eloquent model across four sections.
 
 ## Columns
