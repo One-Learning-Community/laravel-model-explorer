@@ -3,6 +3,8 @@
 namespace OneLearningCommunity\LaravelModelExplorer;
 
 use Illuminate\Support\Facades\Gate;
+use OneLearningCommunity\LaravelModelExplorer\Console\ClearCacheCommand;
+use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\LaravelPackageTools\Package;
@@ -16,6 +18,7 @@ class LaravelModelExplorerServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(ModelDiscovery::class);
         $this->app->singleton(ModelInspector::class);
+        $this->app->singleton(ExplorerCache::class);
     }
 
     public function configurePackage(Package $package): void
@@ -24,7 +27,8 @@ class LaravelModelExplorerServiceProvider extends PackageServiceProvider
             ->name('model-explorer')
             ->hasConfigFile()
             ->hasViews()
-            ->hasRoutes('web');
+            ->hasRoutes('web')
+            ->hasCommand(ClearCacheCommand::class);
     }
 
     public function packageBooted(): void

@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
+use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
@@ -15,15 +16,17 @@ class ModelsController
     public function __construct(
         private readonly ModelDiscovery $discovery,
         private readonly ModelInspector $inspector,
+        private readonly ExplorerCache $cache,
     ) {}
 
     public function index(): JsonResponse
     {
-        $models = collect($this->discovery->discoverAll())
+        $models = $this->cache->remember('models.index', fn () => collect($this->discovery->discoverAll())
             ->map(fn (string $className) => $this->summarize($className))
             ->filter()
             ->sortBy('short_name')
-            ->values();
+            ->values()
+            ->all());
 
         return response()->json($models);
     }
@@ -37,12 +40,15 @@ class ModelsController
         }
 
         try {
-            $data = $this->inspector->inspect($className);
+            $payload = $this->cache->remember(
+                'models.show.'.$model.'.'.$this->fileMtime($className),
+                fn () => $this->serialize($this->inspector->inspect($className)),
+            );
         } catch (\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         }
 
-        return response()->json($this->serialize($data));
+        return response()->json($payload);
     }
 
     /**
@@ -62,6 +68,21 @@ class ModelsController
             ];
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    /**
+     * Modification time of the file declaring the model, used in the detail cache
+     * key so an edited model file invalidates its own cached inspection.
+     */
+    private function fileMtime(string $className): int
+    {
+        try {
+            $file = (new \ReflectionClass($className))->getFileName();
+
+            return $file ? (int) filemtime($file) : 0;
+        } catch (\Throwable) {
+            return 0;
         }
     }
 

@@ -4,6 +4,7 @@ namespace OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
+use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 
@@ -12,6 +13,7 @@ class GraphController
     public function __construct(
         private readonly ModelDiscovery $discovery,
         private readonly ModelInspector $inspector,
+        private readonly ExplorerCache $cache,
     ) {}
 
     /**
@@ -22,7 +24,7 @@ class GraphController
      */
     public function __invoke(): JsonResponse
     {
-        $models = collect($this->discovery->discoverAll())
+        $models = $this->cache->remember('graph', fn () => collect($this->discovery->discoverAll())
             ->map(function (string $className): ?array {
                 try {
                     $data = $this->inspector->inspect($className);
@@ -38,11 +40,12 @@ class GraphController
                         'name' => $rel->name,
                         'type' => $rel->type,
                         'related' => $rel->related,
-                    ])->values(),
+                    ])->values()->all(),
                 ];
             })
             ->filter()
-            ->values();
+            ->values()
+            ->all());
 
         return response()->json($models);
     }
