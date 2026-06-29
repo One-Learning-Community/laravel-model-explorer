@@ -20,6 +20,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            \Laravel\Mcp\Server\McpServiceProvider::class,
             LaravelModelExplorerServiceProvider::class,
         ];
     }

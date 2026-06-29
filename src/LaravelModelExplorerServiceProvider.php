@@ -3,7 +3,9 @@
 namespace OneLearningCommunity\LaravelModelExplorer;
 
 use Illuminate\Support\Facades\Gate;
+use Laravel\Mcp\Facades\Mcp;
 use OneLearningCommunity\LaravelModelExplorer\Console\ClearCacheCommand;
+use OneLearningCommunity\LaravelModelExplorer\Mcp\ModelExplorerServer;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
@@ -45,5 +47,25 @@ class LaravelModelExplorerServiceProvider extends PackageServiceProvider
         Gate::define('viewModelExplorer', function ($user = null): bool {
             return app()->environment('local');
         });
+
+        $this->registerMcpServer();
+    }
+
+    /**
+     * The MCP server registers only when the package and its MCP feature are both
+     * enabled (and laravel/mcp is installed). This is the agent-surface kill switch.
+     */
+    public function shouldRegisterMcp(): bool
+    {
+        return (bool) config('model-explorer.enabled', true)
+            && (bool) config('model-explorer.mcp.enabled', true)
+            && class_exists(Mcp::class);
+    }
+
+    private function registerMcpServer(): void
+    {
+        if ($this->shouldRegisterMcp()) {
+            Mcp::local('model-explorer', ModelExplorerServer::class);
+        }
     }
 }
