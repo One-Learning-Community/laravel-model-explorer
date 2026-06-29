@@ -31,7 +31,7 @@ class RelationshipGraphTool extends Tool
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, \Illuminate\JsonSchema\Types\Type>
      */
     public function schema(JsonSchema $schema): array
     {

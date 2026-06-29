@@ -185,3 +185,7 @@ Pest feature tests against the workbench models, in the existing `it('...')` sty
 - Kill switches: `enabled = false` and `mcp.enabled = false` each suppress registration.
 - Caching: with `cache.enabled = true` (HTTP cache on) the tools still read live; with `mcp.cache.enabled = true` the tools go through `ExplorerCache`.
 - Regression: `GraphController` output is unchanged after the `GraphBuilder` extraction.
+
+## Maintenance
+
+`laravel/mcp` is currently a pre-1.0 hard dependency (`^0.8.x`); the installed 0.8.2 API already diverges from the original plan (e.g. `handle()` returns `ResponseFactory` rather than a plain array). The version pin will need manual review and bumping as `laravel/mcp` approaches 1.0 and its API stabilises.

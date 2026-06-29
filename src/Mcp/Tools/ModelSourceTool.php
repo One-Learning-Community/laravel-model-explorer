@@ -40,6 +40,7 @@ class ModelSourceTool extends Tool
 
         try {
             $className = $this->resolver->resolve($model);
+            // Live read by design: this tool fetches a single on-demand snippet and intentionally bypasses mcp.cache.enabled.
             $data      = $this->inspector->inspect($className);
         } catch (\RuntimeException $e) {
             return Response::error($e->getMessage());
@@ -96,7 +97,7 @@ class ModelSourceTool extends Tool
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, \Illuminate\JsonSchema\Types\Type>
      */
     public function schema(JsonSchema $schema): array
     {

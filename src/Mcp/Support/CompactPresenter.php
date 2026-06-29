@@ -12,18 +12,6 @@ class CompactPresenter
     public const array SECTIONS = ['columns', 'relations', 'scopes', 'accessors', 'traits', 'mass-assignment', 'policy'];
 
     /**
-     * @return array{class:string, name:string, table:string}
-     */
-    public function summary(ModelData $data): array
-    {
-        return [
-            'class' => $data->className,
-            'name' => $data->shortName,
-            'table' => $data->table,
-        ];
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public function overview(ModelData $data): array

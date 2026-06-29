@@ -2,7 +2,7 @@
 
 use OneLearningCommunity\LaravelModelExplorer\LaravelModelExplorerServiceProvider;
 
-function provider(): LaravelModelExplorerServiceProvider
+function mcpRegistrationProvider(): LaravelModelExplorerServiceProvider
 {
     return new LaravelModelExplorerServiceProvider(app());
 }
@@ -10,17 +10,17 @@ function provider(): LaravelModelExplorerServiceProvider
 it('registers MCP when both flags are enabled', function () {
     config(['model-explorer.enabled' => true, 'model-explorer.mcp.enabled' => true]);
 
-    expect(provider()->shouldRegisterMcp())->toBeTrue();
+    expect(mcpRegistrationProvider()->shouldRegisterMcp())->toBeTrue();
 });
 
 it('does not register MCP when the package is disabled', function () {
     config(['model-explorer.enabled' => false, 'model-explorer.mcp.enabled' => true]);
 
-    expect(provider()->shouldRegisterMcp())->toBeFalse();
+    expect(mcpRegistrationProvider()->shouldRegisterMcp())->toBeFalse();
 });
 
 it('does not register MCP when mcp is disabled', function () {
     config(['model-explorer.enabled' => true, 'model-explorer.mcp.enabled' => false]);
 
-    expect(provider()->shouldRegisterMcp())->toBeFalse();
+    expect(mcpRegistrationProvider()->shouldRegisterMcp())->toBeFalse();
 });

@@ -2,6 +2,8 @@
 
 namespace OneLearningCommunity\LaravelModelExplorer\Mcp\Tools;
 
+use RuntimeException;
+
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -9,7 +11,6 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
-use RuntimeException;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
@@ -102,6 +103,8 @@ class FindModelTool extends Tool
 
     private function matchTrait(ModelData $data, string $needle): ?string
     {
+        $needle = ltrim($needle, '\\');
+
         foreach ($data->traits as $trait) {
             if (strcasecmp($trait, $needle) === 0 || strcasecmp(class_basename($trait), $needle) === 0) {
                 return $trait;
@@ -142,6 +145,8 @@ class FindModelTool extends Tool
 
     private function matchColumn(ModelData $data, string $needle): ?string
     {
+        $needle = ltrim($needle, '\\');
+
         foreach ($data->attributes as $attr) {
             /** @var Attribute $attr */
             if (! $attr->virtual && strcasecmp($attr->name, $needle) === 0) {
@@ -153,7 +158,7 @@ class FindModelTool extends Tool
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, \Illuminate\JsonSchema\Types\Type>
      */
     public function schema(JsonSchema $schema): array
     {
