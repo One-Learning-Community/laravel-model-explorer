@@ -3,49 +3,22 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
-use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
-use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
-use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use OneLearningCommunity\LaravelModelExplorer\Services\GraphBuilder;
 
 class GraphController
 {
     public function __construct(
-        private readonly ModelDiscovery $discovery,
-        private readonly ModelInspector $inspector,
+        private readonly GraphBuilder $builder,
         private readonly ExplorerCache $cache,
     ) {}
 
     /**
      * Returns all models with their relationships in a single payload for graph rendering.
-     *
-     * NOTE: This calls inspect() on every model, which is intentionally heavier than the
-     * lightweight index endpoint. It is only used by the relationship graph view.
      */
     public function __invoke(): JsonResponse
     {
-        $models = $this->cache->remember('graph', fn () => collect($this->discovery->discoverAll())
-            ->map(function (string $className): ?array {
-                try {
-                    $data = $this->inspector->inspect($className);
-                } catch (\RuntimeException) {
-                    return null;
-                }
-
-                return [
-                    'class' => $data->className,
-                    'short_name' => $data->shortName,
-                    'table' => $data->table,
-                    'relations' => $data->relations->map(fn (RelationData $rel) => [
-                        'name' => $rel->name,
-                        'type' => $rel->type,
-                        'related' => $rel->related,
-                    ])->values()->all(),
-                ];
-            })
-            ->filter()
-            ->values()
-            ->all());
+        $models = $this->cache->remember('graph', fn () => $this->builder->build());
 
         return response()->json($models);
     }
