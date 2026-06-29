@@ -109,13 +109,34 @@ A new config block (existing structure untouched):
 ```php
 'mcp' => [
     'enabled' => env('MODEL_EXPLORER_MCP', true),
+
+    // MCP tools read live by default (bypassing ExplorerCache) so an agent
+    // never reasons on stale structure during active development. Opt in only
+    // if you accept staleness for speed on a very large model set.
+    'cache' => [
+        'enabled' => env('MODEL_EXPLORER_MCP_CACHE', false),
+    ],
 ],
 ```
 
 - The server is a **local stdio server** — it runs as `php artisan mcp:start model-explorer` inside the developer's own shell, the same trust boundary as `tinker`. The HTTP `viewModelExplorer` gate (ADR-002) is request-scoped and does not apply; the server is gated only by `enabled` **and** `mcp.enabled`.
 - `model_paths` and `excluded_models` are honored automatically — everything flows through `ModelDiscovery`.
-- `ExplorerCache` (the opt-in cache, `model-explorer.cache.enabled`) is reused, so `find-model`'s per-model inspection benefits from caching when enabled.
 - **No live DB rows** are ever returned; all tools are structure, schema, and source metadata.
+
+### Caching: live-by-default for the agent surface
+
+`ExplorerCache` was designed for the **human HTTP/SPA surface**, where its invalidation gaps are tolerable because a developer can see and refresh a stale view. Those gaps make it actively dangerous for an **agent**, which cannot tell a result is stale and will reason on wrong facts:
+
+| Tool | Cache key | Self-invalidates on | Stale when |
+|---|---|---|---|
+| `inspect-model` | `models.show.{slug}.{filemtime}` | editing the model file | editing a **trait** it uses, a **migration/schema** change, a related model |
+| `list-models` | `models.index` (no mtime, no TTL) | nothing | any model added/removed |
+| `relationship-graph` | `graph` (no mtime) | nothing | any relation added/changed |
+| `find-model` | per-model inspections | model-file edits only | the `inspect-model` gaps, ×N |
+
+The MCP scenario *is* active development: you add a relation or a migration, the agent calls a tool, and silently receives yesterday's structure. A stale answer is worse than a slow correct one.
+
+Therefore the MCP tools **bypass `ExplorerCache` and read live by default**, independent of `model-explorer.cache.enabled` (which continues to govern only the HTTP surface). A separate opt-in, `model-explorer.mcp.cache.enabled` (default `false`), lets a user with a very large model set knowingly trade freshness for speed — chiefly to amortize `find-model`'s per-model inspection. There is deliberately **no per-call `no_cache` flag**: that pushes a staleness judgement onto the agent, which has no way to make it well; correctness belongs in the surface default, not the call site.
 
 ### Architecture / file manifest
 
@@ -145,6 +166,7 @@ resources/boost/guidelines/
 - Works whether or not Boost is installed; Boost users additionally get auto-advertisement via guidelines.
 - Tools stay trivial — all logic remains in the existing, already-tested services. `GraphBuilder` extraction removes a duplication that would otherwise appear.
 - Token-economical: compact JSON, opt-in `inspect-model` sections, pointers-not-snippets by default.
+- Correct-by-default for active development: the agent surface reads live, so it never silently serves stale structure while you are editing models, traits, or migrations.
 
 **Negative:**
 - `laravel/mcp` becomes a hard dependency; consumers who only want the web UI pull one extra package. Mitigated by `mcp.enabled` (disable registration) — a future split to `suggest` + conditional `class_exists` registration remains open if the weight proves unwelcome.
@@ -161,4 +183,5 @@ Pest feature tests against the workbench models, in the existing `it('...')` sty
 - `model-source`: a known definition returns the trait-correct snippet; an unknown `name` lists available names.
 - `relationship-graph`: node/edge topology for a known relation.
 - Kill switches: `enabled = false` and `mcp.enabled = false` each suppress registration.
+- Caching: with `cache.enabled = true` (HTTP cache on) the tools still read live; with `mcp.cache.enabled = true` the tools go through `ExplorerCache`.
 - Regression: `GraphController` output is unchanged after the `GraphBuilder` extraction.
