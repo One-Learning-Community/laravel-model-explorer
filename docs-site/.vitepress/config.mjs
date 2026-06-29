@@ -7,6 +7,14 @@ export default defineConfig({
 
     head: [
         ['link', { rel: 'icon', href: '/laravel-model-explorer/favicon.ico' }],
+        [
+            'script',
+            {
+                defer: '',
+                src: 'https://static.cloudflareinsights.com/beacon.min.js',
+                'data-cf-beacon': '{"token": "b9e858dff0e743cf852f98b0b4a491a0"}',
+            },
+        ],
     ],
 
     themeConfig: {
