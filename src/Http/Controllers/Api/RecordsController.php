@@ -89,7 +89,7 @@ class RecordsController
             }
 
             $page = max(1, (int) $request->query('page', 1));
-            $paginator = $relInstance->paginate(15, ['*'], 'page', $page);
+            $paginator = $relInstance->paginate($this->perPage(), ['*'], 'page', $page);
 
             return response()->json([
                 'type' => 'many',
@@ -234,9 +234,9 @@ class RecordsController
      * Normalises an accessor return value for the API response.
      *
      * If the value is a single Eloquent Model it is wrapped as a to-one record payload.
-     * If the value is a Collection it is wrapped as a to-many record payload (capped at 15
-     * items to avoid oversized responses; the full count is included so the UI can show it).
-     * All other values are returned unchanged.
+     * If the value is a Collection it is wrapped as a to-many record payload (capped at the
+     * configured `per_page` to avoid oversized responses; the full count is included so the
+     * UI can show it). All other values are returned unchanged.
      */
     private function serializeAccessorValue(mixed $value): mixed
     {
@@ -247,7 +247,7 @@ class RecordsController
         if ($value instanceof Collection && $value->first() instanceof Model) {
             $total = $value->count();
             $records = $value
-                ->take(15)
+                ->take($this->perPage())
                 ->filter(fn ($item) => $item instanceof Model)
                 ->map(fn (Model $m) => $this->buildRecordPayload($m))
                 ->values();
@@ -277,6 +277,17 @@ class RecordsController
         }
 
         return array_merge(array_keys($record->getAttributes()), $virtualNames);
+    }
+
+    /**
+     * Number of related records shown per page and the cap on collection-returning
+     * accessor values. Falls back to 15 when misconfigured.
+     */
+    private function perPage(): int
+    {
+        $perPage = (int) config('model-explorer.per_page', 15);
+
+        return $perPage > 0 ? $perPage : 15;
     }
 
     private function isToOneRelation(Relation $relation): bool

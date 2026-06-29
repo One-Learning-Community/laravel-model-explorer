@@ -213,6 +213,25 @@ it('resolves a to-many relation and returns paginated records', function () {
         ->and($response->json('current_page'))->toBe(1);
 });
 
+it('uses the configured per_page for to-many relation pagination', function () {
+    app()->detectEnvironment(fn () => 'local');
+    config()->set('model-explorer.per_page', 2);
+
+    $user = User::forceCreate([]);
+    for ($i = 0; $i < 3; $i++) {
+        Post::forceCreate(['title' => "Post {$i}", 'body' => 'B', 'user_id' => $user->id]);
+    }
+
+    $response = $this->getJson(
+        '/_model-explorer/api/models/'.recordsModelSlug(User::class).'/record/relations/posts?record_key='.$user->id
+    )->assertOk();
+
+    expect($response->json('per_page'))->toBe(2)
+        ->and($response->json('total'))->toBe(3)
+        ->and($response->json('records'))->toHaveCount(2)
+        ->and($response->json('last_page'))->toBe(2);
+});
+
 it('paginates to-many relations when requesting a specific page', function () {
     app()->detectEnvironment(fn () => 'local');
     $user = User::forceCreate([]);
