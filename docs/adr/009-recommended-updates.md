@@ -48,3 +48,13 @@ When a policy is registered via `Gate::policy()`, a `policy: PolicyName` badge a
 ## Consequences
 
 All items recorded in this ADR have now shipped. The remaining v0.2.0 follow-ups — per-class model exclusions (`excluded_models` config) and FK column links — landed in v0.3.0, along with multi-connection safe reads (`withinSafeRead()` now opens its rolled-back transaction on the inspected model's own connection).
+
+## Deferred / Future
+
+#### Record browse mode
+The record browser is currently lookup-only: you must already know a primary key or
+unique-field value to find a record (`RecordsController::show()` does a single-field
+`where(...)->first()`). A paginated "browse latest N records" view would let developers
+explore a model's data without knowing a key up front, reusing the existing
+`withinSafeRead()` + `paginate()` plumbing and the `per_page` config. Deferred — not yet
+scheduled.
