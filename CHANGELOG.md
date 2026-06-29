@@ -4,6 +4,12 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 
 ## Unreleased
 
+### Added
+- MCP server (`model-explorer`) exposing AI model-introspection tools: `list-models`,
+  `inspect-model`, `relationship-graph`, `find-model`, and `model-source`. Reads live
+  by default; opt-in caching via `MODEL_EXPLORER_MCP_CACHE`. Boost guidelines advertise
+  the tools on `boost:install`. See ADR-011.
+
 ### What's new
 
 - **`excluded_models` config** — hide specific model classes (even inside a scanned path) by FQCN or `*` wildcard; useful for suppressing third-party models from Telescope, Passport, Horizon, etc.

@@ -113,6 +113,32 @@ are cached until the TTL expires or you clear them manually:
 php artisan model-explorer:clear
 ```
 
+## AI Model Introspection (MCP)
+
+Model Explorer ships a local [`laravel/mcp`](https://laravel.com/docs/mcp) server,
+`model-explorer`, that lets AI coding agents introspect your Eloquent models without
+scanning source. Register it in your AI client:
+
+```json
+{
+  "mcpServers": {
+    "model-explorer": {
+      "command": "php",
+      "args": ["artisan", "mcp:start", "model-explorer"]
+    }
+  }
+}
+```
+
+Tools: `list-models`, `inspect-model` (opt-in sections via `include`),
+`relationship-graph`, `find-model` (filter by `trait`/`extends`/`relatesTo`/`hasColumn`),
+and `model-source`. If you use [Laravel Boost](https://laravel.com/docs/boost),
+`boost:install` automatically advertises these tools to your agent.
+
+The tools read live by default so an agent never sees stale structure mid-development.
+Set `MODEL_EXPLORER_MCP_CACHE=true` to trade freshness for speed on very large model
+sets, or `MODEL_EXPLORER_MCP=false` to disable the server entirely.
+
 ## Security
 
 Laravel Model Explorer is intended for development use. The `viewModelExplorer` gate should prevent access in production environments.
