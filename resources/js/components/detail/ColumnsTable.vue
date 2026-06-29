@@ -19,10 +19,16 @@
                                 <span class="font-medium">{{ attr.name }}</span>
                                 <span v-if="attr.primary" class="badge badge-primary badge-xs">PK</span>
                                 <span v-if="attr.increments" class="badge badge-ghost badge-xs">auto</span>
+                                <RouterLink
+                                    v-if="foreignKeyMap[attr.name] && fkLink(attr.name)"
+                                    :to="fkLink(attr.name)"
+                                    class="badge badge-secondary badge-xs hover:badge-secondary"
+                                    :title="`FK → ${foreignKeyMap[attr.name].related} (view model)`"
+                                >FK</RouterLink>
                                 <span
-                                    v-if="foreignKeyMap[attr.name]"
+                                    v-else-if="foreignKeyMap[attr.name]"
                                     class="badge badge-secondary badge-xs"
-                                    :title="`FK → ${foreignKeyMap[attr.name].related}`"
+                                    :title="`FK → ${foreignKeyMap[attr.name].related ?? 'polymorphic'}`"
                                 >FK</span>
                             </div>
                         </td>
@@ -48,8 +54,21 @@
 </template>
 
 <script setup>
-defineProps({
+import { encodeModel } from "../../utils/model.js"
+
+const props = defineProps({
     columns: { type: Array, required: true },
     foreignKeyMap: { type: Object, default: () => ({}) },
+    // Set of fully-qualified class names that exist in the discovered model set.
+    // FK badges only link when their related model is present here.
+    knownModels: { type: Object, default: () => new Set() },
 })
+
+// Returns the router target for an FK column when its related model is discovered,
+// otherwise null (the badge renders as a non-link).
+function fkLink(name) {
+    const related = props.foreignKeyMap[name]?.related
+    if (!related || !props.knownModels.has(related)) return null
+    return `/models/${encodeModel(related)}`
+}
 </script>

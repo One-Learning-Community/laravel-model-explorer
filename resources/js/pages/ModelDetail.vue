@@ -35,7 +35,7 @@
                 @navigate="scrollToSection"
             />
 
-            <ColumnsTable :columns="dbColumns" :foreign-key-map="foreignKeyMap" />
+            <ColumnsTable :columns="dbColumns" :foreign-key-map="foreignKeyMap" :known-models="knownModels" />
             <VirtualAttributesTable :grouped-attrs="groupedVirtualAttrs" @view-snippet="snippetModal.open" />
             <RelationsTable :grouped-relations="groupedRelations" @view-snippet="snippetModal.open" />
             <ScopesTable :grouped-scopes="groupedScopes" @view-snippet="snippetModal.open" />
@@ -63,6 +63,8 @@ const model = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const snippetModal = ref(null)
+// Discovered model classes, used to decide which FK columns become links.
+const knownModels = ref(new Set())
 
 // ── Computed data ─────────────────────────────────────────────────────────────
 
@@ -164,7 +166,23 @@ onUnmounted(() => window.removeEventListener('scroll', updateActiveSection))
 
 // ── Load ──────────────────────────────────────────────────────────────────────
 
+// Fetch the discovered model list once so FK badges can link to existing models.
+// Non-fatal: if it fails, FK columns simply render without links.
+async function loadKnownModels() {
+    if (knownModels.value.size) return
+    try {
+        const res = await fetch(`${window.modelExplorerBasePath}/api/models`)
+        if (res.ok) {
+            const list = await res.json()
+            knownModels.value = new Set(list.map(m => m.class))
+        }
+    } catch {
+        // ignore — FK links are a progressive enhancement
+    }
+}
+
 async function load(slug) {
+    loadKnownModels()
     loading.value = true
     error.value = null
     model.value = null
