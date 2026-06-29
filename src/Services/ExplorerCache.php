@@ -29,10 +29,25 @@ class ExplorerCache
      */
     public function remember(string $key, Closure $callback): mixed
     {
-        if (! $this->enabled()) {
+        return $this->rememberWhen($this->enabled(), $key, $callback);
+    }
+
+    /**
+     * Cache through the versioned namespace when $condition is true (independent of
+     * the global cache.enabled flag); otherwise invoke the callback live. Used by the
+     * MCP surface, which reads live by default but may opt in via mcp.cache.enabled.
+     */
+    public function rememberWhen(bool $condition, string $key, Closure $callback): mixed
+    {
+        if (! $condition) {
             return $callback();
         }
 
+        return $this->cacheThrough($key, $callback);
+    }
+
+    private function cacheThrough(string $key, Closure $callback): mixed
+    {
         $store = $this->store();
         $namespacedKey = $this->prefix($store).$key;
         $ttl = config('model-explorer.cache.ttl');

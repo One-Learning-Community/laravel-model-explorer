@@ -112,4 +112,27 @@ return [
         'ttl' => env('MODEL_EXPLORER_CACHE_TTL'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | MCP Server
+    |--------------------------------------------------------------------------
+    | A local laravel/mcp server ("model-explorer") exposes model-introspection
+    | tools to AI agents. It registers only when both `enabled` and `mcp.enabled`
+    | are true. Wire it into your AI client with:
+    |
+    |   { "mcpServers": { "model-explorer": {
+    |       "command": "php", "args": ["artisan", "mcp:start", "model-explorer"] } } }
+    |
+    | The tools read live by default so an agent never reasons on stale structure
+    | during active development. Enable `mcp.cache.enabled` only if you accept
+    | staleness for speed on a very large model set.
+    */
+    'mcp' => [
+        'enabled' => env('MODEL_EXPLORER_MCP', true),
+
+        'cache' => [
+            'enabled' => env('MODEL_EXPLORER_MCP_CACHE', false),
+        ],
+    ],
+
 ];
