@@ -20,11 +20,8 @@ class ModelsController
     public function index(): JsonResponse
     {
         $models = collect($this->discovery->discoverAll())
-            ->map(fn (string $className) => [
-                'class' => $className,
-                'short_name' => class_basename($className),
-                'table' => (new $className)->getTable(),
-            ])
+            ->map(fn (string $className) => $this->summarize($className))
+            ->filter()
             ->sortBy('short_name')
             ->values();
 
@@ -46,6 +43,26 @@ class ModelsController
         }
 
         return response()->json($this->serialize($data));
+    }
+
+    /**
+     * Build the lightweight list-view summary for a model. Returns null when the
+     * model cannot be instantiated, so a single broken model does not break the
+     * entire list.
+     *
+     * @return array{class: string, short_name: string, table: string}|null
+     */
+    private function summarize(string $className): ?array
+    {
+        try {
+            return [
+                'class' => $className,
+                'short_name' => class_basename($className),
+                'table' => (new $className)->getTable(),
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

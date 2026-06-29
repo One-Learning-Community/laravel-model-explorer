@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
+use Workbench\App\Models\BrokenModel;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\User;
@@ -25,6 +26,18 @@ it('includes each model class name and table in the list', function () {
         ->assertOk()
         ->assertJsonFragment(['class' => Post::class, 'short_name' => 'Post', 'table' => 'posts'])
         ->assertJsonFragment(['class' => User::class, 'short_name' => 'User', 'table' => 'users']);
+});
+
+it('omits models that cannot be instantiated from the list', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $response = $this->getJson('/_model-explorer/api/models')->assertOk();
+
+    // BrokenModel throws on instantiation; it must be skipped rather than
+    // breaking the entire list, which still contains the healthy models.
+    expect(collect($response->json())->pluck('class'))
+        ->toContain(Post::class)
+        ->not->toContain(BrokenModel::class);
 });
 
 it('returns full model detail for a valid model slug', function () {
