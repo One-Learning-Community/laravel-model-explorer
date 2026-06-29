@@ -6,6 +6,7 @@ use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
+use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\InspectModelTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\ListModelsTool;
 
 #[Name('Model Explorer')]
@@ -23,7 +24,7 @@ class ModelExplorerServer extends Server
      */
     protected array $tools = [
         ListModelsTool::class,
-        // InspectModelTool::class,    — added in Task 6
+        InspectModelTool::class,
         // RelationshipGraphTool::class, — added in Task 7
         // FindModelTool::class,        — added in Task 8
         // ModelSourceTool::class,      — added in Task 9
