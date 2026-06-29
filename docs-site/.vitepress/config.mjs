@@ -41,6 +41,12 @@ export default defineConfig({
                     { text: 'Relationship Graph', link: '/guide/relationship-graph' },
                 ],
             },
+            {
+                text: 'AI Integration',
+                items: [
+                    { text: 'Model Introspection (MCP)', link: '/guide/mcp' },
+                ],
+            },
         ],
 
         socialLinks: [

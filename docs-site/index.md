@@ -29,4 +29,7 @@ features:
   - icon: 🕸️
     title: Relationship Graph
     details: An interactive force-directed graph of every relationship across your entire model layer. Pan, zoom, drag, and click to navigate.
+  - icon: 🤖
+    title: AI Model Introspection (MCP)
+    details: A local laravel/mcp server that lets AI coding agents introspect your models — columns, relations, scopes, accessors, and trait-correct source — without scanning your files.
 ---

@@ -49,3 +49,4 @@ Never open Model Explorer to unauthenticated users in a production environment. 
 
 - [Configuration](/guide/configuration) — change the URL path, add middleware, or restrict model paths
 - [Model List](/guide/model-list) — what you see when you first open the UI
+- [AI Model Introspection (MCP)](/guide/mcp) — let AI coding agents introspect your models
