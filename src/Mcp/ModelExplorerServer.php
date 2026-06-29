@@ -6,6 +6,7 @@ use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
+use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\FindModelTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\InspectModelTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\ListModelsTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\RelationshipGraphTool;
@@ -27,7 +28,7 @@ class ModelExplorerServer extends Server
         ListModelsTool::class,
         InspectModelTool::class,
         RelationshipGraphTool::class,
-        // FindModelTool::class,        — added in Task 8
+        FindModelTool::class,
         // ModelSourceTool::class,      — added in Task 9
     ];
 }
