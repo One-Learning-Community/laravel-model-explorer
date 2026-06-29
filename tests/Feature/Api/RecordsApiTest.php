@@ -1,6 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Workbench\App\Models\Post;
+use Workbench\App\Models\SecondaryConnectionRecord;
 use Workbench\App\Models\User;
 
 function recordsModelSlug(string $className): string
@@ -303,4 +306,36 @@ it('returns 403 on the record endpoint when the gate denies access', function ()
     $this->getJson(
         '/_model-explorer/api/models/'.recordsModelSlug(Post::class).'/record?field=id&value=1'
     )->assertForbidden();
+});
+
+it('rolls back accessor writes for a model on a non-default connection', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    config()->set('database.connections.secondary', [
+        'driver' => 'sqlite',
+        'database' => ':memory:',
+        'prefix' => '',
+    ]);
+
+    Schema::connection('secondary')->create('secondary_records', function ($table) {
+        $table->id();
+        $table->string('name');
+    });
+    Schema::connection('secondary')->create('write_audits', function ($table) {
+        $table->id();
+        $table->string('note');
+    });
+
+    DB::connection('secondary')->table('secondary_records')->insert(['id' => 1, 'name' => 'x']);
+
+    // Resolving the `audited` accessor performs a write on the secondary connection.
+    $this->getJson(
+        '/_model-explorer/api/models/'.recordsModelSlug(SecondaryConnectionRecord::class).'/record/attributes/audited?record_key=1'
+    )
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'audited', 'value' => 'audited']);
+
+    // withinSafeRead must open its transaction on the model's own connection, so the
+    // accessor's write is rolled back rather than persisted.
+    expect(DB::connection('secondary')->table('write_audits')->count())->toBe(0);
 });

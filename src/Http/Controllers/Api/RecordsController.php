@@ -33,7 +33,7 @@ class RecordsController
 
         $field = $request->query('field') ?: (new $className)->getKeyName();
 
-        return $this->withinSafeRead(function () use ($className, $field, $value): JsonResponse {
+        return $this->withinSafeRead($className, function () use ($className, $field, $value): JsonResponse {
             $record = $className::query()->where($field, $value)->first();
 
             if (! $record) {
@@ -58,7 +58,7 @@ class RecordsController
             return response()->json(['message' => 'The record_key field is required.'], 422);
         }
 
-        return $this->withinSafeRead(function () use ($className, $recordKey, $relation, $request): JsonResponse {
+        return $this->withinSafeRead($className, function () use ($className, $recordKey, $relation, $request): JsonResponse {
             $record = $className::find($recordKey);
 
             if (! $record) {
@@ -118,7 +118,7 @@ class RecordsController
 
         $names = $request->query('names', []);
 
-        return $this->withinSafeRead(function () use ($className, $recordKey, $names): JsonResponse {
+        return $this->withinSafeRead($className, function () use ($className, $recordKey, $names): JsonResponse {
             $record = $className::find($recordKey);
 
             if (! $record) {
@@ -164,7 +164,7 @@ class RecordsController
             return response()->json(['message' => 'The record_key field is required.'], 422);
         }
 
-        return $this->withinSafeRead(function () use ($className, $recordKey, $attribute): JsonResponse {
+        return $this->withinSafeRead($className, function () use ($className, $recordKey, $attribute): JsonResponse {
             $record = $className::find($recordKey);
 
             if (! $record) {
@@ -211,17 +211,22 @@ class RecordsController
      * Note: non-database side effects (HTTP calls, cache writes, queue pushes) are not
      * prevented. If an accessor makes external calls, those will still execute.
      *
-     * Note: only covers the model's default database connection. If your models span
-     * multiple connections, writes on other connections are not rolled back.
+     * The transaction is opened on the connection the given model uses, so models on a
+     * non-default connection are protected. Writes that an accessor or relation makes to
+     * a *different* connection than the root model's are still not rolled back.
+     *
+     * @param  class-string<Model>  $className
      */
-    private function withinSafeRead(callable $callback): mixed
+    private function withinSafeRead(string $className, callable $callback): mixed
     {
-        DB::beginTransaction();
+        $connection = (new $className)->getConnectionName();
+
+        DB::connection($connection)->beginTransaction();
 
         try {
             return Model::withoutEvents($callback);
         } finally {
-            DB::rollBack();
+            DB::connection($connection)->rollBack();
         }
     }
 
