@@ -32,3 +32,6 @@ phpstan.neon
 testbench.yaml
 /coverage
 .planning/
+
+# Project AI context (local only)
+/CLAUDE.md
