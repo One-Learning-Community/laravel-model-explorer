@@ -3,6 +3,7 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Mcp\Tools;
 
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -31,7 +32,7 @@ class RelationshipGraphTool extends Tool
     }
 
     /**
-     * @return array<string, \Illuminate\JsonSchema\Types\Type>
+     * @return array<string, Type>
      */
     public function schema(JsonSchema $schema): array
     {

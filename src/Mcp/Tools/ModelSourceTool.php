@@ -3,6 +3,7 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Mcp\Tools;
 
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -28,20 +29,20 @@ class ModelSourceTool extends Tool
     {
         $request->validate([
             'model' => 'required|string',
-            'kind'  => 'required|in:scope,relation,accessor',
-            'name'  => 'required|string',
+            'kind' => 'required|in:scope,relation,accessor',
+            'name' => 'required|string',
         ], [
             'kind.in' => 'kind must be one of: scope, relation, accessor.',
         ]);
 
         $model = (string) $request->get('model');
-        $kind  = (string) $request->get('kind');
-        $name  = (string) $request->get('name');
+        $kind = (string) $request->get('kind');
+        $name = (string) $request->get('name');
 
         try {
             $className = $this->resolver->resolve($model);
             // Live read by design: this tool fetches a single on-demand snippet and intentionally bypasses mcp.cache.enabled.
-            $data      = $this->inspector->inspect($className);
+            $data = $this->inspector->inspect($className);
         } catch (\RuntimeException $e) {
             return Response::error($e->getMessage());
         }
@@ -56,9 +57,9 @@ class ModelSourceTool extends Tool
         }
 
         return Response::structured(array_filter([
-            'code'       => $snippet['code'],
+            'code' => $snippet['code'],
             'defined_in' => $this->presenter->pointer($snippet),
-            'doc'        => $snippet['doc_summary'] ?? null,
+            'doc' => $snippet['doc_summary'] ?? null,
         ], fn ($v) => $v !== null));
     }
 
@@ -97,7 +98,7 @@ class ModelSourceTool extends Tool
     }
 
     /**
-     * @return array<string, \Illuminate\JsonSchema\Types\Type>
+     * @return array<string, Type>
      */
     public function schema(JsonSchema $schema): array
     {
@@ -105,10 +106,10 @@ class ModelSourceTool extends Tool
             'model' => $schema->string()
                 ->description('Fully-qualified or short class name, e.g. "Order".')
                 ->required(),
-            'kind'  => $schema->string()
+            'kind' => $schema->string()
                 ->description('One of: scope, relation, accessor.')
                 ->required(),
-            'name'  => $schema->string()
+            'name' => $schema->string()
                 ->description('The definition name, e.g. scope "active", relation "items", accessor "full_name".')
                 ->required(),
         ];

@@ -3,6 +3,7 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Laravel\Mcp\Server\McpServiceProvider;
 use OneLearningCommunity\LaravelModelExplorer\LaravelModelExplorerServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -20,7 +21,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
-            \Laravel\Mcp\Server\McpServiceProvider::class,
+            McpServiceProvider::class,
             LaravelModelExplorerServiceProvider::class,
         ];
     }

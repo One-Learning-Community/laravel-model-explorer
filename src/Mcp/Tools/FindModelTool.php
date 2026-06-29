@@ -2,9 +2,8 @@
 
 namespace OneLearningCommunity\LaravelModelExplorer\Mcp\Tools;
 
-use RuntimeException;
-
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -14,6 +13,7 @@ use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use RuntimeException;
 use Spatie\ModelInfo\Attributes\Attribute;
 
 #[Description('Find models matching structural criteria: trait (uses a trait), extends (parent class), relatesTo (has a relation to a model), hasColumn (table has a column). Filters combine with AND. Answers cross-cutting questions without inspecting every model. At least one filter is required.')]
@@ -158,7 +158,7 @@ class FindModelTool extends Tool
     }
 
     /**
-     * @return array<string, \Illuminate\JsonSchema\Types\Type>
+     * @return array<string, Type>
      */
     public function schema(JsonSchema $schema): array
     {

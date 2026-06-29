@@ -212,7 +212,7 @@ class CompactPresenter
     }
 
     /**
-     * @return array<string, string>  foreign-key column name => related short class name
+     * @return array<string, string> foreign-key column name => related short class name
      */
     private function foreignKeyMap(ModelData $data): array
     {

@@ -1,11 +1,13 @@
 <?php
 
 use OneLearningCommunity\LaravelModelExplorer\Services\GraphBuilder;
+use Workbench\App\Models\BrokenModel;
+use Workbench\App\Models\Post;
 
 it('builds a node per inspectable model with its relations', function () {
     $graph = app(GraphBuilder::class)->build();
 
-    $post = collect($graph)->firstWhere('class', \Workbench\App\Models\Post::class);
+    $post = collect($graph)->firstWhere('class', Post::class);
 
     expect($post)->not->toBeNull()
         ->and($post['short_name'])->toBe('Post')
@@ -17,5 +19,5 @@ it('omits models that cannot be inspected', function () {
     $graph = app(GraphBuilder::class)->build();
 
     expect(collect($graph)->pluck('class'))
-        ->not->toContain(\Workbench\App\Models\BrokenModel::class);
+        ->not->toContain(BrokenModel::class);
 });

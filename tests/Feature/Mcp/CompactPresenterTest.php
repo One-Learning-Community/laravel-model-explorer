@@ -2,10 +2,11 @@
 
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\CompactPresenter;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use Workbench\App\Models\Post;
 
 function presentPost(): array
 {
-    $data = app(ModelInspector::class)->inspect(\Workbench\App\Models\Post::class);
+    $data = app(ModelInspector::class)->inspect(Post::class);
 
     return [app(CompactPresenter::class), $data];
 }
