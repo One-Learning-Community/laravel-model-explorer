@@ -25,14 +25,14 @@ Hardcoded `data-theme="night"` removed. Theme is now auto-detected from `prefers
 #### ~~"Reset view" button on relationship graph~~ ✓ Done — v0.2.0
 "Reset view" button added to the graph header. Stores the initial centred pan position on load and restores it along with `zoom = 1`.
 
-#### Config: exclude specific model classes
-The package currently supports only path-based exclusions via `model_paths`. Consumers frequently want to suppress noise from third-party models shipped by packages such as Telescope, Passport, or Horizon. An `excluded_models` config key accepting an array of fully-qualified class names (or wildcard namespace prefixes) would cover this without requiring consumers to manipulate `model_paths`.
+#### ~~Config: exclude specific model classes~~ ✓ Done — v0.3.0
+An `excluded_models` config key now suppresses noise from third-party models (Telescope, Passport, Horizon, etc.) without manipulating `model_paths`. Each entry is matched against the fully-qualified class name via `Str::is()` and may use `*` as a wildcard (e.g. `Laravel\Telescope\*`); leading backslashes are ignored. Filtering happens in `ModelDiscovery::discoverAll()`.
 
 #### ~~FK column identification~~ ✓ Done — v0.2.0 (partial)
 FK columns are now identified in the Columns table with an `FK` badge derived from `BelongsTo`/`MorphTo` relation metadata. The tooltip shows the related class name.
 
-#### FK column links in Columns table
-The next step: render FK column names as links to the related model's detail page when the related class exists in the discovered set.
+#### ~~FK column links in Columns table~~ ✓ Done — v0.3.0
+FK badges in the Columns table now link to the related model's detail page when the related class exists in the discovered set. `ModelDetail.vue` fetches the model list once and passes the set of known classes to `ColumnsTable.vue`; an FK whose related model is not discovered (or is polymorphic) renders as a plain, non-linked badge.
 
 ### Lower Priority
 
@@ -47,4 +47,4 @@ When a policy is registered via `Gate::policy()`, a `policy: PolicyName` badge a
 
 ## Consequences
 
-Items still outstanding: per-class model exclusions (`excluded_models` config) and FK column links (navigation from a FK badge to the related model's detail page). Both are independently implementable.
+All items recorded in this ADR have now shipped. The remaining v0.2.0 follow-ups — per-class model exclusions (`excluded_models` config) and FK column links — landed in v0.3.0, along with multi-connection safe reads (`withinSafeRead()` now opens its rolled-back transaction on the inspected model's own connection).

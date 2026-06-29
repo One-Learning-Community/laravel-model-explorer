@@ -10,7 +10,7 @@ A developer tool for Laravel that gives you a browsable UI to explore your Eloqu
 
 ## Requirements
 
-- PHP 8.4+
+- PHP 8.3+
 - Laravel 11, 12, or 13
 
 ## Features
@@ -74,13 +74,43 @@ return [
         // 'Domain\\Billing' => base_path('src/Billing'),
     ],
 
+    // Model classes matching these patterns are hidden, even inside a scanned path.
+    // Entries match the FQCN and may use `*` as a wildcard (leading `\` is ignored).
+    'excluded_models' => [
+        // 'Laravel\\Telescope\\*',
+        // 'App\\Models\\Internal\\AuditLog',
+    ],
+
     // Traits whose FQN begins with these prefixes will be hidden in the UI
     'excluded_trait_prefixes' => [
         'Illuminate\Database\Eloquent\Concerns\\',
         'Illuminate\Database\Eloquent\HasCollection',
         'Illuminate\Support\Traits\\',
     ],
+
+    // Related records shown per page when drilling into a to-many relation,
+    // and the cap on collection-returning accessor values.
+    'per_page' => env('MODEL_EXPLORER_PER_PAGE', 15),
+
+    // Cache model discovery and inspection results (recommended for large apps).
+    // Disabled by default so model changes appear immediately during development.
+    'cache' => [
+        'enabled' => env('MODEL_EXPLORER_CACHE', false),
+        'store'   => env('MODEL_EXPLORER_CACHE_STORE'),   // null = default store
+        'ttl'     => env('MODEL_EXPLORER_CACHE_TTL'),     // seconds; null = forever
+    ],
 ];
+```
+
+### Caching
+
+For apps with many models, the filesystem scanning and reflection behind the model
+list, detail, and graph views can be enabled for caching via `MODEL_EXPLORER_CACHE=true`.
+Model detail pages auto-refresh when the model file changes; the model list and graph
+are cached until the TTL expires or you clear them manually:
+
+```bash
+php artisan model-explorer:clear
 ```
 
 ## Security

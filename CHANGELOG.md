@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## Unreleased
+
+### What's new
+
+- **`excluded_models` config** — hide specific model classes (even inside a scanned path) by FQCN or `*` wildcard; useful for suppressing third-party models from Telescope, Passport, Horizon, etc.
+- **FK column links** — foreign-key badges in the Columns table now link to the related model's detail page when that model is in the discovered set
+- **Optional caching** — set `MODEL_EXPLORER_CACHE=true` to cache model discovery and inspection (helpful for apps with many models). Detail pages auto-refresh when the model file changes; clear everything with `php artisan model-explorer:clear`
+- **Configurable page size** — `per_page` config (`MODEL_EXPLORER_PER_PAGE`) controls how many related records are shown per page and caps collection-returning accessor values (previously hardcoded to 15)
+
+### Bug fixes
+
+- **Multi-connection safe reads** — `withinSafeRead()` now opens its rolled-back transaction on the inspected model's own database connection instead of always the default one, so accessor/observer writes are rolled back for models on a non-default connection
+- **Resilient model list** — a model that throws on instantiation is now skipped in the model list instead of breaking the entire endpoint
+
+### Other changes
+
+- Docs corrected to state PHP 8.3+ (matching the `composer.json` constraint and continued Laravel 11 support)
+
 ## v0.2.1 Release - 2026-03-25
 
 Resolve errors with models using some third party packages for advanced relations.

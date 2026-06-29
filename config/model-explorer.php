@@ -45,6 +45,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Excluded Models
+    |--------------------------------------------------------------------------
+    | Model classes matching any of these patterns are hidden from the Model
+    | Explorer, even when they live inside a scanned path. Useful for hiding
+    | noise from third-party packages (Telescope, Passport, Horizon, etc.).
+    |
+    | Each entry is matched against the fully-qualified class name and may use
+    | `*` as a wildcard. Leading backslashes are ignored. Examples:
+    |   'App\\Models\\Internal\\AuditLog'   exact class
+    |   'Laravel\\Telescope\\*'             whole namespace
+    |   '*\\PersonalAccessToken'            any class with this short name
+    */
+    'excluded_models' => [
+        // 'Laravel\\Telescope\\*',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Excluded Trait Prefixes
     |--------------------------------------------------------------------------
     | Traits whose fully-qualified class name begins with any of these prefixes
@@ -59,6 +77,39 @@ return [
         'Illuminate\\Database\\Eloquent\\Concerns\\',
         'Illuminate\\Database\\Eloquent\\HasCollection',
         'Illuminate\\Support\\Traits\\',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Per Page
+    |--------------------------------------------------------------------------
+    | How many related records are shown per page when drilling into a to-many
+    | relation in the record browser, and the maximum number of items returned
+    | for a collection-returning accessor.
+    */
+    'per_page' => env('MODEL_EXPLORER_PER_PAGE', 15),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache
+    |--------------------------------------------------------------------------
+    | Model discovery and inspection rely on filesystem scanning and reflection,
+    | which can be slow in apps with many models. Enable caching to store those
+    | results. Model detail pages auto-refresh when the model file changes; the
+    | model list and graph are cached until the TTL expires or you run:
+    |
+    |     php artisan model-explorer:clear
+    |
+    | Leave disabled during active model development so changes appear instantly.
+    */
+    'cache' => [
+        'enabled' => env('MODEL_EXPLORER_CACHE', false),
+
+        // Cache store to use. Null uses the application's default store.
+        'store' => env('MODEL_EXPLORER_CACHE_STORE'),
+
+        // Time-to-live in seconds. Null caches forever (clear manually).
+        'ttl' => env('MODEL_EXPLORER_CACHE_TTL'),
     ],
 
 ];
