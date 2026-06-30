@@ -1,11 +1,14 @@
 {
     "name": "onelearningcommunity/laravel-model-explorer",
-    "description": "Developer tools to explore your Laravel models.",
+    "description": "A zero-config browser UI and MCP server for exploring your Eloquent models, relationships, scopes, and data.",
     "keywords": [
         "laravel",
         "eloquent",
         "models",
-        "developer tools"
+        "developer tools",
+        "mcp",
+        "model-context-protocol",
+        "ai"
     ],
     "homepage": "https://github.com/one-learning-community/laravel-model-explorer",
     "license": "MIT",
