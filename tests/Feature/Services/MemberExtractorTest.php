@@ -1,11 +1,12 @@
 <?php
 
+use Illuminate\Support\Collection;
 use OneLearningCommunity\LaravelModelExplorer\Data\MemberData;
 use OneLearningCommunity\LaravelModelExplorer\Services\MemberExtractor;
 use Workbench\App\Models\MemberShowcase;
 
-/** @return Illuminate\Support\Collection<string, MemberData> */
-function showcaseMembers(): Illuminate\Support\Collection
+/** @return Collection<string, MemberData> */
+function showcaseMembers(): Collection
 {
     return collect(MemberExtractor::forModel(MemberShowcase::class, ['owner']))->keyBy('name');
 }
