@@ -27,5 +27,11 @@ they resolve trait-provided members and database columns that a source scan miss
   accessors, and the wider members list (business methods, lifecycle hooks,
   properties, constants, …). Use the `defined_in` pointers from `inspect-model` to
   decide what to fetch.
+- `model-neighbors` — a model's depth-1 relation neighborhood (`model`, optional
+  `direction`/`limit`). `direction` defaults to `incoming`: "which models point at
+  this one" — the blast-radius question `inspect-model`'s own relations section
+  can't answer, since that only shows outgoing relations. Use it before changing a
+  model's structure to see what else depends on it. Bounded by `limit` (default 50)
+  with a `truncated` flag; not a whole-graph dump.
 
 These tools read live, so results always reflect the current model code.

@@ -36,7 +36,7 @@ If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` auto
 
 ## The tools
 
-The server exposes four tools. Every tool returns compact, structured JSON; each scope, relation, accessor, and member carries a `defined_in` pointer in `path:line` form (relative to your application root) so the agent can jump straight to the definition.
+The server exposes five tools. Every tool returns compact, structured JSON; each scope, relation, accessor, and member carries a `defined_in` pointer in `path:line` form (relative to your application root) so the agent can jump straight to the definition.
 
 | Tool | Purpose |
 |---|---|
@@ -44,9 +44,10 @@ The server exposes four tools. Every tool returns compact, structured JSON; each
 | [`inspect-model`](#inspect-model) | One model's full structure |
 | [`find-model`](#find-model) | Find models by structural criteria |
 | [`model-source`](#model-source) | Fetch one definition's source snippet |
+| [`model-neighbors`](#model-neighbors) | A model's depth-1 relation neighborhood |
 
 ::: tip Looking for the relationship graph?
-Earlier versions exposed a `relationship-graph` tool that returned the entire graph. It was removed because a whole-application graph overflows an agent's response budget on real codebases — scoped questions are better answered by `find-model` (`relatesTo`) and `inspect-model`. The force-directed graph remains available in the [browser UI](/guide/relationship-graph). See ADR-012.
+Earlier versions exposed a `relationship-graph` tool that returned the entire graph. It was removed because a whole-application graph overflows an agent's response budget on real codebases. The scoped return that ADR-012 anticipated shipped as [`model-neighbors`](#model-neighbors) (ADR-013) — a bounded, single-model neighborhood instead of a dump. The force-directed graph itself remains available in the [browser UI](/guide/relationship-graph).
 :::
 
 Models are referenced by their **fully-qualified class name (FQCN)** or **short class name** — `App\Models\Order` or just `Order`.
@@ -181,6 +182,35 @@ Returns the dedented, **trait-correct** source for one named member. Use the `de
 
 Omitting `kind` searches scopes, relations, accessors, and the wider members list (business methods, lifecycle hooks, properties, constants, …) in that order until `name` matches — so the natural workflow is "enumerate with `members`, then fetch the one body" without knowing the kind in advance. Properties and constants have no reflectable body; their `code` is the single declaration line instead. If `name` doesn't match anything, the error points the agent at `inspect-model`'s `members` section to see what's available.
 
+### `model-neighbors`
+
+Returns a model's **depth-1 relation neighborhood**: a bounded list of edges instead of the whole-application graph `relationship-graph` used to dump (see ADR-012/ADR-013). Answers *"what breaks if I change this model"* — specifically the direction `inspect-model` can't show you, since its `relations` section only covers a model's own (outgoing) relations.
+
+**Input**
+
+| Parameter | Description |
+|---|---|
+| `model` | FQCN or short class name (required) |
+| `direction` | `incoming`, `outgoing`, or `both`. Defaults to `incoming` — "which models point at this one." |
+| `depth` | Reserved for future multi-hop traversal. Only `1` (the default) is currently supported; other values error. |
+| `limit` | Maximum number of edges to return. Defaults to `50`; excess sets `truncated: true`. |
+
+**Output**
+
+```json
+{
+  "root": "App\\Models\\Profile",
+  "direction": "incoming",
+  "edges": [
+    { "direction": "incoming", "from": "Order", "to": "Profile", "type": "belongsTo", "name": "profile", "defined_in": "app/Models/Order.php:40" }
+  ],
+  "count": 1,
+  "truncated": false
+}
+```
+
+`outgoing` edges are the root's own relations — the same data `inspect-model` already shows. `incoming` edges are the actual new capability: every other discovered model with a relation pointing at the root, found by scanning the same data the [browser graph](/guide/relationship-graph) renders, not by re-reading every model's source. With `direction: "both"`, edges from both directions merge into one list, each tagged with its own `direction`.
+
 ## Configuration
 
 The MCP server is configured under the `mcp` key of `config/model-explorer.php`:
@@ -209,15 +239,15 @@ MODEL_EXPLORER_MCP_CACHE=true
 
 ### Inspecting vendor / undiscovered models
 
-By default `inspect-model` and `model-source` only resolve models in your configured `model_paths`. Pass a valid model's FQCN that lives elsewhere — say a package's `Spatie\Mailcoach\…\Subscriber` — and the tool reports that no discovered model matches, with a hint.
+By default `inspect-model`, `model-source`, and `model-neighbors` only resolve models in your configured `model_paths`. Pass a valid model's FQCN that lives elsewhere — say a package's `Spatie\Mailcoach\…\Subscriber` — and the tool reports that no discovered model matches, with a hint.
 
-Set `allow_undiscovered` to let those tools introspect **any** class that resolves to an Eloquent model, even outside `model_paths`:
+Set `allow_undiscovered` to let those tools resolve **any** class that resolves to an Eloquent model, even outside `model_paths`:
 
 ```env
 MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED=true
 ```
 
-This only applies when the agent supplies a **fully-qualified** class name; short names and the `list-models` / `find-model` results stay bounded to the discovered set. Off by default.
+This only applies when the agent supplies a **fully-qualified** class name; short names and the `list-models` / `find-model` results stay bounded to the discovered set. Off by default. Note that `model-neighbors`'s `incoming` direction always scans only the discovered set regardless of this setting — an undiscovered root's `outgoing` relations resolve fine, but other undiscovered models pointing *at* it can't be found, since they were never scanned in the first place.
 
 ### Disabling the server
 

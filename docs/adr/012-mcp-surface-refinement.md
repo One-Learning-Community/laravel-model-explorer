@@ -46,6 +46,8 @@ Remove the `relationship-graph` **MCP tool** from the registered tool set in the
 
 The tool comes back **only** when it can be built conservatively/scoped, never as a global dump: a required `root` model plus a bounded `depth` (e.g. 1–2 hops), optional `namespace` / `edge_type` filters, and a hard node/edge cap with an explicit "truncated" flag. A neighborhood is consumable; the universe is not. Until that scoped version exists, the graph stays off the agent surface.
 
+**Update (2026-06-30):** this scoped return shipped as `model-neighbors` — a new tool, not a revival of `relationship-graph` under its old name. See ADR-013.
+
 ### B. Add a vendor/undiscovered-model escape hatch
 
 Allow `inspect-model` / `model-source` to introspect a class **outside** `model_paths` when it is given a fully-qualified name that resolves to an existing `Illuminate\Database\Eloquent\Model` subclass. Gate it behind a **config** opt-in (`model-explorer.mcp.allow_undiscovered`, default `false`) so the default discovery scoping is preserved. This unblocks "what's in this package's model?" without widening `list-models`/`find-model`, which remain bounded to the discovered set.

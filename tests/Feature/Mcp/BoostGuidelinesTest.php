@@ -12,5 +12,6 @@ it('ships a Boost guidelines file naming every MCP tool', function () {
         ->toContain('list-models')
         ->toContain('inspect-model')
         ->toContain('find-model')
-        ->toContain('model-source');
+        ->toContain('model-source')
+        ->toContain('model-neighbors');
 });
