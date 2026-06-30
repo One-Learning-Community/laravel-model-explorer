@@ -11,8 +11,8 @@ use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
+use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
-use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 use RuntimeException;
 use Spatie\ModelInfo\Attributes\Attribute;
@@ -22,7 +22,7 @@ class FindModelTool extends Tool
 {
     public function __construct(
         private readonly ModelDiscovery $discovery,
-        private readonly ModelInspector $inspector,
+        private readonly FreshModelInspector $inspector,
         private readonly ExplorerCache $cache,
         private readonly SourceFingerprint $fingerprint,
     ) {}

@@ -5,8 +5,10 @@ namespace OneLearningCommunity\LaravelModelExplorer;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Mcp\Facades\Mcp;
 use OneLearningCommunity\LaravelModelExplorer\Console\ClearCacheCommand;
+use OneLearningCommunity\LaravelModelExplorer\Console\InspectCommand;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\ModelExplorerServer;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
+use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\LaravelPackageTools\Package;
@@ -21,6 +23,10 @@ class LaravelModelExplorerServiceProvider extends PackageServiceProvider
         $this->app->singleton(ModelDiscovery::class);
         $this->app->singleton(ModelInspector::class);
         $this->app->singleton(ExplorerCache::class);
+
+        // Singleton so its "which classes have I loaded, at what mtime" registry
+        // persists across calls within the long-lived MCP server process.
+        $this->app->singleton(FreshModelInspector::class);
     }
 
     public function configurePackage(Package $package): void
@@ -30,7 +36,8 @@ class LaravelModelExplorerServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasRoutes('web')
-            ->hasCommand(ClearCacheCommand::class);
+            ->hasCommand(ClearCacheCommand::class)
+            ->hasCommand(InspectCommand::class);
     }
 
     public function packageBooted(): void

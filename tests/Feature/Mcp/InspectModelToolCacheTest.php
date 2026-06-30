@@ -4,6 +4,7 @@ use Laravel\Mcp\Server\McpServiceProvider;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\ModelExplorerServer;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\InspectModelTool;
+use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Workbench\App\Models\Post;
 
@@ -14,19 +15,23 @@ beforeEach(function () {
 it('serves a cached inspection but recomputes after the model file changes', function () {
     config(['model-explorer.mcp.cache.enabled' => true]);
 
-    $spy = new class extends ModelInspector
+    // Spy at the FreshModelInspector boundary, delegating in-process, so this test
+    // isolates cache-key invalidation from the (separately tested) freshness routing.
+    $spy = new class extends FreshModelInspector
     {
         public static int $calls = 0;
+
+        public function __construct() {}
 
         public function inspect(string $className): ModelData
         {
             self::$calls++;
 
-            return parent::inspect($className);
+            return app(ModelInspector::class)->inspect($className);
         }
     };
     $spy::$calls = 0;
-    app()->instance(ModelInspector::class, $spy);
+    app()->instance(FreshModelInspector::class, $spy);
 
     $file = (new ReflectionClass(Post::class))->getFileName();
     $original = filemtime($file);

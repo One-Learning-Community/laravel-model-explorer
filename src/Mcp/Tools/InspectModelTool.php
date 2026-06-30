@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Tool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\CompactPresenter;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\ModelResolver;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
-use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 
 #[Description('Inspect one model\'s structure: columns, relations, scopes, accessors, traits, mass-assignment, and policy. Always returns an overview with section counts, then the requested sections (default: columns + relations). Each scope/relation/accessor carries a defined_in "path:line" pointer. Prefer this over reading the model source file.')]
@@ -20,7 +20,7 @@ class InspectModelTool extends Tool
 {
     public function __construct(
         private readonly ModelResolver $resolver,
-        private readonly ModelInspector $inspector,
+        private readonly FreshModelInspector $inspector,
         private readonly CompactPresenter $presenter,
         private readonly ExplorerCache $cache,
         private readonly SourceFingerprint $fingerprint,
