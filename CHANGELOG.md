@@ -4,6 +4,12 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **`model-source` resolves any member, not just scope/relation/accessor (MCP)** — `kind` is now optional and unrestricted. Omit it to resolve `name` by searching scopes, relations, accessors, and the wider `members` list (business methods, lifecycle hooks, properties, constants, …) in that order; pass it to narrow the search instead of constraining it to three kinds. Completes the "enumerate with `members`, then fetch the one body" workflow for any member, including plain business methods that `members` could enumerate but `model-source` previously couldn't fetch. See ADR-012.
+- **`inspect-model`'s `members` section can be filtered (MCP)** — `include: ["members:relation,business"]` narrows to the given kinds; `include: ["members:file=Order.php"]` narrows to a declaring-file substring. `counts.members` keeps reporting the unfiltered total. Fixes the token-cost inversion of returning a noisy class's entire surface (hundreds of members) when only a few were wanted. See ADR-012.
+- **`find-model` gains a `definesMember` filter (MCP)** — the structural analogue of `hasColumn`, but over the first-party members surface: "which models define `toSearchableArray`?" is now a first-class query that matches trait-composed members, instead of a source grep that would miss them. See ADR-012.
+
 ## v0.3.2 - 2026-06-30
 
 ### Added

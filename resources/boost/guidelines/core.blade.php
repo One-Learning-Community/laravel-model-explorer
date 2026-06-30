@@ -14,11 +14,18 @@ they resolve trait-provided members and database columns that a source scan miss
   relation/accessor includes a `defined_in` `path:line` pointer. `members` lists every
   first-party method/property/constant (names + signatures + pointers, no bodies) with
   a best-effort `kind` — use it to see what a model *does*, then `model-source` a body.
-- `find-model` — find models by `trait`, `extends`, `relatesTo`, or `hasColumn`
-  (filters AND together). Use for cross-cutting questions like "which models use
-  SoftDeletes" or "which models belong to Team".
-- `model-source` — fetch the dedented, trait-correct source for one `scope`,
-  `relation`, or `accessor` (`model`, `kind`, `name`). Use the `defined_in` pointers
-  from `inspect-model` to decide what to fetch.
+  On a large class, narrow it with `include: ["members:relation,business"]` (kind
+  filter) or `include: ["members:file=Order.php"]` (declaring-file filter) instead of
+  pulling the whole surface.
+- `find-model` — find models by `trait`, `extends`, `relatesTo`, `hasColumn`, or
+  `definesMember` (filters AND together). Use for cross-cutting questions like "which
+  models use SoftDeletes", "which models belong to Team", or "which models define
+  toSearchableArray" — `definesMember` matches trait-composed members too.
+- `model-source` — fetch the dedented, trait-correct source for one named member
+  (`model`, `name`, optional `kind`). Any member works, not just `scope`/`relation`/
+  `accessor` — omit `kind` to resolve by name alone across scopes, relations,
+  accessors, and the wider members list (business methods, lifecycle hooks,
+  properties, constants, …). Use the `defined_in` pointers from `inspect-model` to
+  decide what to fetch.
 
 These tools read live, so results always reflect the current model code.

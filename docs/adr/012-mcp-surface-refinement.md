@@ -1,6 +1,6 @@
 # ADR-012: MCP Surface Refinement — Graph, Vendor Models, and a Members List
 
-- **Status:** Accepted — A, B & C shipped
+- **Status:** Accepted — A, B & C shipped; all three open questions resolved
 - **Date:** 2026-06-29
 
 ## Context
@@ -106,8 +106,10 @@ Notes:
 ## Open questions
 
 - ~~`list-members`: new tool vs. a `members` section on `inspect-model`?~~ **Resolved:** shipped as a `members` section, off by default and gated behind `include` — smallest surface, reuses the section/counts machinery, consistent with ADR-011.
-- Should `model-source` lift its per-kind restriction now that `members` enumerates every member name? (The `kind: scope|relation|accessor` cap predates member enumeration.)
-- Should `find-model` gain a `hasMethod` / `definesMember` filter once member enumeration exists (the structural analogue of `hasColumn`)?
+- ~~Should `model-source` lift its per-kind restriction now that `members` enumerates every member name?~~ **Resolved:** `kind` is now optional and unrestricted. When omitted, `model-source` resolves `name` by searching scopes, relations, accessors, and then the wider members list (business methods, lifecycle hooks, properties, constants, …) in that order; when given, `kind` can be any of those — not just `scope`/`relation`/`accessor` — and narrows the search to a matching `kind` or structural `memberType`. Properties/constants have no reflectable body, so their snippet is the single declaration line (`SourceExtractor::forDeclarationLine()`), recovered the same best-effort way `MemberExtractor` already finds their line number. This was the smallest change that completes the "enumerate with `members`, then fetch the one body" workflow for *any* member, not just the three structural kinds `model-source` originally knew about.
+- ~~Should `find-model` gain a `hasMethod` / `definesMember` filter once member enumeration exists (the structural analogue of `hasColumn`)?~~ **Resolved:** shipped as `definesMember` — matches a first-party method/property/constant by name against the resolved `ModelData->members` list, the same way `hasColumn` matches against attributes. Because it goes through the already-inspected member list rather than a source grep, it correctly matches trait-composed members (e.g. a `scope*` method defined in a concern), which a naive grep over the model file would miss.
+
+A fourth gap surfaced while shipping the above: with `model-source` no longer kind-restricted, a noisy class's `members` section (377 members on the audited app) became the likely way an agent discovers a name to fetch — but returning all 377 just to find three names reproduces the original token-cost problem in a new place. `inspect-model`'s `include` now accepts a `members:<kind1>,<kind2>` token (e.g. `members:relation,business`) to narrow by kind, or `members:file=<substring>` to narrow by declaring file, while `counts.members` keeps reporting the unfiltered total so the agent still knows how big the full surface is.
 
 ## References
 

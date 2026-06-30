@@ -131,10 +131,11 @@ scanning source. Register it in your AI client:
 ```
 
 Tools: `list-models`, `inspect-model` (opt-in sections via `include`, including a
-`members` section listing every method/property/constant with provenance),
-`find-model` (filter by `trait`/`extends`/`relatesTo`/`hasColumn`), and `model-source`.
-If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` automatically
-advertises these tools to your agent.
+`members` section listing every method/property/constant with provenance, filterable
+by kind or declaring file), `find-model` (filter by `trait`/`extends`/`relatesTo`/
+`hasColumn`/`definesMember`), and `model-source` (fetches any member's source by name,
+not just scopes/relations/accessors). If you use [Laravel Boost](https://laravel.com/docs/boost),
+`boost:install` automatically advertises these tools to your agent.
 
 The tools read live by default so an agent never sees stale structure mid-development.
 Set `MODEL_EXPLORER_MCP_CACHE=true` to trade freshness for speed on very large model

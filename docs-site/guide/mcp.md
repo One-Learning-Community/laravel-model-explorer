@@ -74,7 +74,7 @@ Returns one model's structure: an overview with section counts, then the section
 | Parameter | Description |
 |---|---|
 | `model` | FQCN or short class name (required) |
-| `include` | Sections to return: `columns`, `relations`, `scopes`, `accessors`, `traits`, `mass-assignment`, `policy`, `members`, or `all`. Defaults to `columns` + `relations`. |
+| `include` | Sections to return: `columns`, `relations`, `scopes`, `accessors`, `traits`, `mass-assignment`, `policy`, `members`, or `all`. Defaults to `columns` + `relations`. The `members` section can be narrowed — see below. |
 
 **Output** (default sections)
 
@@ -122,6 +122,15 @@ Only **first-party** members are listed: anything defined outside a `vendor/` di
 }
 ```
 
+#### Filtering the `members` section
+
+A class with a wide surface can return hundreds of members — more tokens than an agent wants when it only cares about a few. Two filter forms narrow `include`'s `members` entry instead of requesting the whole section:
+
+- `members:<kind1>,<kind2>` — keep only members whose `kind` matches one of the given values, e.g. `include: ["members:relation,business"]` keeps relations and plain business methods, dropping lifecycle hooks, config properties, etc.
+- `members:file=<substring>` — keep only members whose `defined_in` file contains the substring, e.g. `include: ["members:file=HasAuthor.php"]` keeps only members declared in that trait.
+
+Either form still triggers the `members` section; `counts.members` in the overview always reports the **unfiltered** total, so the agent can tell how much was left out.
+
 ### `find-model`
 
 Finds models matching structural criteria — answering cross-cutting questions without inspecting every model. Provide at least one filter; filters combine with **AND**.
@@ -134,6 +143,7 @@ Finds models matching structural criteria — answering cross-cutting questions 
 | `extends` | extend the given parent class |
 | `relatesTo` | have a relation pointing at the given model |
 | `hasColumn` | have the given column in their table |
+| `definesMember` | define the given method/property/constant (short name), including trait-composed members |
 
 **Output** — each match lists which filters it satisfied:
 
@@ -146,19 +156,19 @@ Finds models matching structural criteria — answering cross-cutting questions 
 }
 ```
 
-Use it for questions like *"which models use `SoftDeletes`"* or *"which models belong to `Team`"*.
+Use it for questions like *"which models use `SoftDeletes`"*, *"which models belong to `Team`"*, or *"which models define `toSearchableArray`"*. The last one is the structural analogue of `hasColumn`: it matches against the same first-party member list `members` enumerates, so it catches a method defined in a composed trait that a plain source grep would miss.
 
 ### `model-source`
 
-Returns the dedented, **trait-correct** source for one `scope`, `relation`, or `accessor`. Use the `defined_in` pointers from `inspect-model` to decide what to fetch.
+Returns the dedented, **trait-correct** source for one named member. Use the `defined_in` pointers from `inspect-model` to decide what to fetch.
 
 **Input**
 
 | Parameter | Description |
 |---|---|
 | `model` | FQCN or short class name (required) |
-| `kind` | One of `scope`, `relation`, `accessor` (required) |
-| `name` | The definition name, e.g. scope `recent`, relation `author` (required) |
+| `name` | The member name, e.g. scope `recent`, relation `author`, or any other member like `markPaid` (required) |
+| `kind` | Optional. Narrows the lookup: `scope`, `relation`, `accessor`, or any other `members` kind (`business`, `lifecycle`, `magic`, `method`, `property`, `constant`, `config`). Omit to resolve by name alone. |
 
 **Output**
 
@@ -169,7 +179,7 @@ Returns the dedented, **trait-correct** source for one `scope`, `relation`, or `
 }
 ```
 
-If the name doesn't exist for that kind, the error lists the available names so the agent can correct itself.
+Omitting `kind` searches scopes, relations, accessors, and the wider members list (business methods, lifecycle hooks, properties, constants, …) in that order until `name` matches — so the natural workflow is "enumerate with `members`, then fetch the one body" without knowing the kind in advance. Properties and constants have no reflectable body; their `code` is the single declaration line instead. If `name` doesn't match anything, the error points the agent at `inspect-model`'s `members` section to see what's available.
 
 ## Configuration
 
