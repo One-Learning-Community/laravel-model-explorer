@@ -34,4 +34,15 @@ they resolve trait-provided members and database columns that a source scan miss
   model's structure to see what else depends on it. Bounded by `limit` (default 50)
   with a `truncated` flag; not a whole-graph dump.
 
+### When NOT to use these tools
+
+These tools answer **what is defined on a model and where it comes from** — structure,
+not usage. They cannot tell you where a model or method is *referenced or called*. For
+that — call sites, blast radius beyond Eloquent relations, anything in non-PHP files
+(Blade, Vue, JS, config), or code that doesn't parse yet — use a text search such as
+grep. Rule of thumb: asking about *the thing* → model-explorer; asking about *who
+references the thing* → grep. (`model-neighbors` is the one apparent exception, and it
+isn't: its "what depends on this" answer is strictly model-to-model relation edges, not
+code references.)
+
 These tools read live, so results always reflect the current model code.

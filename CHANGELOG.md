@@ -4,6 +4,10 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- **Clarified the MCP tool surface's scope in agent-facing guidance** — the Boost guidelines, the server's `Instructions`, `find-model`'s description, and `model-neighbors`' description now explicitly state that these tools answer what is *defined* on a model and where, not where it's *referenced or called*. Points agents at a text search (e.g. grep) for call sites, usage beyond Eloquent relations, or anything in non-PHP files — including clarifying that `model-neighbors`' edges are model-to-model relation edges, not code references.
+
 ## v0.4.0 - 2026-06-30
 
 ### Added

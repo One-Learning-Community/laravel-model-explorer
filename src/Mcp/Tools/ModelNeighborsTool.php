@@ -23,7 +23,7 @@ use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
  * `direction` defaults to `incoming` because that's the actual gap — outgoing
  * relations are already fully exposed by inspect-model. See ADR-013.
  */
-#[Description('Return the depth-1 relation neighborhood of one model: which models point at it (incoming, the default), which models it points at (outgoing), or both. Answers "what breaks if I change this model" without dumping the whole graph. Bounded by limit, with a truncated flag when more edges exist.')]
+#[Description('Return the depth-1 relation neighborhood of one model: which models point at it (incoming, the default), which models it points at (outgoing), or both. Answers "what breaks if I change this model" at the Eloquent-relation level — these are model-to-model relation edges, not code call sites; to find where the model or its methods are referenced in code, use a text search such as grep. Bounded by limit, with a truncated flag when more edges exist.')]
 class ModelNeighborsTool extends Tool
 {
     private const DIRECTIONS = ['incoming', 'outgoing', 'both'];

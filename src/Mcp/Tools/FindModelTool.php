@@ -18,7 +18,7 @@ use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 use RuntimeException;
 use Spatie\ModelInfo\Attributes\Attribute;
 
-#[Description('Find models matching structural criteria: trait (uses a trait), extends (parent class), relatesTo (has a relation to a model), hasColumn (table has a column), definesMember (defines a first-party method/property/constant by name, e.g. "toSearchableArray"). Filters combine with AND. Answers cross-cutting questions without inspecting every model. At least one filter is required.')]
+#[Description('Find models matching structural criteria: trait (uses a trait), extends (parent class), relatesTo (has a relation to a model), hasColumn (table has a column), definesMember (defines a first-party method/property/constant by name, e.g. "toSearchableArray"). Filters combine with AND. Answers cross-cutting questions without inspecting every model. Matches models by what they *define or declare*, not by where they are used — for usage or call sites, use a text search such as grep. At least one filter is required.')]
 class FindModelTool extends Tool
 {
     public function __construct(

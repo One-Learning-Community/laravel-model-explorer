@@ -15,7 +15,7 @@ use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\ModelSourceTool;
 
 #[Name('Model Explorer')]
 #[Version('1.0.0')]
-#[Instructions('Introspect the application\'s Eloquent models: list them, inspect one model\'s columns/relations/scopes/accessors, find models by structural criteria, fetch source snippets, and query a model\'s depth-1 relation neighborhood. Prefer these tools over reading model source files.')]
+#[Instructions('Introspect the application\'s Eloquent models: list them, inspect one model\'s columns/relations/scopes/accessors/members, find models by structural criteria, fetch source snippets, and query a model\'s depth-1 relation neighborhood. Prefer these tools over reading model source files. They answer what is *defined* on a model and where — model structure, not code usage. To find where a model or method is *referenced or called* across the codebase (including non-PHP files), use a text search such as grep instead.')]
 class ModelExplorerServer extends Server
 {
     /**
