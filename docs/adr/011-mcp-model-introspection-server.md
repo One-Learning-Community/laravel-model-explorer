@@ -1,6 +1,6 @@
 # ADR-011: MCP Server for AI Model Introspection
 
-- **Status:** Accepted — implementation pending
+- **Status:** Accepted — implemented (shipped; `relationship-graph` later retired per ADR-012)
 - **Date:** 2026-06-29
 
 ## Context
