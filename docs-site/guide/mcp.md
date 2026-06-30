@@ -36,15 +36,18 @@ If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` auto
 
 ## The tools
 
-The server exposes five tools. Every tool returns compact, structured JSON; each scope, relation, and accessor carries a `defined_in` pointer in `path:line` form (relative to your application root) so the agent can jump straight to the definition.
+The server exposes four tools. Every tool returns compact, structured JSON; each scope, relation, accessor, and member carries a `defined_in` pointer in `path:line` form (relative to your application root) so the agent can jump straight to the definition.
 
 | Tool | Purpose |
 |---|---|
 | [`list-models`](#list-models) | List every discovered model |
 | [`inspect-model`](#inspect-model) | One model's full structure |
-| [`relationship-graph`](#relationship-graph) | All models as nodes + edges |
 | [`find-model`](#find-model) | Find models by structural criteria |
 | [`model-source`](#model-source) | Fetch one definition's source snippet |
+
+::: tip Looking for the relationship graph?
+Earlier versions exposed a `relationship-graph` tool that returned the entire graph. It was removed because a whole-application graph overflows an agent's response budget on real codebases — scoped questions are better answered by `find-model` (`relatesTo`) and `inspect-model`. The force-directed graph remains available in the [browser UI](/guide/relationship-graph). See ADR-012.
+:::
 
 Models are referenced by their **fully-qualified class name (FQCN)** or **short class name** — `App\Models\Order` or just `Order`.
 
@@ -71,7 +74,7 @@ Returns one model's structure: an overview with section counts, then the section
 | Parameter | Description |
 |---|---|
 | `model` | FQCN or short class name (required) |
-| `include` | Sections to return: `columns`, `relations`, `scopes`, `accessors`, `traits`, `mass-assignment`, `policy`, or `all`. Defaults to `columns` + `relations`. |
+| `include` | Sections to return: `columns`, `relations`, `scopes`, `accessors`, `traits`, `mass-assignment`, `policy`, `members`, or `all`. Defaults to `columns` + `relations`. |
 
 **Output** (default sections)
 
@@ -96,18 +99,26 @@ Returns one model's structure: an overview with section counts, then the section
 
 Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `nullable`, and `cast:{Type}`.
 
-### `relationship-graph`
+#### The `members` section
 
-Returns the whole relationship graph as nodes and edges — the same data behind the browser's [Relationship Graph](/guide/relationship-graph), shaped for an agent.
+`include: ["members"]` (or `all`) adds a **members** section: every member the model actually *defines* — methods, properties, and constants — so the agent can see what a model **does**, not just its columns and relations. It answers "what's on this class, and where does each piece come from?" without opening the file.
+
+Only **first-party** members are listed: anything defined outside a `vendor/` directory. The hundreds of inherited framework methods (`save`, `delete`, `newQuery`, …) are excluded, and a trait-provided member points at the **trait** file, not the model. Each member carries a best-effort `kind` (`relation`, `scope`, `accessor`, `lifecycle`, `business`, `config`, `constant`, …) — a hint, not a contract — plus a `defined_in` pointer. Bodies are **not** included; fetch one on demand with [`model-source`](#model-source).
 
 ```json
 {
-  "nodes": [
-    { "class": "App\\Models\\Post", "name": "Post", "table": "posts" }
-  ],
-  "edges": [
-    { "from": "Post", "to": "User", "type": "belongsTo", "name": "author" }
-  ]
+  "counts": { "columns": 6, "relations": 3, "members": 9, "...": "..." },
+  "members": {
+    "methods": [
+      "protected static booted(): void [lifecycle] @ app/Models/Order.php:42",
+      "markPaid(Carbon $at): void [business] @ app/Models/Order.php:88",
+      "author(): BelongsTo [relation] @ app/Models/Concerns/HasAuthor.php:9"
+    ],
+    "properties": [
+      "$fillable [config] @ app/Models/Order.php:20",
+      "const MAX_ITEMS = 50 [constant] @ app/Models/Order.php:12"
+    ]
+  }
 }
 ```
 
@@ -171,6 +182,8 @@ The MCP server is configured under the `mcp` key of `config/model-explorer.php`:
     'cache' => [
         'enabled' => env('MODEL_EXPLORER_MCP_CACHE', false),
     ],
+
+    'allow_undiscovered' => env('MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED', false),
 ],
 ```
 
@@ -184,6 +197,18 @@ Set `MODEL_EXPLORER_MCP_CACHE=true` only if you want to trade freshness for spee
 MODEL_EXPLORER_MCP_CACHE=true
 ```
 
+### Inspecting vendor / undiscovered models
+
+By default `inspect-model` and `model-source` only resolve models in your configured `model_paths`. Pass a valid model's FQCN that lives elsewhere — say a package's `Spatie\Mailcoach\…\Subscriber` — and the tool reports that no discovered model matches, with a hint.
+
+Set `allow_undiscovered` to let those tools introspect **any** class that resolves to an Eloquent model, even outside `model_paths`:
+
+```env
+MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED=true
+```
+
+This only applies when the agent supplies a **fully-qualified** class name; short names and the `list-models` / `find-model` results stay bounded to the discovered set. Off by default.
+
 ### Disabling the server
 
 The server registers only when the package and its MCP feature are both enabled. Either of these turns it off:
@@ -194,5 +219,5 @@ MODEL_EXPLORER_ENABLED=false  # disable the whole package (UI + MCP)
 ```
 
 ::: warning
-These tools expose your application's model *structure and source* to the connected agent. They never read or return live database rows — only schema, relations, scopes, accessors, traits, and source snippets.
+These tools expose your application's model *structure and source* to the connected agent. They never read or return live database rows — only schema, relations, scopes, accessors, traits, members, and source snippets.
 :::

@@ -130,14 +130,17 @@ scanning source. Register it in your AI client:
 }
 ```
 
-Tools: `list-models`, `inspect-model` (opt-in sections via `include`),
-`relationship-graph`, `find-model` (filter by `trait`/`extends`/`relatesTo`/`hasColumn`),
-and `model-source`. If you use [Laravel Boost](https://laravel.com/docs/boost),
-`boost:install` automatically advertises these tools to your agent.
+Tools: `list-models`, `inspect-model` (opt-in sections via `include`, including a
+`members` section listing every method/property/constant with provenance),
+`find-model` (filter by `trait`/`extends`/`relatesTo`/`hasColumn`), and `model-source`.
+If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` automatically
+advertises these tools to your agent.
 
 The tools read live by default so an agent never sees stale structure mid-development.
 Set `MODEL_EXPLORER_MCP_CACHE=true` to trade freshness for speed on very large model
-sets, or `MODEL_EXPLORER_MCP=false` to disable the server entirely.
+sets, or `MODEL_EXPLORER_MCP=false` to disable the server entirely. To inspect models
+outside your configured `model_paths` (e.g. a vendor package's model) by FQCN, set
+`MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED=true`.
 
 ## Security
 
