@@ -9,7 +9,7 @@ use Spatie\ModelInfo\Attributes\Attribute;
 
 class CompactPresenter
 {
-    public const array SECTIONS = ['columns', 'relations', 'scopes', 'accessors', 'traits', 'mass-assignment', 'policy'];
+    public const array SECTIONS = ['columns', 'relations', 'scopes', 'accessors', 'traits', 'mass-assignment', 'policy', 'members'];
 
     /**
      * @return array<string, mixed>
@@ -27,6 +27,7 @@ class CompactPresenter
                 'scopes' => $data->scopes->count(),
                 'accessors' => $data->attributes->filter(fn (Attribute $a) => $a->virtual)->count(),
                 'traits' => count($data->traits),
+                'members' => count($data->members),
             ],
         ];
     }
@@ -47,6 +48,7 @@ class CompactPresenter
             'traits' => fn () => $this->traits($data),
             'mass-assignment' => fn () => $this->massAssignment($data),
             'policy' => fn () => $this->policy($data),
+            'members' => fn () => $this->members($data),
         ];
 
         foreach ($sections as $section) {
@@ -165,6 +167,37 @@ class CompactPresenter
     }
 
     /**
+     * Every first-party member as a terse string, split into methods and
+     * properties (constants live alongside properties). Each carries its kind
+     * and a `defined_in` pointer, e.g.
+     * "markPaid(Carbon $at): void [business] @ app/Models/Order.php:88".
+     *
+     * @return array{methods: list<string>, properties: list<string>}
+     */
+    public function members(ModelData $data): array
+    {
+        $methods = [];
+        $properties = [];
+
+        foreach ($data->members as $member) {
+            $visibility = $member->visibility === 'public' ? '' : $member->visibility.' ';
+            $static = $member->static ? 'static ' : '';
+            $pointer = $this->pointer($member->snippet);
+            $at = $pointer !== null ? ' @ '.$pointer : '';
+
+            if ($member->memberType === 'method') {
+                $methods[] = $visibility.$static.$member->signature.' ['.$member->kind.']'.$at;
+            } elseif ($member->memberType === 'constant') {
+                $properties[] = $visibility.'const '.$member->name.' = '.$member->value.' [constant]'.$at;
+            } else {
+                $properties[] = $visibility.$static.'$'.$member->name.' ['.$member->kind.']'.$at;
+            }
+        }
+
+        return ['methods' => $methods, 'properties' => $properties];
+    }
+
+    /**
      * Format a snippet's location as a base_path-relative `path:line` pointer.
      *
      * @param  array{file?:string, start_line?:int}|null  $snippet
@@ -179,7 +212,9 @@ class CompactPresenter
         $base = base_path().DIRECTORY_SEPARATOR;
         $relative = str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
 
-        return $relative.':'.($snippet['start_line'] ?? 0);
+        $line = $snippet['start_line'] ?? null;
+
+        return $line ? $relative.':'.$line : $relative;
     }
 
     /**

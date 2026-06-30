@@ -41,13 +41,18 @@ class ModelInspector
 
         $policies = Gate::policies();
 
+        $relations = $modelRelations
+            ->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))
+            ->sortBy('name')
+            ->values();
+
         return new ModelData(
             className: $className,
             shortName: class_basename($className),
             table: $model->getTable(),
             keyName: $model->getKeyName(),
             attributes: $modelAttributes,
-            relations: $modelRelations->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))->sortBy('name')->values(),
+            relations: $relations,
             scopes: $this->extractScopes($className),
             fillable: $model->getFillable(),
             guarded: $model->getGuarded(),
@@ -60,6 +65,7 @@ class ModelInspector
             traits: $this->extractTraits($className),
             accessorSnippets: $this->extractAccessorSnippets($className, $modelAttributes),
             policyClass: $policies[$className] ?? null,
+            members: MemberExtractor::forModel($className, $relations->pluck('name')->all()),
         );
     }
 

@@ -57,9 +57,32 @@ it('inspect() returns overview plus only the requested sections', function () {
         ->and($out)->not->toHaveKey('scopes');
 });
 
+it('renders members split into methods and properties with kind and pointer', function () {
+    [$p, $data] = presentPost();
+    $members = $p->members($data);
+
+    expect($members)->toHaveKeys(['methods', 'properties'])
+        ->and(collect($members['methods'])->contains(fn ($m) => str_contains($m, 'activate() [business] @ ')))->toBeTrue()
+        ->and(collect($members['methods'])->contains(fn ($m) => str_contains($m, '[relation]') && str_contains($m, 'HasAuthor.php:')))->toBeTrue()
+        ->and(collect($members['properties'])->contains(fn ($m) => str_contains($m, '$fillable [config]')))->toBeTrue();
+});
+
+it('counts members in the overview header', function () {
+    [$p, $data] = presentPost();
+
+    expect($p->overview($data)['counts']['members'])->toBeGreaterThan(0);
+});
+
 it('pointer renders paths relative to base_path', function () {
     [$p, $data] = presentPost();
     $pointer = $p->pointer(['file' => base_path('app/Models/Foo.php'), 'start_line' => 12]);
 
     expect($pointer)->toBe('app/Models/Foo.php:12');
+});
+
+it('pointer omits the line when the declaration line is unknown', function () {
+    [$p] = presentPost();
+    $pointer = $p->pointer(['file' => base_path('app/Models/Foo.php'), 'start_line' => null]);
+
+    expect($pointer)->toBe('app/Models/Foo.php');
 });

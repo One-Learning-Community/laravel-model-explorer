@@ -18,6 +18,7 @@ readonly class ModelData
      * @param  string[]  $appends
      * @param  list<string>  $traits  Non-excluded traits used by the model (recursive).
      * @param  array<string, array{code: string, file: string, start_line: int}>  $accessorSnippets  Attribute name → source metadata.
+     * @param  list<MemberData>  $members  Every first-party-defined method/property/constant, with provenance (ADR-012 §C).
      */
     public function __construct(
         public string $className,
@@ -39,5 +40,6 @@ readonly class ModelData
         public array $traits,
         public array $accessorSnippets = [],
         public ?string $policyClass = null,
+        public array $members = [],
     ) {}
 }

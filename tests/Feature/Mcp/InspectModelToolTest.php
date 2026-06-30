@@ -43,6 +43,26 @@ it('include all returns every section', function () {
         ->assertSee('summary');
 });
 
+it('returns the members section with kinds and provenance when requested', function () {
+    $response = ModelExplorerServer::tool(InspectModelTool::class, [
+        'model' => 'Post',
+        'include' => ['members'],
+    ]);
+
+    $response->assertOk()
+        ->assertSee('members')
+        ->assertSee('[business]')        // activate() — a plain method
+        ->assertSee('[relation]')        // user()/author()
+        ->assertSee('HasAuthor.php')     // trait-provided member points at the trait file
+        ->assertDontSee('newQuery');     // inherited framework methods are excluded
+});
+
+it('omits the members section from the default include', function () {
+    ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Post'])
+        ->assertOk()
+        ->assertDontSee('[business]');
+});
+
 it('errors with an actionable message for an unknown model', function () {
     ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Nope'])
         ->assertHasErrors();

@@ -1,6 +1,6 @@
 # ADR-012: MCP Surface Refinement — Graph, Vendor Models, and a Members List
 
-- **Status:** Accepted — A & B shipped; C (`list-members`) in progress
+- **Status:** Accepted — A, B & C shipped
 - **Date:** 2026-06-29
 
 ## Context
@@ -58,7 +58,7 @@ Make this a **config** flag, not a per-call one. ADR-011 deliberately rejected a
 
 This is the headline addition and the direct answer to gap #3. Expose a returnable list of **all** defined members of a model, each with its origin, so an agent can see the full surface and then `model-source` the parts it cares about — the pointers-not-bodies ethos of ADR-007 / ADR-011, extended from relations/scopes/accessors to the *whole* class.
 
-Shape (illustrative; either a new `list-members` tool or a new `members` section on `inspect-model`):
+**Shipped as a `members` section on `inspect-model`** (not a separate tool), gated behind `include` and off by default — so the existing `include[]` / counts machinery carries it, the tool count stays flat, and the overview's `counts.members` advertises it. The shipped render is terse strings rather than the per-field objects sketched below (consistent with how `columns`/`scopes` already render), e.g. `"protected static booted(): void [lifecycle] @ app/Models/Order.php:42"` and `"$fillable [config] @ …:20"`. Illustrative structured shape:
 
 ```jsonc
 {
@@ -83,9 +83,9 @@ Shape (illustrative; either a new `list-members` tool or a new `members` section
 
 Notes:
 
-- **Enumeration boundary (load-bearing).** List only members **defined on the model's own class and its first-party traits** — never the framework/vendor base. `ReflectionClass::getMethods()` / `getConstants()` on an Eloquent model surface *hundreds* of inherited `Illuminate\…` members (`save`, `delete`, `newQuery`, `getAttribute`, `CREATED_AT`, …); emitting those would reproduce the exact un-consumable dump that motivates retiring the graph (gap #1). Reuse the boundary that already exists: `ModelInspector::extractTraits()` filters via `excluded_trait_prefixes`, and `list-members` applies the same exclusion so only host-app-defined surface appears. Without this filter the tool is dead on arrival — it is part of the decision, not a tuning detail.
-- **Provenance is the point** — and it has two halves. The `defined_in` **file:line** comes from reflection (`ReflectionMethod::getFileName()` already resolves to the trait file, not the using class). Determining a member's **origin class** (trait vs parent) for the `kind`/attribution must use the `ReflectionClass::getTraits()` walk, **not** `getDeclaringClass()`, which returns the *using* class when a trait is involved. This is the same convention the existing scope/relation/accessor attribution follows; `list-members` generalises it from three member kinds to the whole class.
-- **`kind` is a heuristic classification** (relation / scope / accessor / lifecycle / business / config / constant), reusing existing detection where it exists and falling back to `method` / `property`. It is a hint, not a contract.
+- **Enumeration boundary (load-bearing).** List only members defined in **first-party source** — `MemberExtractor` includes a member only when its declaring file is **not** under a `vendor/` directory. `ReflectionClass::getMethods()` / `getReflectionConstants()` on an Eloquent model surface *hundreds* of inherited `Illuminate\…` members (`save`, `delete`, `newQuery`, `getAttribute`, …); all ship from `vendor/`, so the file-path rule drops them wholesale. This is a strictly stronger boundary than the `excluded_trait_prefixes` list it subsumes (those traits also live in `vendor/`) and it also catches third-party package traits/parents the prefix list never enumerated. Without this filter the section is dead on arrival — it is part of the decision, not a tuning detail.
+- **Provenance is the point.** Each member's `defined_in` **file:line** comes from reflection — for methods, `ReflectionMethod::getFileName()`/`getStartLine()` (via the existing `SourceExtractor`) already resolve to the *trait* file, not the using class, so a trait method points at the trait. Properties and constants have no native line number, so the line is recovered by a lightweight regex scan of the declaring file (best-effort; the pointer degrades to file-only when the scan misses). Note `getDeclaringClass()` is deliberately **not** used for method origin — it returns the using class for trait methods; the `getFileName()` pointer is the trait-correct signal.
+- **`kind` is a heuristic classification** (relation / scope / accessor / lifecycle / magic / business / method for methods; config / constant / property otherwise), reusing existing detection (relation names, `scope*` prefix, `Attribute` return type) and falling back to `method` / `property`. It is a hint, not a contract.
 - **Bodies stay out** — names + signatures + pointers only; `model-source` fetches a body on demand. This keeps it token-economical even for large classes.
 - Consider whether this **supersedes the per-kind `model-source` resolution restriction**: with a full member list, `model-source` could accept any member name (currently `scope`/`relation`/`accessor` only).
 
@@ -105,7 +105,8 @@ Notes:
 
 ## Open questions
 
-- `list-members`: new tool vs. a `members` section on `inspect-model`? A section keeps the tool count down but bloats the default unless gated behind `include`.
+- ~~`list-members`: new tool vs. a `members` section on `inspect-model`?~~ **Resolved:** shipped as a `members` section, off by default and gated behind `include` — smallest surface, reuses the section/counts machinery, consistent with ADR-011.
+- Should `model-source` lift its per-kind restriction now that `members` enumerates every member name? (The `kind: scope|relation|accessor` cap predates member enumeration.)
 - Should `find-model` gain a `hasMethod` / `definesMember` filter once member enumeration exists (the structural analogue of `hasColumn`)?
 
 ## References
