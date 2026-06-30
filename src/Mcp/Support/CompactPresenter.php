@@ -36,7 +36,7 @@ class CompactPresenter
     /**
      * @param  list<string>  $sections
      * @param  array{kinds?: list<string>, file?: string}|null  $membersFilter  Narrows the
-     *   `members` section to matching kinds and/or a declaring-file substring (ADR-012).
+     *                                                                          `members` section to matching kinds and/or a declaring-file substring (ADR-012).
      * @return array<string, mixed>
      */
     public function inspect(ModelData $data, array $sections, ?array $membersFilter = null): array

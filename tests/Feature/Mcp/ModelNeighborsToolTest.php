@@ -3,6 +3,7 @@
 use Laravel\Mcp\Server\McpServiceProvider;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\ModelExplorerServer;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\ModelNeighborsTool;
+use Workbench\App\Models\User;
 
 // McpServiceProvider is excluded from Testbench auto-discovery (ignorePackageDiscoveriesFrom
 // returns ['*']). Its boot() registers the resolving(Request::class, ...) callback that
@@ -29,7 +30,7 @@ function neighborsStructured(array $arguments): array
 it('defaults to the incoming direction, finding every model that points at the root', function () {
     $structured = neighborsStructured(['model' => 'User']);
 
-    expect($structured['root'])->toBe(\Workbench\App\Models\User::class)
+    expect($structured['root'])->toBe(User::class)
         ->and($structured['direction'])->toBe('incoming')
         ->and(collect($structured['edges'])->pluck('from'))->toContain('Post', 'BasePost', 'ExtendedPost', 'MemberShowcase')
         ->and(collect($structured['edges'])->every(fn ($e) => $e['direction'] === 'incoming'))->toBeTrue();
