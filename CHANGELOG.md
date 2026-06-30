@@ -4,6 +4,8 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 
 ## Unreleased
 
+## v0.3.2 - 2026-06-30
+
 ### Added
 
 - **`inspect-model` `members` section (MCP)** — `include: ["members"]` (or `all`) now returns every member a model *defines* — methods, properties, and constants — each with a best-effort `kind` (`relation`/`scope`/`accessor`/`lifecycle`/`business`/`config`/`constant`/…) and a trait-correct `defined_in` pointer. Names, signatures, and pointers only; fetch a body with `model-source`. Only first-party members are listed (anything outside `vendor/`), so inherited framework methods never drown the result. Closes the "structure only, no behaviour" gap from the ADR-011 audit. See ADR-012.
@@ -12,6 +14,8 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 ### Changed
 
 - **Removed the `relationship-graph` MCP tool** — a whole-application graph overflows an agent's response budget at real scale (the audited app produced ~88 KB), and no audited task needed it that `find-model`/`inspect-model` did not serve better. The force-directed graph remains in the browser UI; only the agent-facing tool was retired. Scoped questions are answered by `find-model` (`relatesTo`) and `inspect-model`. See ADR-012. **(Breaking, pre-1.0:** the MCP tool set drops from five tools to four.)
+
+**Full Changelog**: https://github.com/One-Learning-Community/laravel-model-explorer/compare/v0.3.1...v0.3.2
 
 ## v0.3.1 - 2026-06-30
 
