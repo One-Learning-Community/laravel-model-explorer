@@ -12,7 +12,6 @@ they resolve trait-provided members and database columns that a source scan miss
   `accessors`, `traits`, `mass-assignment`, `policy`, or `all`; default columns +
   relations). Pass the model as a short name (`Order`) or FQCN. Each scope/relation/
   accessor includes a `defined_in` `path:line` pointer.
-- `relationship-graph` — all models as nodes + edges; use it to see how models connect.
 - `find-model` — find models by `trait`, `extends`, `relatesTo`, or `hasColumn`
   (filters AND together). Use for cross-cutting questions like "which models use
   SoftDeletes" or "which models belong to Team".

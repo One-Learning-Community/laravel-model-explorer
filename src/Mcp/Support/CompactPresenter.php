@@ -165,35 +165,6 @@ class CompactPresenter
     }
 
     /**
-     * @param  list<array{class:string, short_name:string, table:string, relations:list<array{name:string,type:string,related:string}>}>  $builderOutput
-     * @return array{nodes:list<array>, edges:list<array>}
-     */
-    public function graph(array $builderOutput): array
-    {
-        $nodes = [];
-        $edges = [];
-
-        foreach ($builderOutput as $model) {
-            $nodes[] = [
-                'class' => $model['class'],
-                'name' => $model['short_name'],
-                'table' => $model['table'],
-            ];
-
-            foreach ($model['relations'] as $rel) {
-                $edges[] = [
-                    'from' => $model['short_name'],
-                    'to' => class_basename($rel['related']),
-                    'type' => lcfirst($rel['type']),
-                    'name' => $rel['name'],
-                ];
-            }
-        }
-
-        return ['nodes' => $nodes, 'edges' => $edges];
-    }
-
-    /**
      * Format a snippet's location as a base_path-relative `path:line` pointer.
      *
      * @param  array{file?:string, start_line?:int}|null  $snippet

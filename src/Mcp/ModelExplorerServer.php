@@ -11,25 +11,23 @@ use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\FindModelTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\InspectModelTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\ListModelsTool;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\ModelSourceTool;
-use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\RelationshipGraphTool;
 
 #[Name('Model Explorer')]
 #[Version('1.0.0')]
-#[Instructions('Introspect the application\'s Eloquent models: list them, inspect one model\'s columns/relations/scopes/accessors, view the relationship graph, find models by structural criteria, and fetch source snippets. Prefer these tools over reading model source files.')]
+#[Instructions('Introspect the application\'s Eloquent models: list them, inspect one model\'s columns/relations/scopes/accessors, find models by structural criteria, and fetch source snippets. Prefer these tools over reading model source files.')]
 class ModelExplorerServer extends Server
 {
     /**
      * @var array<int, class-string<Tool>>
      *
-     * Tools are registered here as they are implemented (Tasks 5–9).
-     * Tasks 6–9 each add InspectModelTool, RelationshipGraphTool, FindModelTool,
-     * ModelSourceTool once those classes exist — the laravel/mcp container resolves
-     * every entry at request time, so absent classes cause BindingResolutionException.
+     * The relationship-graph tool was retired (ADR-012): it could only return the
+     * whole graph, which overflows the client at real scale. GraphBuilder and the
+     * HTTP/SPA graph endpoint remain for the human surface; a scoped graph tool may
+     * return later. The laravel/mcp container resolves every entry at request time.
      */
     protected array $tools = [
         ListModelsTool::class,
         InspectModelTool::class,
-        RelationshipGraphTool::class,
         FindModelTool::class,
         ModelSourceTool::class,
     ];
