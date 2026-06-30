@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## Unreleased
+
+### Bug fixes
+
+- **Relations no longer silently dropped when a relation method throws** — `RelationFinder` discovered relations by invoking each method on a blank model and discarding any that threw (e.g. a `whereHas`/constraint closure that dereferences the query builder, or a relation built against unset attributes). This made the reported relation set depend on runtime/DB state rather than the model's structure. A relation that has been statically identified is now reported even when invocation fails: the type is recovered from the declared return type (or the relation primitive in the source for untyped methods) and the related model is parsed from the `X::class` argument.
+
 ## v0.3.0 - 2026-06-30
 
 ### Added
