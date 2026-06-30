@@ -133,6 +133,13 @@ return [
         'cache' => [
             'enabled' => env('MODEL_EXPLORER_MCP_CACHE', false),
         ],
+
+        // Allow `inspect-model` / `model-source` to introspect an Eloquent model
+        // *outside* the configured `model_paths` when given its fully-qualified
+        // class name (e.g. a vendor package's model). Off by default so the agent
+        // surface stays bounded to the discovered set; `list-models`/`find-model`
+        // are unaffected either way.
+        'allow_undiscovered' => env('MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED', false),
     ],
 
 ];

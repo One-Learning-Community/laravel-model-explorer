@@ -2,6 +2,7 @@
 
 namespace OneLearningCommunity\LaravelModelExplorer\Mcp\Support;
 
+use Illuminate\Database\Eloquent\Model;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 
 class ModelResolver
@@ -10,6 +11,10 @@ class ModelResolver
 
     /**
      * Resolve an FQCN or short class name against the discovered model set.
+     *
+     * When `mcp.allow_undiscovered` is enabled, a fully-qualified name that
+     * resolves to an Eloquent model outside `model_paths` (e.g. a vendor model)
+     * is accepted too — short names stay bounded to the discovered set.
      *
      * @return class-string
      *
@@ -39,6 +44,17 @@ class ModelResolver
             throw new \RuntimeException(
                 "Ambiguous model name [{$input}]. Use a fully-qualified class name; candidates: ".implode(', ', $matches).'.'
             );
+        }
+
+        if (class_exists($needle) && is_subclass_of($needle, Model::class)) {
+            if (! config('model-explorer.mcp.allow_undiscovered', false)) {
+                throw new \RuntimeException(
+                    "[{$input}] is an Eloquent model but outside the configured model_paths. ".
+                    'Set model-explorer.mcp.allow_undiscovered to true to inspect undiscovered models.'
+                );
+            }
+
+            return (new \ReflectionClass($needle))->getName();
         }
 
         throw new \RuntimeException("No discovered model matches [{$input}].");
