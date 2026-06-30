@@ -10,7 +10,7 @@ A grep over your `app/Models` directory can't tell an agent that a relation is d
 
 ## Requirements
 
-- The `model-explorer` server is registered only when both `enabled` and `mcp.enabled` are true (see [Configuration](#configuration)).
+- The `model-explorer` server is registered only when both `model-explorer.enabled` and `model-explorer.mcp.enabled` are true (see [Configuration](#configuration)).
 - `laravel/mcp` is installed as a dependency of this package, so no extra install step is required.
 
 ## Registering the server with your AI client
@@ -46,7 +46,7 @@ The server exposes five tools. Every tool returns compact, structured JSON; each
 | [`find-model`](#find-model) | Find models by structural criteria |
 | [`model-source`](#model-source) | Fetch one definition's source snippet |
 
-Models are referenced by **fully-qualified class name or short class name** (`App\Models\Order` or `Order`) — not the base64url slugs the HTTP API uses.
+Models are referenced by their **fully-qualified class name (FQCN)** or **short class name** — `App\Models\Order` or just `Order`.
 
 ### `list-models`
 
