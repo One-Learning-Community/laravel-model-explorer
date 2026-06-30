@@ -2,6 +2,28 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## v0.3.0 - 2026-06-30
+
+### Added
+
+- **AI Model Introspection (MCP)** — a local [`laravel/mcp`](https://laravel.com/docs/mcp) server (`model-explorer`) that lets AI coding agents introspect your Eloquent models without scanning source. Five tools: `list-models`, `inspect-model` (opt-in sections via `include`), `relationship-graph`, `find-model` (filter by `trait`/`extends`/`relatesTo`/`hasColumn`), and `model-source` (trait-correct snippets). Reads live by default; opt-in caching via `MODEL_EXPLORER_MCP_CACHE`. If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` advertises the tools to your agent automatically. See ADR-011 and the [MCP guide](https://one-learning-community.github.io/laravel-model-explorer/guide/mcp).
+- **`excluded_models` config** — hide specific model classes (even inside a scanned path) by FQCN or `*` wildcard; useful for suppressing third-party models from Telescope, Passport, Horizon, etc.
+- **FK column links** — foreign-key badges in the Columns table now link to the related model's detail page when that model is in the discovered set.
+- **Optional caching** — set `MODEL_EXPLORER_CACHE=true` to cache model discovery and inspection (helpful for apps with many models). Detail pages auto-refresh when the model file changes; clear everything with `php artisan model-explorer:clear`.
+- **Configurable page size** — `per_page` config (`MODEL_EXPLORER_PER_PAGE`) controls how many related records are shown per page and caps collection-returning accessor values (previously hardcoded to 15).
+
+### Bug fixes
+
+- **Multi-connection safe reads** — `withinSafeRead()` now opens its rolled-back transaction on the inspected model's own database connection instead of always the default one, so accessor/observer writes are rolled back for models on a non-default connection.
+- **Resilient model list** — a model that throws on instantiation is now skipped in the model list instead of breaking the entire endpoint.
+
+### Other changes
+
+- Docs corrected to state PHP 8.3+ (matching the `composer.json` constraint and continued Laravel 11 support).
+- Published a VitePress documentation site with an MCP guide, and trimmed the Composer dist archive (`.gitattributes`) so it no longer ships the docs site or frontend build toolchain.
+
+**Full Changelog**: https://github.com/One-Learning-Community/laravel-model-explorer/compare/v0.2.1...v0.3.0
+
 ## Unreleased
 
 ## v0.2.1 Release - 2026-03-25
