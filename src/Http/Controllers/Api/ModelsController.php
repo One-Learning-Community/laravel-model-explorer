@@ -9,6 +9,7 @@ use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 use Spatie\ModelInfo\Attributes\Attribute;
 
 class ModelsController
@@ -17,11 +18,12 @@ class ModelsController
         private readonly ModelDiscovery $discovery,
         private readonly ModelInspector $inspector,
         private readonly ExplorerCache $cache,
+        private readonly SourceFingerprint $fingerprint,
     ) {}
 
     public function index(): JsonResponse
     {
-        $models = $this->cache->remember('models.index', fn () => collect($this->discovery->discoverAll())
+        $models = $this->cache->remember('models.index.'.$this->fingerprint->forModelPaths(), fn () => collect($this->discovery->discoverAll())
             ->map(fn (string $className) => $this->summarize($className))
             ->filter()
             ->sortBy('short_name')
@@ -41,7 +43,7 @@ class ModelsController
 
         try {
             $payload = $this->cache->remember(
-                'models.show.'.$model.'.'.$this->fileMtime($className),
+                'models.show.'.$model.'.'.$this->fingerprint->forClass($className),
                 fn () => $this->serialize($this->inspector->inspect($className)),
             );
         } catch (\RuntimeException $e) {
@@ -68,21 +70,6 @@ class ModelsController
             ];
         } catch (\Throwable) {
             return null;
-        }
-    }
-
-    /**
-     * Modification time of the file declaring the model, used in the detail cache
-     * key so an edited model file invalidates its own cached inspection.
-     */
-    private function fileMtime(string $className): int
-    {
-        try {
-            $file = (new \ReflectionClass($className))->getFileName();
-
-            return $file ? (int) filemtime($file) : 0;
-        } catch (\Throwable) {
-            return 0;
         }
     }
 

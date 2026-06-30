@@ -11,6 +11,7 @@ use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
+use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 
 #[Description('List all discovered Eloquent models with their fully-qualified class, short name, and table. Call this first to see what models exist before inspecting one.')]
 class ListModelsTool extends Tool
@@ -18,13 +19,16 @@ class ListModelsTool extends Tool
     public function __construct(
         private readonly ModelDiscovery $discovery,
         private readonly ExplorerCache $cache,
+        private readonly SourceFingerprint $fingerprint,
     ) {}
 
     public function handle(Request $request): ResponseFactory
     {
         $useCache = (bool) config('model-explorer.mcp.cache.enabled', false);
 
-        $models = $this->cache->rememberWhen($useCache, 'mcp.list', function (): array {
+        $key = 'mcp.list.'.$this->fingerprint->forModelPaths();
+
+        $models = $this->cache->rememberWhen($useCache, $key, function (): array {
             return collect($this->discovery->discoverAll())
                 ->map(function (string $className): ?array {
                     try {

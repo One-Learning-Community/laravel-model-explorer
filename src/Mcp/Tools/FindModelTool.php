@@ -13,6 +13,7 @@ use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 use RuntimeException;
 use Spatie\ModelInfo\Attributes\Attribute;
 
@@ -23,6 +24,7 @@ class FindModelTool extends Tool
         private readonly ModelDiscovery $discovery,
         private readonly ModelInspector $inspector,
         private readonly ExplorerCache $cache,
+        private readonly SourceFingerprint $fingerprint,
     ) {}
 
     public function handle(Request $request): ResponseFactory|Response
@@ -43,7 +45,7 @@ class FindModelTool extends Tool
             try {
                 $data = $this->cache->rememberWhen(
                     $useCache,
-                    'mcp.inspect.'.$className,
+                    'mcp.inspect.'.$className.'.'.$this->fingerprint->forClass($className),
                     fn () => $this->inspector->inspect($className),
                 );
             } catch (RuntimeException) {
