@@ -15,7 +15,11 @@ class GraphBuilder
      * Build the raw relationship-graph payload: one entry per inspectable model.
      * Un-inspectable models are skipped so a single broken model never breaks the graph.
      *
-     * @return list<array{class:string, short_name:string, table:string, relations:list<array{name:string,type:string,related:string}>}>
+     * `snippet` carries the relation's source pointer (file + start_line, trait-correct)
+     * through from RelationData so a consumer can format a `defined_in` pointer without
+     * a second inspection pass — used by the `model-neighbors` MCP tool.
+     *
+     * @return list<array{class:string, short_name:string, table:string, relations:list<array{name:string,type:string,related:string,snippet:?array{file:string,start_line:int}}>}>
      */
     public function build(): array
     {
@@ -35,6 +39,7 @@ class GraphBuilder
                         'name' => $rel->name,
                         'type' => $rel->type,
                         'related' => $rel->related,
+                        'snippet' => $rel->snippet,
                     ])->values()->all(),
                 ];
             })
