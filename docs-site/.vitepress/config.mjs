@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-    title: 'Laravel Model Explorer',
+    title: 'Model Explorer for Laravel',
     description: 'A zero-config browser UI for exploring your Eloquent models.',
     base: '/laravel-model-explorer/',
 

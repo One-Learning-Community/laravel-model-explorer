@@ -2,7 +2,7 @@
 
 ![Model List](/screenshots/model-list.png)
 
-The Model List is the home screen of Laravel Model Explorer. It shows every Eloquent model discovered in your configured `model_paths`.
+The Model List is the home screen of Model Explorer for Laravel. It shows every Eloquent model discovered in your configured `model_paths`.
 
 ## What You See
 

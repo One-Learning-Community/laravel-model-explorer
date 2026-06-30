@@ -6,7 +6,7 @@ use OneLearningCommunity\LaravelModelExplorer\Services\ModelDiscovery;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 
 /**
- * Entry point for the Laravel Model Explorer package.
+ * Entry point for the Model Explorer for Laravel package.
  *
  * The primary services are available via the container:
  *

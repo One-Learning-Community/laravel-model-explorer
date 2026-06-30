@@ -1,6 +1,6 @@
 # Getting Started
 
-Laravel Model Explorer is a zero-config developer tool that gives you a browser-based UI for exploring your Eloquent models. No `vendor:publish`, no frontend tooling required in your app.
+Model Explorer for Laravel is a zero-config developer tool that gives you a browser-based UI for exploring your Eloquent models. No `vendor:publish`, no frontend tooling required in your app.
 
 ## Requirements
 

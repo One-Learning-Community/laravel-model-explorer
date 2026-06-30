@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: Laravel Model Explorer
+  name: Model Explorer for Laravel
   text: Explore your Eloquent models in the browser.
   tagline: Zero config. Install and go. A developer tool that gives you instant visibility into your models, relationships, and data.
   image:
     src: /screenshots/model-detail.png
-    alt: Laravel Model Explorer Model details
+    alt: Model Explorer for Laravel Model details
   actions:
     - theme: brand
       text: Get Started

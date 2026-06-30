@@ -16,7 +16,7 @@
     backupStaticProperties="false"
 >
     <testsuites>
-        <testsuite name="Laravel Model Explorer Test Suite">
+        <testsuite name="Model Explorer for Laravel Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

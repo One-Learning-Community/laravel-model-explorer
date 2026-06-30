@@ -1,4 +1,4 @@
-## Laravel Model Explorer — Model Introspection
+## Model Explorer for Laravel — Model Introspection
 
 This app ships the `model-explorer` MCP server. When you need to understand the
 application's Eloquent models, prefer these tools over reading model source files —

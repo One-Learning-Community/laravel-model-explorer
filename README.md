@@ -1,4 +1,4 @@
-# Laravel Model Explorer
+# Model Explorer for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/onelearningcommunity/laravel-model-explorer.svg?style=flat-square)](https://packagist.org/packages/onelearningcommunity/laravel-model-explorer)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/one-learning-community/laravel-model-explorer/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/one-learning-community/laravel-model-explorer/actions?query=workflow%3Arun-tests+branch%3Amain)
@@ -141,7 +141,7 @@ sets, or `MODEL_EXPLORER_MCP=false` to disable the server entirely.
 
 ## Security
 
-Laravel Model Explorer is intended for development use. The `viewModelExplorer` gate should prevent access in production environments.
+Model Explorer for Laravel is intended for development use. The `viewModelExplorer` gate should prevent access in production environments.
 
 All record reads are wrapped in a rolled-back transaction with `Model::withoutEvents()` to prevent accidental writes from observers or model events. Note that non-database side effects from accessor methods (HTTP calls, cache writes, queue pushes) are **not** prevented.
 
