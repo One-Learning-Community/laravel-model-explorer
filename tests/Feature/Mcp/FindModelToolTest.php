@@ -41,3 +41,22 @@ it('combines filters with AND', function () {
 it('errors when no filter is provided', function () {
     ModelExplorerServer::tool(FindModelTool::class, [])->assertHasErrors();
 });
+
+it('finds models by a plain business method via definesMember', function () {
+    ModelExplorerServer::tool(FindModelTool::class, ['definesMember' => 'activate'])
+        ->assertOk()
+        ->assertSee('Post')
+        ->assertSee('definesMember:');
+});
+
+it('finds models by a trait-composed member via definesMember', function () {
+    ModelExplorerServer::tool(FindModelTool::class, ['definesMember' => 'scopePublished'])
+        ->assertOk()
+        ->assertSee('Post');
+});
+
+it('returns no matches for definesMember when the name is not a member', function () {
+    ModelExplorerServer::tool(FindModelTool::class, ['definesMember' => 'doesNotExistAnywhere'])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('count', 0)->where('models', [])->etc());
+});

@@ -15,7 +15,7 @@ use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 
-#[Description('Inspect one model\'s structure: columns, relations, scopes, accessors, traits, mass-assignment, and policy. Always returns an overview with section counts, then the requested sections (default: columns + relations). Each scope/relation/accessor carries a defined_in "path:line" pointer. Prefer this over reading the model source file.')]
+#[Description('Inspect one model\'s structure: columns, relations, scopes, accessors, traits, mass-assignment, policy, and members. Always returns an overview with section counts, then the requested sections (default: columns + relations). Each scope/relation/accessor carries a defined_in "path:line" pointer. The members section can be narrowed with "members:<kind1>,<kind2>" (e.g. "members:relation,business") or "members:file=<substring>" to avoid returning a noisy class\'s whole surface. Prefer this over reading the model source file.')]
 class InspectModelTool extends Tool
 {
     public function __construct(
@@ -40,7 +40,9 @@ class InspectModelTool extends Tool
             return Response::error($e->getMessage());
         }
 
-        $sections = $this->normalizeInclude((array) $request->array('include'));
+        $include = $request->array('include');
+        $sections = $this->normalizeInclude($include);
+        $membersFilter = $this->membersFilter($include);
         $useCache = (bool) config('model-explorer.mcp.cache.enabled', false);
 
         try {
@@ -53,7 +55,7 @@ class InspectModelTool extends Tool
             return Response::error($e->getMessage());
         }
 
-        return Response::structured($this->presenter->inspect($data, $sections));
+        return Response::structured($this->presenter->inspect($data, $sections, $membersFilter));
     }
 
     /**
@@ -70,7 +72,39 @@ class InspectModelTool extends Tool
             return CompactPresenter::SECTIONS;
         }
 
-        return array_values(array_intersect(CompactPresenter::SECTIONS, $include));
+        // A "members:..." filter token still requests the members section itself.
+        $sections = array_map(
+            fn ($token) => is_string($token) && str_starts_with($token, 'members:') ? 'members' : $token,
+            $include,
+        );
+
+        return array_values(array_unique(array_intersect(CompactPresenter::SECTIONS, $sections)));
+    }
+
+    /**
+     * Parses a "members:relation,business" (kind filter) or "members:file=Order.php"
+     * (declaring-file substring filter) token out of `include`, if present.
+     *
+     * @param  array<int, string>  $include
+     * @return array{kinds?: list<string>, file?: string}|null
+     */
+    private function membersFilter(array $include): ?array
+    {
+        foreach ($include as $token) {
+            if (! is_string($token) || ! str_starts_with($token, 'members:')) {
+                continue;
+            }
+
+            $filter = substr($token, strlen('members:'));
+
+            if (str_starts_with($filter, 'file=')) {
+                return ['file' => substr($filter, strlen('file='))];
+            }
+
+            return ['kinds' => array_values(array_filter(array_map('trim', explode(',', $filter))))];
+        }
+
+        return null;
     }
 
     /**
@@ -83,7 +117,8 @@ class InspectModelTool extends Tool
                 ->description('Fully-qualified class name or short class name, e.g. "App\\Models\\Order" or "Order".')
                 ->required(),
             'include' => $schema->array()
-                ->description('Sections to include: '.implode(', ', CompactPresenter::SECTIONS).', or "all". Defaults to columns + relations.'),
+                ->description('Sections to include: '.implode(', ', CompactPresenter::SECTIONS).', or "all". Defaults to columns + relations. '.
+                    'Narrow "members" with "members:<kind1>,<kind2>" (kinds: relation, scope, accessor, lifecycle, business, magic, method, config, constant, property) or "members:file=<substring>" to match a defined_in file substring.'),
         ];
     }
 }

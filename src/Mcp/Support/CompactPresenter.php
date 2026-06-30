@@ -2,6 +2,7 @@
 
 namespace OneLearningCommunity\LaravelModelExplorer\Mcp\Support;
 
+use OneLearningCommunity\LaravelModelExplorer\Data\MemberData;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Data\ScopeData;
@@ -34,9 +35,11 @@ class CompactPresenter
 
     /**
      * @param  list<string>  $sections
+     * @param  array{kinds?: list<string>, file?: string}|null  $membersFilter  Narrows the
+     *   `members` section to matching kinds and/or a declaring-file substring (ADR-012).
      * @return array<string, mixed>
      */
-    public function inspect(ModelData $data, array $sections): array
+    public function inspect(ModelData $data, array $sections, ?array $membersFilter = null): array
     {
         $out = $this->overview($data);
 
@@ -48,7 +51,7 @@ class CompactPresenter
             'traits' => fn () => $this->traits($data),
             'mass-assignment' => fn () => $this->massAssignment($data),
             'policy' => fn () => $this->policy($data),
-            'members' => fn () => $this->members($data),
+            'members' => fn () => $this->members($data, $membersFilter),
         ];
 
         foreach ($sections as $section) {
@@ -172,14 +175,21 @@ class CompactPresenter
      * and a `defined_in` pointer, e.g.
      * "markPaid(Carbon $at): void [business] @ app/Models/Order.php:88".
      *
+     * `$filter['kinds']` keeps only members whose `kind` is in the list
+     * (case-insensitive, e.g. `['relation', 'business']`); `$filter['file']`
+     * keeps only members whose `defined_in` file contains the given substring.
+     * Both narrow the surface that a noisy class (hundreds of members) returns —
+     * the overview's `counts.members` always reports the unfiltered total.
+     *
+     * @param  array{kinds?: list<string>, file?: string}|null  $filter
      * @return array{methods: list<string>, properties: list<string>}
      */
-    public function members(ModelData $data): array
+    public function members(ModelData $data, ?array $filter = null): array
     {
         $methods = [];
         $properties = [];
 
-        foreach ($data->members as $member) {
+        foreach ($this->filterMembers($data->members, $filter) as $member) {
             $visibility = $member->visibility === 'public' ? '' : $member->visibility.' ';
             $static = $member->static ? 'static ' : '';
             $pointer = $this->pointer($member->snippet);
@@ -195,6 +205,32 @@ class CompactPresenter
         }
 
         return ['methods' => $methods, 'properties' => $properties];
+    }
+
+    /**
+     * @param  list<MemberData>  $members
+     * @param  array{kinds?: list<string>, file?: string}|null  $filter
+     * @return list<MemberData>
+     */
+    private function filterMembers(array $members, ?array $filter): array
+    {
+        if ($filter === null) {
+            return $members;
+        }
+
+        if (! empty($filter['kinds'])) {
+            $kinds = array_map('strtolower', $filter['kinds']);
+            $members = array_filter($members, fn (MemberData $m) => in_array(strtolower($m->kind), $kinds, true));
+        }
+
+        if (! empty($filter['file'])) {
+            $needle = $filter['file'];
+            $members = array_filter($members, fn (MemberData $m) => $m->snippet !== null
+                && ! empty($m->snippet['file'])
+                && str_contains($m->snippet['file'], $needle));
+        }
+
+        return array_values($members);
     }
 
     /**

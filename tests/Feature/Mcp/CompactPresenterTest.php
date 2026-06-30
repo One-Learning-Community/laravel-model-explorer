@@ -67,6 +67,22 @@ it('renders members split into methods and properties with kind and pointer', fu
         ->and(collect($members['properties'])->contains(fn ($m) => str_contains($m, '$fillable [config]')))->toBeTrue();
 });
 
+it('filters members to the given kinds', function () {
+    [$p, $data] = presentPost();
+    $members = $p->members($data, ['kinds' => ['business']]);
+
+    expect(collect($members['methods'])->contains(fn ($m) => str_contains($m, '[business]')))->toBeTrue()
+        ->and(collect($members['methods'])->contains(fn ($m) => str_contains($m, '[relation]')))->toBeFalse();
+});
+
+it('filters members to a declaring-file substring', function () {
+    [$p, $data] = presentPost();
+    $members = $p->members($data, ['file' => 'HasAuthor.php']);
+
+    expect(collect($members['methods'])->every(fn ($m) => str_contains($m, 'HasAuthor.php')))->toBeTrue()
+        ->and($members['methods'])->not->toBeEmpty();
+});
+
 it('counts members in the overview header', function () {
     [$p, $data] = presentPost();
 

@@ -68,6 +68,33 @@ class SourceExtractor
     }
 
     /**
+     * Returns a one-line snippet for a property or constant declaration, which has
+     * no reflectable body — just the source line at the given (best-effort,
+     * regex-recovered) line number. Used by model-source to fetch non-method members.
+     *
+     * @return array{code: string, file: string, start_line: int, doc_summary: ?string}|null
+     */
+    public static function forDeclarationLine(string $file, ?int $line): ?array
+    {
+        if ($line === null) {
+            return null;
+        }
+
+        $lines = @file($file, FILE_IGNORE_NEW_LINES);
+
+        if ($lines === false || ! isset($lines[$line - 1])) {
+            return null;
+        }
+
+        return [
+            'code' => trim($lines[$line - 1]),
+            'file' => $file,
+            'start_line' => $line,
+            'doc_summary' => null,
+        ];
+    }
+
+    /**
      * Extracts the summary line (first non-tag, non-empty line) from a PHPDoc comment,
      * or null when no summary is present.
      */

@@ -9,6 +9,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use OneLearningCommunity\LaravelModelExplorer\Data\MemberData;
 use OneLearningCommunity\LaravelModelExplorer\Data\ModelData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
@@ -17,7 +18,7 @@ use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 use RuntimeException;
 use Spatie\ModelInfo\Attributes\Attribute;
 
-#[Description('Find models matching structural criteria: trait (uses a trait), extends (parent class), relatesTo (has a relation to a model), hasColumn (table has a column). Filters combine with AND. Answers cross-cutting questions without inspecting every model. At least one filter is required.')]
+#[Description('Find models matching structural criteria: trait (uses a trait), extends (parent class), relatesTo (has a relation to a model), hasColumn (table has a column), definesMember (defines a first-party method/property/constant by name, e.g. "toSearchableArray"). Filters combine with AND. Answers cross-cutting questions without inspecting every model. At least one filter is required.')]
 class FindModelTool extends Tool
 {
     public function __construct(
@@ -33,9 +34,10 @@ class FindModelTool extends Tool
         $extends = $this->str($request->get('extends'));
         $relatesTo = $this->str($request->get('relatesTo'));
         $hasColumn = $this->str($request->get('hasColumn'));
+        $definesMember = $this->str($request->get('definesMember'));
 
-        if (! $trait && ! $extends && ! $relatesTo && ! $hasColumn) {
-            return Response::error('Provide at least one filter: trait, extends, relatesTo, or hasColumn.');
+        if (! $trait && ! $extends && ! $relatesTo && ! $hasColumn && ! $definesMember) {
+            return Response::error('Provide at least one filter: trait, extends, relatesTo, hasColumn, or definesMember.');
         }
 
         $useCache = (bool) config('model-explorer.mcp.cache.enabled', false);
@@ -80,6 +82,13 @@ class FindModelTool extends Tool
                     continue;
                 }
                 $matched[] = 'hasColumn: '.$hit;
+            }
+
+            if ($definesMember !== null) {
+                if (($hit = $this->matchDefinesMember($data, $definesMember)) === null) {
+                    continue;
+                }
+                $matched[] = 'definesMember: '.$hit;
             }
 
             $matches[] = [
@@ -160,6 +169,23 @@ class FindModelTool extends Tool
     }
 
     /**
+     * The structural analogue of matchColumn(), but over the first-party
+     * members surface (MemberExtractor) instead of database columns — catches
+     * trait-composed methods/properties/constants a source grep would miss.
+     */
+    private function matchDefinesMember(ModelData $data, string $needle): ?string
+    {
+        foreach ($data->members as $member) {
+            /** @var MemberData $member */
+            if (strcasecmp($member->name, $needle) === 0) {
+                return $member->memberType.':'.$member->kind.' '.$member->name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<string, Type>
      */
     public function schema(JsonSchema $schema): array
@@ -169,6 +195,7 @@ class FindModelTool extends Tool
             'extends' => $schema->string()->description('Model extends this class (short name or FQCN), e.g. "Authenticatable".'),
             'relatesTo' => $schema->string()->description('Model has a relation pointing at this model (short name or FQCN), e.g. "Team".'),
             'hasColumn' => $schema->string()->description('Model\'s table has this column, e.g. "team_id".'),
+            'definesMember' => $schema->string()->description('Model defines this first-party method, property, or constant, e.g. "toSearchableArray". Matches trait-composed members too.'),
         ];
     }
 }

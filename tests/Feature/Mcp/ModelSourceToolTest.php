@@ -40,10 +40,49 @@ it('errors and lists available names for an unknown definition', function () {
     ])->assertHasErrors();
 });
 
-it('rejects an invalid kind', function () {
+it('errors when no member matches the given name', function () {
     ModelExplorerServer::tool(ModelSourceTool::class, [
         'model' => 'Post',
         'kind' => 'column',
         'name' => 'title',
+    ])->assertHasErrors();
+});
+
+it('fetches a plain business method by name without a kind', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+        'name' => 'activate',
+    ])->assertOk()
+        ->assertSee('is_published = true')
+        ->assertSee('Post.php');
+});
+
+it('fetches a plain business method by name with kind business', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+        'kind' => 'business',
+        'name' => 'activate',
+    ])->assertOk()->assertSee('is_published = true');
+});
+
+it('fetches a relation by name without a kind, via the wider member list', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+        'name' => 'author',
+    ])->assertOk()->assertSee('belongsTo');
+});
+
+it('fetches a config property declaration by name', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+        'kind' => 'config',
+        'name' => 'fillable',
+    ])->assertOk()->assertSee('fillable');
+});
+
+it('errors with a members hint when an unknown member name is given without a kind', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+        'name' => 'nopeNotAMember',
     ])->assertHasErrors();
 });
