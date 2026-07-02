@@ -4,6 +4,10 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- **Corrected the "Using Laravel Boost?" note on the MCP docs page** — it previously implied `boost:install` registers the `model-explorer` MCP server with your AI client ("no manual client config needed"), which is wrong: Boost only ships text guidelines telling an already-connected agent the server exists. There is no Boost hook to auto-register a third-party MCP server, so the client config step is always required, Boost or not. This was already correctly stated in ADR-011; only the docs site had drifted from it.
+
 ## v0.4.1 - 2026-06-30
 
 ### Changed

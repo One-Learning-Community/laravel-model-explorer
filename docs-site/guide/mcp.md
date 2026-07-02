@@ -31,7 +31,7 @@ Point your MCP-capable client (Claude Code, Cursor, etc.) at the server with the
 Run this from your application's root so `php artisan` resolves to your app.
 
 ::: tip Using Laravel Boost?
-If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` automatically advertises these tools to your agent — the package ships Boost guidelines describing each one. No manual client config needed.
+If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` copies this package's Boost guidelines into your project, so a Boost-driven agent is told the `model-explorer` server exists and what each tool does. That's text, not registration: Boost has no hook to add a third-party MCP server (like this one) to your client's config on your behalf, so you still need to register `model-explorer` yourself with the client config above — one-time, whether or not you use Boost.
 :::
 
 ## The tools
