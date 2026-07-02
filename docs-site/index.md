@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Model Explorer for Laravel
-  text: Explore your Eloquent models in the browser.
-  tagline: Zero config. Install and go. A developer tool that gives you instant visibility into your models, relationships, and data.
+  text: Live Eloquent model introspection for AI agents — and a browsable UI for humans.
+  tagline: Zero config. Install and go. An MCP server for Claude Code, Cursor, and other agents, plus a browser UI for the rest of us.
   image:
     src: /screenshots/model-detail.png
     alt: Model Explorer for Laravel Model details
@@ -17,6 +17,9 @@ hero:
       link: https://github.com/one-learning-community/laravel-model-explorer
 
 features:
+  - icon: 🤖
+    title: AI Model Introspection (MCP)
+    details: A local laravel/mcp server that lets AI coding agents introspect your models — columns, relations, scopes, accessors, and trait-correct source — without scanning your files.
   - icon: 🗂️
     title: Model List
     details: A searchable grid of every Eloquent model in your app — table name, row count, and key stats at a glance.
@@ -29,7 +32,4 @@ features:
   - icon: 🕸️
     title: Relationship Graph
     details: An interactive force-directed graph of every relationship across your entire model layer. Pan, zoom, drag, and click to navigate.
-  - icon: 🤖
-    title: AI Model Introspection (MCP)
-    details: A local laravel/mcp server that lets AI coding agents introspect your models — columns, relations, scopes, accessors, and trait-correct source — without scanning your files.
 ---

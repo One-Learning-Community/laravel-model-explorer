@@ -4,7 +4,7 @@
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/one-learning-community/laravel-model-explorer/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/one-learning-community/laravel-model-explorer/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/onelearningcommunity/laravel-model-explorer.svg?style=flat-square)](https://packagist.org/packages/onelearningcommunity/laravel-model-explorer)
 
-A developer tool for Laravel that gives you a browsable UI to explore your Eloquent models — their attributes, casts, relations, scopes, traits, and live data — without reading code.
+A Laravel package that gives AI coding agents and developers a live, structural view of your Eloquent models — columns, relations, scopes, accessors, traits, and data — through an MCP server for agents and a browsable UI for humans. No source scanning, no stale context.
 
 **Zero setup beyond Composer install.** No `vendor:publish`, no frontend tooling required in your application.
 
@@ -15,6 +15,7 @@ A developer tool for Laravel that gives you a browsable UI to explore your Eloqu
 
 ## Features
 
+- **AI Model Introspection (MCP)** — a local [`laravel/mcp`](https://laravel.com/docs/mcp) server exposing five tools (`list-models`, `inspect-model`, `find-model`, `model-source`, `model-neighbors`) so Claude Code, Cursor, and other MCP clients get live model structure and trait-correct source, instead of grepping your app
 - **Model list** — searchable grid of all discovered Eloquent models
 - **Model detail** — DB columns, casts, fillable/hidden/guarded, relations with type badges and foreign keys, scopes with source snippets, traits, and accessor snippets
 - **Record lookup** — find any record by primary key or unique field; browse raw attributes, lazy-loaded accessor values, and expandable relations with drill-down navigation and breadcrumb trail
@@ -31,6 +32,42 @@ The package auto-registers via Laravel's package discovery — no additional set
 ## Usage
 
 Visit `/_model-explorer` in your application. In local environments, access is granted by default.
+
+## AI Model Introspection (MCP)
+
+Model Explorer ships a local [`laravel/mcp`](https://laravel.com/docs/mcp) server,
+`model-explorer`, that lets AI coding agents introspect your Eloquent models without
+scanning source. Register it in your AI client:
+
+```json
+{
+  "mcpServers": {
+    "model-explorer": {
+      "command": "php",
+      "args": ["artisan", "mcp:start", "model-explorer"]
+    }
+  }
+}
+```
+
+Tools: `list-models`, `inspect-model` (opt-in sections via `include`, including a
+`members` section listing every method/property/constant with provenance, filterable
+by kind or declaring file), `find-model` (filter by `trait`/`extends`/`relatesTo`/
+`hasColumn`/`definesMember`), `model-source` (fetches any member's source by name,
+not just scopes/relations/accessors), and `model-neighbors` (a model's depth-1 relation
+neighborhood — defaults to *incoming* relations, "which models point at this one").
+If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` copies this
+package's Boost guidelines into your project so an already-connected agent is told the
+server exists — it doesn't register the server itself, so the client config above is
+still required either way.
+
+The tools read live by default so an agent never sees stale structure mid-development.
+Set `MODEL_EXPLORER_MCP_CACHE=true` to trade freshness for speed on very large model
+sets, or `MODEL_EXPLORER_MCP=false` to disable the server entirely. To inspect models
+outside your configured `model_paths` (e.g. a vendor package's model) by FQCN, set
+`MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED=true`.
+
+See the [MCP guide](https://one-learning-community.github.io/laravel-model-explorer/guide/mcp.html) for the full tool reference.
 
 ## Authorization
 
@@ -112,38 +149,6 @@ are cached until the TTL expires or you clear them manually:
 ```bash
 php artisan model-explorer:clear
 ```
-
-## AI Model Introspection (MCP)
-
-Model Explorer ships a local [`laravel/mcp`](https://laravel.com/docs/mcp) server,
-`model-explorer`, that lets AI coding agents introspect your Eloquent models without
-scanning source. Register it in your AI client:
-
-```json
-{
-  "mcpServers": {
-    "model-explorer": {
-      "command": "php",
-      "args": ["artisan", "mcp:start", "model-explorer"]
-    }
-  }
-}
-```
-
-Tools: `list-models`, `inspect-model` (opt-in sections via `include`, including a
-`members` section listing every method/property/constant with provenance, filterable
-by kind or declaring file), `find-model` (filter by `trait`/`extends`/`relatesTo`/
-`hasColumn`/`definesMember`), `model-source` (fetches any member's source by name,
-not just scopes/relations/accessors), and `model-neighbors` (a model's depth-1 relation
-neighborhood — defaults to *incoming* relations, "which models point at this one").
-If you use [Laravel Boost](https://laravel.com/docs/boost), `boost:install` automatically
-advertises these tools to your agent.
-
-The tools read live by default so an agent never sees stale structure mid-development.
-Set `MODEL_EXPLORER_MCP_CACHE=true` to trade freshness for speed on very large model
-sets, or `MODEL_EXPLORER_MCP=false` to disable the server entirely. To inspect models
-outside your configured `model_paths` (e.g. a vendor package's model) by FQCN, set
-`MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED=true`.
 
 ## Security
 
