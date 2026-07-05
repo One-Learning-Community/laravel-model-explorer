@@ -8,16 +8,16 @@ The Model Detail view gives you the full structure of a single Eloquent model ac
 
 A table of every column in the model's database table, showing:
 
-- **Name** — column name; foreign key columns are badged to signal the relationship
+- **Name** — column name; foreign key columns are badged to signal the relationship. A `unique` or `indexed` badge marks columns backed by a database index (the `indexed` badge covers non-unique indexes; primary and unique keys have their own badges)
 - **Type** — the raw database type (e.g. `bigint`, `varchar`, `json`)
-- **Cast** — the Eloquent cast applied, if any (e.g. `datetime`, `array`, `encrypted`)
+- **Cast** — the Eloquent cast applied, if any (e.g. `datetime`, `array`, `encrypted`). When the cast is a **PHP enum**, its cases are expanded inline as `Name=value` chips (backed enums) or `Name` chips (pure enums) so you can see the valid values without opening the enum
 - **Nullable / Default** — whether the column accepts nulls and its default value
 
 ## Relations
 
 Every relationship method detected on the model, showing:
 
-- **Method name** — the PHP method that defines the relation
+- **Method name** — the PHP method that defines the relation. A muted sub-line surfaces extra structural detail where it applies: the **pivot** table, keys, and extra columns for many-to-many; the **morph type** column for polymorphic relations; and the **through** model for has-many/one-through
 - **Type badge** — colour-coded by relation kind (HasOne, BelongsTo, BelongsToMany, Morph variants, etc.)
 - **Related model** — the target model class
 - **Source** — whether the method is defined directly on the model or inherited via a trait or parent class

@@ -4,6 +4,12 @@ All notable changes to `laravel-model-explorer` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **Enum casts are expanded into their cases (MCP + UI)** — a column that casts to a PHP enum now surfaces the enum's cases so an agent or developer sees the valid values without opening the enum. Backed enums render `Name=value`, pure enums render names only. In `inspect-model` the cases appear inline in the column string (`status: string cast:Status(Draft=draft, …)`, capped at 12 with a ` …+N more` suffix); the Model Detail page renders them as chips under the cast. See ADR-014.
+- **Non-unique indexed columns are flagged (MCP + UI)** — columns backed by a plain (non-unique) database index are now marked `indexed` in the `inspect-model` column string and with an `indexed` badge in the Columns table. Primary and unique columns are skipped — already flagged and implicitly indexed. Read from the model connection's `Schema::getIndexes()`; degrades silently on drivers that can't report indexes. See ADR-014.
+- **Richer relation detail — pivot, morph type, through (MCP + UI)** — relations now carry the structural detail needed to write a query or migration against them: the pivot table, both pivot keys, and `withPivot()` extra columns for many-to-many; the `*_type` column for polymorphic relations; and the intermediate model plus origin key for has-many/one-through. `inspect-model` adds compact `pivot`/`pivot_keys`/`pivot_columns`/`morph_type`/`through`/`through_key` keys (omitted when not applicable); the Model Detail page shows a muted detail sub-line under each relation. Best-effort — relations that can't instantiate against a blank model leave the fields empty. See ADR-014.
+
 ### Changed
 
 - **Promoted MCP to the lead feature in the README and docs home page** — the intro, feature list, and docs-site hero now lead with AI model introspection instead of burying it under the browser UI. The README's MCP section moved up to sit right after `Usage`, ahead of `Authorization`/`Configuration`, since it's independent of the HTTP gate.

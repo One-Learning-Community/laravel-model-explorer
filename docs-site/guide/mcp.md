@@ -88,8 +88,9 @@ Returns one model's structure: an overview with section counts, then the section
   "counts": { "columns": 6, "relations": 3, "scopes": 2, "accessors": 1, "traits": 2 },
   "columns": [
     "id: integer PK",
-    "author_id: integer FK→User",
+    "author_id: integer FK→User indexed",
     "title: string",
+    "status: string cast:Status(Draft=draft, Published=published, Archived=archived)",
     "published_at: datetime nullable cast:datetime"
   ],
   "relations": [
@@ -98,7 +99,13 @@ Returns one model's structure: an overview with section counts, then the section
 }
 ```
 
-Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `nullable`, and `cast:{Type}`.
+Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `indexed` (participates in a non-unique index), `nullable`, and `cast:{Type}`. When a cast is a **PHP enum**, its cases are expanded inline — backed enums as `cast:Enum(Name=value, …)`, pure enums as `cast:Enum(Name, …)` — capped at 12 cases with a ` …+N more` suffix so a wide enum can't blow the response budget.
+
+Relation objects carry extra structural detail when it applies (absent otherwise): `pivot` (the join table) with `pivot_keys` and `pivot_columns` for many-to-many; `morph_type` (the `*_type` column) for polymorphic relations; and `through` (the intermediate model) with `through_key` for has-many/one-through. For example, a `belongsToMany` renders as:
+
+```json
+{ "name": "tags", "type": "belongsToMany", "related": "Tag", "pivot": "post_tag", "pivot_keys": ["post_id", "tag_id"], "pivot_columns": ["sort_order"], "defined_in": "app/Models/Post.php:40" }
+```
 
 #### The `members` section
 
