@@ -2,7 +2,10 @@
 
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\CompactPresenter;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use Workbench\App\Models\Comment;
+use Workbench\App\Models\Country;
 use Workbench\App\Models\Post;
+use Workbench\App\Models\Tag;
 
 function presentPost(): array
 {
@@ -85,6 +88,42 @@ it('renders relations with type, related, via and a defined_in pointer', functio
         ->and($author['related'])->toBe('User')
         ->and($author['via'])->toBe('author_id')
         ->and($author['defined_in'])->toContain('HasAuthor.php:');
+});
+
+it('renders pivot detail on a belongsToMany relation', function () {
+    $p = app(CompactPresenter::class);
+    $data = app(ModelInspector::class)->inspect(Tag::class);
+    $videos = collect($p->relations($data))->firstWhere('name', 'videos');
+
+    expect($videos['pivot'])->toBe('tag_video')
+        ->and($videos['pivot_keys'])->toBe(['tag_id', 'video_id'])
+        ->and($videos['pivot_columns'])->toBe(['sort_order']);
+});
+
+it('renders the morph type on a polymorphic relation', function () {
+    $p = app(CompactPresenter::class);
+    $data = app(ModelInspector::class)->inspect(Comment::class);
+    $commentable = collect($p->relations($data))->firstWhere('name', 'commentable');
+
+    expect($commentable['morph_type'])->toBe('commentable_type');
+});
+
+it('renders the through model and key on a hasManyThrough relation', function () {
+    $p = app(CompactPresenter::class);
+    $data = app(ModelInspector::class)->inspect(Country::class);
+    $posts = collect($p->relations($data))->firstWhere('name', 'posts');
+
+    expect($posts['through'])->toBe('User')
+        ->and($posts['through_key'])->toBe('country_id');
+});
+
+it('omits pivot, morph and through keys on a plain relation', function () {
+    [$p, $data] = presentPost();
+    $user = collect($p->relations($data))->firstWhere('name', 'user');
+
+    expect($user)->not->toHaveKey('pivot')
+        ->and($user)->not->toHaveKey('morph_type')
+        ->and($user)->not->toHaveKey('through');
 });
 
 it('renders scope signatures with parameters and trait-correct pointers', function () {

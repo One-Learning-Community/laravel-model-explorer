@@ -118,6 +118,13 @@ class ModelsController
                 'defined_in' => $rel->definedIn,
                 'description' => $rel->description,
                 'snippet' => $rel->snippet,
+                'pivot_table' => $rel->pivotTable,
+                'pivot_foreign_key' => $rel->pivotForeignKey,
+                'pivot_related_key' => $rel->pivotRelatedKey,
+                'pivot_columns' => $rel->pivotColumns,
+                'morph_type' => $rel->morphType,
+                'through_model' => $rel->throughModel,
+                'through_foreign_key' => $rel->throughForeignKey,
             ])->values(),
         ];
     }

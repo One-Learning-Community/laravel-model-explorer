@@ -5,14 +5,18 @@ use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
 use Workbench\App\Models\BasePost;
+use Workbench\App\Models\Comment;
 use Workbench\App\Models\Concerns\HasAuthor;
+use Workbench\App\Models\Country;
 use Workbench\App\Models\Concerns\HasOwner;
 use Workbench\App\Models\Concerns\HasPublishedState;
 use Workbench\App\Models\CustomTableModel;
 use Workbench\App\Models\ExtendedPost;
 use Workbench\App\Models\NoTimestampsModel;
 use Workbench\App\Models\Post;
+use Workbench\App\Models\Tag;
 use Workbench\App\Models\User;
+use Workbench\App\Models\Video;
 
 it('returns the correct database table name for a standard model', function () {
     $inspector = new ModelInspector;
@@ -98,6 +102,53 @@ it('omits the primary key and un-indexed columns from indexedColumns', function 
     // `id` is the PK (implicitly indexed, already flagged); `title` has no index.
     expect($data->indexedColumns)->not->toHaveKey('id')
         ->and($data->indexedColumns)->not->toHaveKey('title');
+});
+
+it('captures pivot detail for a belongsToMany relation', function () {
+    $data = (new ModelInspector)->inspect(Tag::class);
+    $videos = $data->relations->firstWhere('name', 'videos');
+
+    expect($videos->pivotTable)->toBe('tag_video')
+        ->and($videos->pivotForeignKey)->toBe('tag_id')
+        ->and($videos->pivotRelatedKey)->toBe('video_id')
+        ->and($videos->pivotColumns)->toBe(['sort_order'])
+        ->and($videos->morphType)->toBeNull()
+        ->and($videos->throughModel)->toBeNull();
+});
+
+it('captures the morph type column for a morphTo relation', function () {
+    $data = (new ModelInspector)->inspect(Comment::class);
+    $commentable = $data->relations->firstWhere('name', 'commentable');
+
+    expect($commentable->morphType)->toBe('commentable_type')
+        ->and($commentable->foreignKey)->toBe('commentable_id');
+});
+
+it('captures the morph type column for a morphMany relation', function () {
+    $data = (new ModelInspector)->inspect(Video::class);
+    $comments = $data->relations->firstWhere('name', 'comments');
+
+    expect($comments->morphType)->toBe('commentable_type')
+        ->and($comments->foreignKey)->toBe('commentable_id');
+});
+
+it('captures the intermediate model and key for a hasManyThrough relation', function () {
+    $data = (new ModelInspector)->inspect(Country::class);
+    $posts = $data->relations->firstWhere('name', 'posts');
+
+    expect($posts->throughModel)->toBe(User::class)
+        ->and($posts->throughForeignKey)->toBe('country_id')
+        ->and($posts->foreignKey)->toBe('user_id');
+});
+
+it('leaves pivot and morph detail null for a plain belongsTo relation', function () {
+    $data = (new ModelInspector)->inspect(Post::class);
+    $user = $data->relations->firstWhere('name', 'user');
+
+    expect($user->pivotTable)->toBeNull()
+        ->and($user->morphType)->toBeNull()
+        ->and($user->throughModel)->toBeNull()
+        ->and($user->foreignKey)->toBe('user_id');
 });
 
 it('returns usesTimestamps true and column names for a standard model', function () {

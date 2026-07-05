@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Gate;
 use Workbench\App\Models\BrokenModel;
 use Workbench\App\Models\Concerns\HasAuthor;
+use Workbench\App\Models\Country;
 use Workbench\App\Models\Post;
+use Workbench\App\Models\Tag;
 use Workbench\App\Models\User;
 
 function modelSlug(string $className): string
@@ -102,6 +104,32 @@ it('sets defined_in to null for relations on the model directly', function () {
     $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
         ->assertOk()
         ->assertJsonFragment(['name' => 'user', 'defined_in' => null]);
+});
+
+it('includes pivot detail for a belongsToMany relation', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Tag::class))
+        ->assertOk()
+        ->assertJsonFragment([
+            'name' => 'videos',
+            'pivot_table' => 'tag_video',
+            'pivot_foreign_key' => 'tag_id',
+            'pivot_related_key' => 'video_id',
+            'pivot_columns' => ['sort_order'],
+        ]);
+});
+
+it('includes the through model for a hasManyThrough relation', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Country::class))
+        ->assertOk()
+        ->assertJsonFragment([
+            'name' => 'posts',
+            'through_model' => User::class,
+            'through_foreign_key' => 'country_id',
+        ]);
 });
 
 it('sets defined_in to the trait FQCN for trait-sourced relations', function () {

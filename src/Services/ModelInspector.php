@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute as EloquentAttribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -240,7 +244,7 @@ class ModelInspector
 
     private function buildRelationData(string $modelClass, Model $model, Relation $relation): RelationData
     {
-        [$foreignKey, $localKey] = $this->extractKeys($model, $relation->name);
+        $meta = $this->extractRelationMeta($model, $relation->name);
 
         $snippet = null;
         $description = null;
@@ -257,11 +261,18 @@ class ModelInspector
             name: $relation->name,
             type: class_basename($relation->type),
             related: $relation->related,
-            foreignKey: $foreignKey,
-            localKey: $localKey,
+            foreignKey: $meta['foreignKey'],
+            localKey: $meta['localKey'],
             definedIn: $this->resolveMethodSource($modelClass, $relation->name),
             description: $description,
             snippet: $snippet,
+            pivotTable: $meta['pivotTable'],
+            pivotForeignKey: $meta['pivotForeignKey'],
+            pivotRelatedKey: $meta['pivotRelatedKey'],
+            pivotColumns: $meta['pivotColumns'],
+            morphType: $meta['morphType'],
+            throughModel: $meta['throughModel'],
+            throughForeignKey: $meta['throughForeignKey'],
         );
     }
 
@@ -322,29 +333,90 @@ class ModelInspector
     }
 
     /**
-     * @return array{0: ?string, 1: ?string}
+     * Best-effort structural detail for one relation, gathered by instantiating it
+     * once against a blank model. Every field defaults to null/[] and stays that way
+     * when the relation can't be instantiated or the family doesn't carry that detail.
+     *
+     * @return array{
+     *     foreignKey: ?string, localKey: ?string,
+     *     pivotTable: ?string, pivotForeignKey: ?string, pivotRelatedKey: ?string, pivotColumns: list<string>,
+     *     morphType: ?string, throughModel: ?string, throughForeignKey: ?string
+     * }
      */
-    private function extractKeys(Model $model, string $relationName): array
+    private function extractRelationMeta(Model $model, string $relationName): array
     {
+        $meta = [
+            'foreignKey' => null, 'localKey' => null,
+            'pivotTable' => null, 'pivotForeignKey' => null, 'pivotRelatedKey' => null, 'pivotColumns' => [],
+            'morphType' => null, 'throughModel' => null, 'throughForeignKey' => null,
+        ];
+
         try {
             $instance = $model->{$relationName}();
         } catch (\Throwable) {
-            return [null, null];
+            return $meta;
         }
 
-        if ($instance instanceof HasOneOrMany) {
-            return [$instance->getForeignKeyName(), $instance->getLocalKeyName()];
-        }
-
-        if ($instance instanceof BelongsTo) {
-            return [$instance->getForeignKeyName(), $instance->getOwnerKeyName()];
-        }
-
+        // MorphToMany extends BelongsToMany — check this family first so a polymorphic
+        // pivot captures both its pivot keys and its morph type.
         if ($instance instanceof BelongsToMany) {
-            return [$instance->getForeignPivotKeyName(), $instance->getRelatedPivotKeyName()];
+            $foreign = $instance->getForeignPivotKeyName();
+            $related = $instance->getRelatedPivotKeyName();
+
+            $meta['foreignKey'] = $foreign;
+            $meta['localKey'] = $related;
+            $meta['pivotTable'] = $instance->getTable();
+            $meta['pivotForeignKey'] = $foreign;
+            $meta['pivotRelatedKey'] = $related;
+            $meta['pivotColumns'] = array_values(array_filter(
+                $instance->getPivotColumns(),
+                fn (string $column): bool => $column !== $foreign && $column !== $related,
+            ));
+
+            if ($instance instanceof MorphToMany) {
+                $meta['morphType'] = $instance->getMorphType();
+            }
+
+            return $meta;
         }
 
-        return [null, null];
+        // MorphTo extends BelongsTo.
+        if ($instance instanceof BelongsTo) {
+            $meta['foreignKey'] = $instance->getForeignKeyName();
+            $meta['localKey'] = $instance->getOwnerKeyName();
+
+            if ($instance instanceof MorphTo) {
+                $meta['morphType'] = $instance->getMorphType();
+            }
+
+            return $meta;
+        }
+
+        // MorphOne/MorphMany extend MorphOneOrMany, which extends HasMany (HasOneOrMany).
+        if ($instance instanceof HasOneOrMany) {
+            $meta['foreignKey'] = $instance->getForeignKeyName();
+            $meta['localKey'] = $instance->getLocalKeyName();
+
+            if ($instance instanceof MorphOneOrMany) {
+                $meta['morphType'] = $instance->getMorphType();
+            }
+
+            return $meta;
+        }
+
+        // HasOneThrough extends HasManyThrough.
+        if ($instance instanceof HasManyThrough) {
+            $meta['foreignKey'] = $instance->getForeignKeyName();        // FK on the far/target table
+            $meta['localKey'] = $instance->getLocalKeyName();            // PK on the origin model
+            $meta['throughForeignKey'] = $instance->getFirstKeyName();   // FK on the intermediate table
+            // HasManyThrough passes the intermediate ("through") model to the base
+            // relation constructor as its parent, so getParent() is the through model.
+            $meta['throughModel'] = get_class($instance->getParent());
+
+            return $meta;
+        }
+
+        return $meta;
     }
 
     /**

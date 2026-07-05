@@ -25,6 +25,41 @@ return new class extends Migration
 
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('country_id')->nullable();
+            $table->timestamps();
+        });
+
+        // Many-to-many with an extra pivot column — exercises pivot detail.
+        Schema::create('videos', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->timestamps();
+        });
+
+        Schema::create('tags', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('tag_video', function (Blueprint $table) {
+            $table->foreignId('tag_id');
+            $table->foreignId('video_id');
+            $table->integer('sort_order')->default(0);
+        });
+
+        // Polymorphic target — exercises the morph type column.
+        Schema::create('comments', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('commentable');
+            $table->text('body');
+            $table->timestamps();
+        });
+
+        // Origin of a has-many-through (Country → User → Post).
+        Schema::create('countries', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
             $table->timestamps();
         });
 
@@ -44,5 +79,10 @@ return new class extends Migration
         Schema::dropIfExists('users');
         Schema::dropIfExists('custom_table');
         Schema::dropIfExists('no_timestamps_models');
+        Schema::dropIfExists('videos');
+        Schema::dropIfExists('tags');
+        Schema::dropIfExists('tag_video');
+        Schema::dropIfExists('comments');
+        Schema::dropIfExists('countries');
     }
 };

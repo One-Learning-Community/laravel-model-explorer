@@ -146,6 +146,14 @@ class CompactPresenter
             'related' => class_basename($r->related),
             'via' => $r->foreignKey,
             'defined_in' => $this->pointer($r->snippet),
+            'pivot' => $r->pivotTable,
+            'pivot_keys' => $r->pivotForeignKey && $r->pivotRelatedKey
+                ? [$r->pivotForeignKey, $r->pivotRelatedKey]
+                : null,
+            'pivot_columns' => $r->pivotColumns !== [] ? $r->pivotColumns : null,
+            'morph_type' => $r->morphType,
+            'through' => $r->throughModel ? class_basename($r->throughModel) : null,
+            'through_key' => $r->throughForeignKey,
         ], fn ($v) => $v !== null && $v !== ''))->values()->all();
     }
 

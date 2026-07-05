@@ -26,6 +26,7 @@
                             <td class="font-mono text-sm">
                                 {{ rel.name }}
                                 <div v-if="rel.description" class="text-xs text-base-content/50 font-sans font-normal mt-0.5">{{ rel.description }}</div>
+                                <div v-if="relationDetail(rel)" class="text-xs text-base-content/40 font-sans font-normal mt-0.5">{{ relationDetail(rel) }}</div>
                             </td>
                             <td>
                                 <RelationBadge :type="rel.type" />
@@ -64,4 +65,36 @@ defineProps({
 })
 
 const emit = defineEmits(['view-snippet'])
+
+// A muted one-line summary of the extra structural detail a relation carries:
+// many-to-many pivot, polymorphic morph type, or has-*-through intermediate.
+// Returns null for plain relations so the sub-line is omitted.
+function relationDetail(rel) {
+    const parts = []
+
+    if (rel.pivot_table) {
+        let pivot = `pivot ${rel.pivot_table}`
+        if (rel.pivot_foreign_key && rel.pivot_related_key) {
+            pivot += ` (${rel.pivot_foreign_key} / ${rel.pivot_related_key})`
+        }
+        if (rel.pivot_columns?.length) {
+            pivot += ` +${rel.pivot_columns.join(', ')}`
+        }
+        parts.push(pivot)
+    }
+
+    if (rel.morph_type) {
+        parts.push(`morph type ${rel.morph_type}`)
+    }
+
+    if (rel.through_model) {
+        let through = `through ${shortName(rel.through_model)}`
+        if (rel.through_foreign_key) {
+            through += ` (${rel.through_foreign_key})`
+        }
+        parts.push(through)
+    }
+
+    return parts.length ? parts.join(' · ') : null
+}
 </script>
