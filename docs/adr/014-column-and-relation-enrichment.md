@@ -70,18 +70,21 @@ string and the UI badge carry the full role.
 ### Model factory pointer (present-only)
 
 A model-level addition in the same idiom: `inspect-model`'s overview and the Model Detail
-page surface the model's **factory** when one exists. Detection uses Laravel's own
-`Factory::resolveFactoryName()` (which respects the app namespace and any registered
-resolver), then gates on `class_exists()` — a `HasFactory` model with no concrete factory
-class reports nothing, since `resolveFactoryName()` returns a name regardless. The
-`defined_in` pointer comes from `ReflectionClass::getFileName()`, so it is a real on-disk
-path, never a convention guess, and could later back a `model-source` fetch. Scope is
-deliberately a pointer only — the factory's `definition()` and states are **not** parsed;
-the win is "where do I read the factory to write a test?" without that cost. Placed in the
-overview (present-only, ~20 tokens when present, nothing when absent) rather than an opt-in
-section, so the test-writing workflow finds it with no extra call. Known limitation: a model
-that overrides `newFactory()` to return a non-conventional factory isn't reflected, since
-`resolveFactoryName()` only sees the resolver/guess — acceptable for a quick win.
+page surface the model's **factory** when one exists. Detection resolves through
+`Model::factory()` — gated on `method_exists($model, 'factory')`, present only when the model
+uses `HasFactory` (or a variant) — so it follows whatever the model *actually* points at: a
+`$factory` property, a `#[UseFactory]` attribute, a custom `newFactory()`, or a package
+factory trait (`HasPackageFactory`). This is stronger than the convention guess
+(`Factory::resolveFactoryName()`), which only sees the name resolver and would miss all of
+those. `factory()` merely constructs the factory object (via `Factory::new()`) — it runs no
+`definition()` and touches no DB, so it is cheap and side-effect-free. The class and
+`defined_in` pointer come from reflection on the real factory instance, never a
+convention-derived string; if the resolved factory class is absent, `Factory::new()` throws
+and detection degrades to null — never wrong. Scope is deliberately a pointer only — the
+factory's `definition()` and states are **not** parsed; the win is "where do I read the
+factory to write a test?" without that cost. Placed in the overview (present-only, ~20 tokens
+when present, nothing when absent) rather than an opt-in section, so the test-writing workflow
+finds it with no extra call.
 
 ### Relation detail is best-effort
 

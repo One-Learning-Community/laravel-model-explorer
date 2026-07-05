@@ -5,7 +5,8 @@ use Illuminate\Support\Collection;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
-use Workbench\App\Factories\PostFactory;
+use Workbench\App\Factories\GadgetFactory;
+use Workbench\App\Factories\WidgetLegacyFactory;
 use Workbench\App\Models\BasePost;
 use Workbench\App\Models\Comment;
 use Workbench\App\Models\Concerns\HasAuthor;
@@ -14,12 +15,14 @@ use Workbench\App\Models\Concerns\HasPublishedState;
 use Workbench\App\Models\Country;
 use Workbench\App\Models\CustomTableModel;
 use Workbench\App\Models\ExtendedPost;
+use Workbench\App\Models\Gadget;
 use Workbench\App\Models\IndexedRecord;
 use Workbench\App\Models\NoTimestampsModel;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\Tag;
 use Workbench\App\Models\User;
 use Workbench\App\Models\Video;
+use Workbench\App\Models\Widget;
 
 it('returns the correct database table name for a standard model', function () {
     $inspector = new ModelInspector;
@@ -69,26 +72,42 @@ it('returns appended attributes', function () {
     expect($data->appends)->toBe(['summary', 'excerpt']);
 });
 
-it('detects an existing factory class and its on-disk path', function () {
-    Factory::guessFactoryNamesUsing(
-        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
-    );
+it('detects the factory the model actually points at, not the convention guess', function () {
+    // Widget::$factory points at WidgetLegacyFactory; convention would guess
+    // WidgetFactory. Detection must follow Model::factory(), not resolveFactoryName.
+    $data = (new ModelInspector)->inspect(Widget::class);
 
-    $data = (new ModelInspector)->inspect(Post::class);
-
-    expect($data->factoryClass)->toBe(PostFactory::class)
-        ->and($data->factoryDefinedIn)->toContain('PostFactory.php:');
+    expect($data->factoryClass)->toBe(WidgetLegacyFactory::class)
+        ->and($data->factoryClass)->toBe(Widget::factory()::class)
+        ->and($data->factoryDefinedIn)->toContain('WidgetLegacyFactory.php:');
 });
 
-it('reports no factory when the resolved class does not exist', function () {
-    // HasFactory can be present while no concrete factory was ever written;
-    // resolveFactoryName() returns a name regardless, so the class_exists gate
-    // is what keeps this from emitting a phantom factory. User has no factory.
+it('detects a vanilla convention-resolved factory', function () {
     Factory::guessFactoryNamesUsing(
         fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
     );
 
+    $data = (new ModelInspector)->inspect(Gadget::class);
+
+    expect($data->factoryClass)->toBe(GadgetFactory::class)
+        ->and($data->factoryDefinedIn)->toContain('GadgetFactory.php:');
+});
+
+it('reports no factory when the model does not use HasFactory', function () {
     $data = (new ModelInspector)->inspect(User::class);
+
+    expect($data->factoryClass)->toBeNull()
+        ->and($data->factoryDefinedIn)->toBeNull();
+});
+
+it('degrades to no factory when the resolved factory class is absent', function () {
+    // Gadget uses HasFactory, but the resolver points at a namespace with no
+    // matching factory, so Model::factory() throws and detection degrades to null.
+    Factory::guessFactoryNamesUsing(
+        fn (string $model) => 'Nonexistent\\Factories\\'.class_basename($model).'Factory'
+    );
+
+    $data = (new ModelInspector)->inspect(Gadget::class);
 
     expect($data->factoryClass)->toBeNull()
         ->and($data->factoryDefinedIn)->toBeNull();

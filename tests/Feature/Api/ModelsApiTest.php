@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Gate;
-use Workbench\App\Factories\PostFactory;
+use Workbench\App\Factories\WidgetLegacyFactory;
 use Workbench\App\Models\BrokenModel;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Country;
@@ -10,6 +9,7 @@ use Workbench\App\Models\IndexedRecord;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\Tag;
 use Workbench\App\Models\User;
+use Workbench\App\Models\Widget;
 
 function modelSlug(string $className): string
 {
@@ -150,13 +150,10 @@ it('includes the through model for a hasManyThrough relation', function () {
 
 it('includes the factory object in model detail when one exists', function () {
     app()->detectEnvironment(fn () => 'local');
-    Factory::guessFactoryNamesUsing(
-        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
-    );
 
-    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Widget::class))
         ->assertOk()
-        ->assertJsonPath('factory.class', PostFactory::class);
+        ->assertJsonPath('factory.class', WidgetLegacyFactory::class);
 });
 
 it('sets factory to null when the model has none', function () {

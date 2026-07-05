@@ -3,7 +3,6 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Services;
 
 use Illuminate\Database\Eloquent\Casts\Attribute as EloquentAttribute;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -80,29 +79,33 @@ class ModelInspector
     }
 
     /**
-     * The model's factory class and a `path:line` pointer to it, when one both
-     * resolves and actually exists on disk. Uses Laravel's own name resolver
-     * (which respects the app namespace and any registered resolver), then gates
-     * on class_exists so a `HasFactory` model with no concrete factory — the
-     * resolver returns a name regardless — reports nothing. The path comes from
-     * reflection, so it is real, never a convention guess. Best-effort: any
-     * failure degrades to no factory.
+     * The model's factory class and a `path:line` pointer to it, resolved through
+     * `Model::factory()` so it honors a `$factory` property, a `#[UseFactory]`
+     * attribute, a custom `newFactory()`, and package factory traits
+     * (`HasPackageFactory`) — not just the convention guess. `factory()` only
+     * constructs the factory object (via `Factory::new()`); it runs no
+     * `definition()` and touches no DB, so it is cheap and side-effect-free.
+     *
+     * The `factory()` method exists only when the model uses `HasFactory` (or a
+     * variant), so a model without one reports nothing. The class + path come from
+     * reflection on the actual factory instance, never a convention-derived string.
+     * Best-effort: if the resolved factory class is absent (or anything else
+     * throws), degrade to no factory — never wrong.
      *
      * @return array{class: ?string, defined_in: ?string}
      */
     private function extractFactory(string $className): array
     {
         try {
-            $factoryClass = Factory::resolveFactoryName($className);
-
-            if (! class_exists($factoryClass)) {
+            if (! method_exists($className, 'factory')) {
                 return ['class' => null, 'defined_in' => null];
             }
 
-            $reflection = new \ReflectionClass($factoryClass);
+            $factory = $className::factory();
+            $reflection = new \ReflectionClass($factory);
 
             return [
-                'class' => $factoryClass,
+                'class' => $factory::class,
                 'defined_in' => $this->relativePathLine($reflection->getFileName() ?: '', $reflection->getStartLine() ?: null),
             ];
         } catch (\Throwable) {

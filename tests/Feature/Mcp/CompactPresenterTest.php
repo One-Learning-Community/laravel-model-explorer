@@ -1,14 +1,14 @@
 <?php
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\CompactPresenter;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
-use Workbench\App\Factories\PostFactory;
+use Workbench\App\Factories\WidgetLegacyFactory;
 use Workbench\App\Models\Comment;
 use Workbench\App\Models\Country;
 use Workbench\App\Models\IndexedRecord;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\Tag;
+use Workbench\App\Models\Widget;
 
 function presentPost(): array
 {
@@ -28,19 +28,16 @@ it('overview carries class, table, key and section counts', function () {
 });
 
 it('includes the factory in the overview when one exists', function () {
-    Factory::guessFactoryNamesUsing(
-        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
-    );
-
-    [$p, $data] = presentPost();
+    $p = app(CompactPresenter::class);
+    $data = app(ModelInspector::class)->inspect(Widget::class);
     $overview = $p->overview($data);
 
-    expect($overview['factory']['class'])->toBe(PostFactory::class)
-        ->and($overview['factory']['defined_in'])->toContain('PostFactory.php:');
+    expect($overview['factory']['class'])->toBe(WidgetLegacyFactory::class)
+        ->and($overview['factory']['defined_in'])->toContain('WidgetLegacyFactory.php:');
 });
 
-it('omits the factory from the overview when none exists', function () {
-    // Default resolver points at a namespace with no matching factory class.
+it('omits the factory from the overview when the model has none', function () {
+    // Post does not use HasFactory, so it has no factory() method.
     [$p, $data] = presentPost();
 
     expect($p->overview($data))->not->toHaveKey('factory');

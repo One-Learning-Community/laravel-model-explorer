@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Laravel\Mcp\Server\McpServiceProvider;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\ModelExplorerServer;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Tools\InspectModelTool;
@@ -64,13 +63,9 @@ it('wires the MODEL_EXPLORER_MCP_ENUM_CASES env var into the config default', fu
 });
 
 it('surfaces the factory in the overview by default', function () {
-    Factory::guessFactoryNamesUsing(
-        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
-    );
-
-    ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Post'])
+    ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Widget'])
         ->assertOk()
-        ->assertSee('PostFactory');
+        ->assertSee('WidgetLegacyFactory');
 });
 
 it('honours an explicit include of a single section', function () {

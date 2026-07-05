@@ -64,6 +64,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Factory detection fixtures.
+        Schema::create('widgets', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
+
+        Schema::create('gadgets', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+        });
+
         // Index roles: a single-column index and a 3-column composite — exercises
         // the leading vs non-leading composite annotation.
         Schema::create('indexed_records', function (Blueprint $table) {
@@ -98,5 +109,7 @@ return new class extends Migration
         Schema::dropIfExists('comments');
         Schema::dropIfExists('countries');
         Schema::dropIfExists('indexed_records');
+        Schema::dropIfExists('widgets');
+        Schema::dropIfExists('gadgets');
     }
 };
