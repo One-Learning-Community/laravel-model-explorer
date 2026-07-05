@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Gate;
+use Workbench\App\Factories\PostFactory;
 use Workbench\App\Models\BrokenModel;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Country;
@@ -144,6 +146,25 @@ it('includes the through model for a hasManyThrough relation', function () {
             'through_model' => User::class,
             'through_foreign_key' => 'country_id',
         ]);
+});
+
+it('includes the factory object in model detail when one exists', function () {
+    app()->detectEnvironment(fn () => 'local');
+    Factory::guessFactoryNamesUsing(
+        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
+    );
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+        ->assertOk()
+        ->assertJsonPath('factory.class', PostFactory::class);
+});
+
+it('sets factory to null when the model has none', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(User::class))
+        ->assertOk()
+        ->assertJsonPath('factory', null);
 });
 
 it('sets defined_in to the trait FQCN for trait-sourced relations', function () {

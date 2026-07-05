@@ -92,6 +92,10 @@ class ModelsController
             'created_at_column' => $data->createdAtColumn,
             'updated_at_column' => $data->updatedAtColumn,
             'policy' => $data->policyClass,
+            'factory' => $data->factoryClass === null ? null : [
+                'class' => $data->factoryClass,
+                'defined_in' => $data->factoryDefinedIn,
+            ],
             'traits' => $data->traits,
             'scopes' => $data->scopes->map(fn (ScopeData $scope) => [
                 'name' => $scope->name,

@@ -4,6 +4,8 @@
 
 The Model Detail view gives you the full structure of a single Eloquent model across four sections.
 
+The header badges summarise the model at a glance — its table, whether it uses timestamps, its policy, and its **factory** (shown when the model's resolved factory class exists on disk; hover for the class name and file path).
+
 ## Columns
 
 A table of every column in the model's database table, showing:

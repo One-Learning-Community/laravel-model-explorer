@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\CompactPresenter;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
+use Workbench\App\Factories\PostFactory;
 use Workbench\App\Models\Comment;
 use Workbench\App\Models\Country;
 use Workbench\App\Models\IndexedRecord;
@@ -23,6 +25,25 @@ it('overview carries class, table, key and section counts', function () {
         ->and($overview['table'])->toBe('posts')
         ->and($overview['counts'])->toHaveKeys(['columns', 'relations', 'scopes', 'accessors', 'traits'])
         ->and($overview['counts']['relations'])->toBeGreaterThanOrEqual(3);
+});
+
+it('includes the factory in the overview when one exists', function () {
+    Factory::guessFactoryNamesUsing(
+        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
+    );
+
+    [$p, $data] = presentPost();
+    $overview = $p->overview($data);
+
+    expect($overview['factory']['class'])->toBe(PostFactory::class)
+        ->and($overview['factory']['defined_in'])->toContain('PostFactory.php:');
+});
+
+it('omits the factory from the overview when none exists', function () {
+    // Default resolver points at a namespace with no matching factory class.
+    [$p, $data] = presentPost();
+
+    expect($p->overview($data))->not->toHaveKey('factory');
 });
 
 it('renders columns as terse strings with PK and FK annotations', function () {

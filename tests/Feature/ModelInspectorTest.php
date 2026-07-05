@@ -1,9 +1,11 @@
 <?php
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Collection;
 use OneLearningCommunity\LaravelModelExplorer\Data\RelationData;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Spatie\ModelInfo\Attributes\Attribute;
+use Workbench\App\Factories\PostFactory;
 use Workbench\App\Models\BasePost;
 use Workbench\App\Models\Comment;
 use Workbench\App\Models\Concerns\HasAuthor;
@@ -65,6 +67,31 @@ it('returns appended attributes', function () {
     $data = $inspector->inspect(Post::class);
 
     expect($data->appends)->toBe(['summary', 'excerpt']);
+});
+
+it('detects an existing factory class and its on-disk path', function () {
+    Factory::guessFactoryNamesUsing(
+        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
+    );
+
+    $data = (new ModelInspector)->inspect(Post::class);
+
+    expect($data->factoryClass)->toBe(PostFactory::class)
+        ->and($data->factoryDefinedIn)->toContain('PostFactory.php:');
+});
+
+it('reports no factory when the resolved class does not exist', function () {
+    // HasFactory can be present while no concrete factory was ever written;
+    // resolveFactoryName() returns a name regardless, so the class_exists gate
+    // is what keeps this from emitting a phantom factory. User has no factory.
+    Factory::guessFactoryNamesUsing(
+        fn (string $model) => 'Workbench\\App\\Factories\\'.class_basename($model).'Factory'
+    );
+
+    $data = (new ModelInspector)->inspect(User::class);
+
+    expect($data->factoryClass)->toBeNull()
+        ->and($data->factoryDefinedIn)->toBeNull();
 });
 
 it('expands a backed enum cast into its cases', function () {

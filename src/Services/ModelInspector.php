@@ -3,6 +3,7 @@
 namespace OneLearningCommunity\LaravelModelExplorer\Services;
 
 use Illuminate\Database\Eloquent\Casts\Attribute as EloquentAttribute;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -44,6 +45,7 @@ class ModelInspector
         }
 
         $policies = Gate::policies();
+        $factory = $this->extractFactory($className);
 
         $relations = $modelRelations
             ->map(fn (Relation $relation) => $this->buildRelationData($className, $model, $relation))
@@ -72,7 +74,56 @@ class ModelInspector
             members: MemberExtractor::forModel($className, $relations->pluck('name')->all()),
             enumCasts: $this->extractEnumCasts($model->getCasts()),
             indexedColumns: $this->extractIndexedColumns($model),
+            factoryClass: $factory['class'],
+            factoryDefinedIn: $factory['defined_in'],
         );
+    }
+
+    /**
+     * The model's factory class and a `path:line` pointer to it, when one both
+     * resolves and actually exists on disk. Uses Laravel's own name resolver
+     * (which respects the app namespace and any registered resolver), then gates
+     * on class_exists so a `HasFactory` model with no concrete factory — the
+     * resolver returns a name regardless — reports nothing. The path comes from
+     * reflection, so it is real, never a convention guess. Best-effort: any
+     * failure degrades to no factory.
+     *
+     * @return array{class: ?string, defined_in: ?string}
+     */
+    private function extractFactory(string $className): array
+    {
+        try {
+            $factoryClass = Factory::resolveFactoryName($className);
+
+            if (! class_exists($factoryClass)) {
+                return ['class' => null, 'defined_in' => null];
+            }
+
+            $reflection = new \ReflectionClass($factoryClass);
+
+            return [
+                'class' => $factoryClass,
+                'defined_in' => $this->relativePathLine($reflection->getFileName() ?: '', $reflection->getStartLine() ?: null),
+            ];
+        } catch (\Throwable) {
+            return ['class' => null, 'defined_in' => null];
+        }
+    }
+
+    /**
+     * Format an absolute file path + line as a base_path-relative `path:line`
+     * pointer, matching the `defined_in` idiom used across the surface.
+     */
+    private function relativePathLine(string $file, ?int $line): ?string
+    {
+        if ($file === '') {
+            return null;
+        }
+
+        $base = base_path().DIRECTORY_SEPARATOR;
+        $relative = str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
+
+        return $line ? $relative.':'.$line : $relative;
     }
 
     /**

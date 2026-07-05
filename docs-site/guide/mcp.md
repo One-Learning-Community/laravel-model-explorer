@@ -68,7 +68,7 @@ Lists every discovered model with its class, short name, and table. Start here t
 
 ### `inspect-model`
 
-Returns one model's structure: an overview with section counts, then the sections you ask for.
+Returns one model's structure: an overview with section counts, then the sections you ask for. When the model has a **factory** (its resolved factory class actually exists on disk), the overview also carries a `factory` object with the factory's class and a `defined_in` pointer — so the agent can jump straight to the factory to write a test, without this tool parsing the factory itself. Absent when no factory exists.
 
 **Input**
 
@@ -87,6 +87,7 @@ Returns one model's structure: an overview with section counts, then the section
   "table": "posts",
   "key": "id",
   "counts": { "columns": 6, "relations": 3, "scopes": 2, "accessors": 1, "traits": 2 },
+  "factory": { "class": "Database\\Factories\\PostFactory", "defined_in": "database/factories/PostFactory.php:14" },
   "columns": [
     "id: integer PK",
     "author_id: integer FK→User indexed",

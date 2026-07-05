@@ -23,6 +23,11 @@
                         class="badge badge-info font-mono"
                         :title="model.policy"
                     >policy: {{ shortName(model.policy) }}</span>
+                    <span
+                        v-if="model.factory"
+                        class="badge badge-info font-mono"
+                        :title="`${model.factory.class}\n${model.factory.defined_in}`"
+                    >factory: {{ shortName(model.factory.class) }}</span>
                     <RouterLink :to="`/models/${route.params.model}/record`" class="btn btn-xs btn-ghost">
                         Look up record
                     </RouterLink>

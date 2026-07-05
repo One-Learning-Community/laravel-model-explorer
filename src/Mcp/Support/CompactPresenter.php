@@ -20,7 +20,7 @@ class CompactPresenter
      */
     public function overview(ModelData $data): array
     {
-        return [
+        $overview = [
             'class' => $data->className,
             'name' => $data->shortName,
             'table' => $data->table,
@@ -34,6 +34,16 @@ class CompactPresenter
                 'members' => count($data->members),
             ],
         ];
+
+        // Present-only: a model with no concrete factory reports nothing here.
+        if ($data->factoryClass !== null) {
+            $overview['factory'] = [
+                'class' => $data->factoryClass,
+                'defined_in' => $data->factoryDefinedIn,
+            ];
+        }
+
+        return $overview;
     }
 
     /**

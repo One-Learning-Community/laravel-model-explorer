@@ -21,6 +21,8 @@ readonly class ModelData
      * @param  list<MemberData>  $members  Every first-party-defined method/property/constant, with provenance (ADR-012 §C).
      * @param  array<string, list<array{name: string, value: string|int|null}>>  $enumCasts  Column name → the cases of its enum cast (backed enums carry `value`; pure enums have `value: null`).
      * @param  array<string, string>  $indexedColumns  Column name → index role for columns in a non-unique index: '' (leads a single-column index), 'composite-leading', or 'composite-{N}of{M}' (non-leading member). Absent when not indexed; PK/unique columns are omitted (already flagged). See ADR-014.
+     * @param  string|null  $factoryClass  FQCN of the model's factory when one is resolved and actually exists on disk; null otherwise.
+     * @param  string|null  $factoryDefinedIn  base_path-relative `path:line` pointer to the factory class (from reflection); null when no factory exists.
      */
     public function __construct(
         public string $className,
@@ -45,5 +47,7 @@ readonly class ModelData
         public array $members = [],
         public array $enumCasts = [],
         public array $indexedColumns = [],
+        public ?string $factoryClass = null,
+        public ?string $factoryDefinedIn = null,
     ) {}
 }
