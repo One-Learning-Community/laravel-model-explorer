@@ -1,3 +1,7 @@
+---
+outline: [2, 3]
+---
+
 # AI Model Introspection (MCP)
 
 Model Explorer ships a local [`laravel/mcp`](https://laravel.com/docs/mcp) server, **`model-explorer`**, that lets AI coding agents introspect your Eloquent models the same way the browser UI does — columns, relationships, scopes, accessors, traits, and source snippets — **without scanning your source files**.
@@ -45,10 +49,6 @@ The server exposes five tools. Every tool returns compact, structured JSON; each
 | [`find-model`](#find-model) | Find models by structural criteria |
 | [`model-source`](#model-source) | Fetch one definition's source snippet |
 | [`model-neighbors`](#model-neighbors) | A model's depth-1 relation neighborhood |
-
-::: tip Looking for the relationship graph?
-Earlier versions exposed a `relationship-graph` tool that returned the entire graph. It was removed because a whole-application graph overflows an agent's response budget on real codebases. The scoped return that ADR-012 anticipated shipped as [`model-neighbors`](#model-neighbors) (ADR-013) — a bounded, single-model neighborhood instead of a dump. The force-directed graph itself remains available in the [browser UI](/guide/relationship-graph).
-:::
 
 Models are referenced by their **fully-qualified class name (FQCN)** or **short class name** — `App\Models\Order` or just `Order`.
 
@@ -184,7 +184,7 @@ Omitting `kind` searches scopes, relations, accessors, and the wider members lis
 
 ### `model-neighbors`
 
-Returns a model's **depth-1 relation neighborhood**: a bounded list of edges instead of the whole-application graph `relationship-graph` used to dump (see ADR-012/ADR-013). Answers *"what breaks if I change this model"* — specifically the direction `inspect-model` can't show you, since its `relations` section only covers a model's own (outgoing) relations.
+Returns a model's **depth-1 relation neighborhood**: a bounded list of relation edges. Answers *"what breaks if I change this model"* — specifically the direction `inspect-model` can't show you, since its `relations` section only covers a model's own (outgoing) relations.
 
 **Input**
 
