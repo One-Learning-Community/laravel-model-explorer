@@ -19,6 +19,7 @@ readonly class ModelData
      * @param  list<string>  $traits  Non-excluded traits used by the model (recursive).
      * @param  array<string, array{code: string, file: string, start_line: int}>  $accessorSnippets  Attribute name → source metadata.
      * @param  list<MemberData>  $members  Every first-party-defined method/property/constant, with provenance (ADR-012 §C).
+     * @param  array<string, list<array{name: string, value: string|int|null}>>  $enumCasts  Column name → the cases of its enum cast (backed enums carry `value`; pure enums have `value: null`).
      */
     public function __construct(
         public string $className,
@@ -41,5 +42,6 @@ readonly class ModelData
         public array $accessorSnippets = [],
         public ?string $policyClass = null,
         public array $members = [],
+        public array $enumCasts = [],
     ) {}
 }

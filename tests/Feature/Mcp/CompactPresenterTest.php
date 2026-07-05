@@ -29,6 +29,39 @@ it('renders columns as terse strings with PK and FK annotations', function () {
         ->and(collect($columns)->contains(fn ($c) => str_contains($c, 'FK→User')))->toBeTrue();
 });
 
+it('expands an enum cast inline in the column string as Name=value pairs', function () {
+    [$p, $data] = presentPost();
+    $status = collect($p->columns($data))->first(fn ($c) => str_starts_with($c, 'status:'));
+
+    expect($status)->toContain('cast:PostStatus(Draft=draft, Published=published, Archived=archived)');
+});
+
+it('caps a wide enum at the case limit with an overflow suffix', function () {
+    $p = app(CompactPresenter::class);
+
+    $cases = collect(range(1, 15))
+        ->map(fn ($i) => ['name' => "Case{$i}", 'value' => "v{$i}"])
+        ->all();
+
+    $rendered = $p->formatEnumCases($cases);
+
+    expect($rendered)->toContain('Case1=v1')
+        ->and($rendered)->toContain('Case'.CompactPresenter::ENUM_CASE_LIMIT)
+        ->and($rendered)->not->toContain('Case13')
+        ->and($rendered)->toEndWith(' …+3 more');
+});
+
+it('renders pure enum cases as names only', function () {
+    $p = app(CompactPresenter::class);
+
+    $rendered = $p->formatEnumCases([
+        ['name' => 'Low', 'value' => null],
+        ['name' => 'High', 'value' => null],
+    ]);
+
+    expect($rendered)->toBe('Low, High');
+});
+
 it('renders relations with type, related, via and a defined_in pointer', function () {
     [$p, $data] = presentPost();
     $author = collect($p->relations($data))->firstWhere('name', 'author');

@@ -62,6 +62,27 @@ it('returns appended attributes', function () {
     expect($data->appends)->toBe(['summary', 'excerpt']);
 });
 
+it('expands a backed enum cast into its cases', function () {
+    $inspector = new ModelInspector;
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->enumCasts)->toHaveKey('status')
+        ->and($data->enumCasts['status'])->toBe([
+            ['name' => 'Draft', 'value' => 'draft'],
+            ['name' => 'Published', 'value' => 'published'],
+            ['name' => 'Archived', 'value' => 'archived'],
+        ]);
+});
+
+it('leaves enumCasts empty for columns without an enum cast', function () {
+    $inspector = new ModelInspector;
+    $data = $inspector->inspect(Post::class);
+
+    // `published_at` is a datetime cast, `title` has no cast — neither is an enum.
+    expect($data->enumCasts)->not->toHaveKey('published_at')
+        ->and($data->enumCasts)->not->toHaveKey('title');
+});
+
 it('returns usesTimestamps true and column names for a standard model', function () {
     $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);

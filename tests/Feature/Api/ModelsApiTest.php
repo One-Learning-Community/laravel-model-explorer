@@ -64,6 +64,29 @@ it('includes relation metadata in model detail', function () {
         ]);
 });
 
+it('includes expanded enum cases on an enum-cast column', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+        ->assertOk()
+        ->assertJsonFragment([
+            'name' => 'status',
+            'enum_cases' => [
+                ['name' => 'Draft', 'value' => 'draft'],
+                ['name' => 'Published', 'value' => 'published'],
+                ['name' => 'Archived', 'value' => 'archived'],
+            ],
+        ]);
+});
+
+it('sets enum_cases to null on a non-enum column', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'title', 'enum_cases' => null]);
+});
+
 it('sets defined_in to null for relations on the model directly', function () {
     app()->detectEnvironment(fn () => 'local');
 

@@ -12,6 +12,9 @@ class CompactPresenter
 {
     public const array SECTIONS = ['columns', 'relations', 'scopes', 'accessors', 'traits', 'mass-assignment', 'policy', 'members'];
 
+    /** Max enum cases rendered inline in a column string before ` …+N more` truncation. */
+    public const int ENUM_CASE_LIMIT = 12;
+
     /**
      * @return array<string, mixed>
      */
@@ -72,7 +75,7 @@ class CompactPresenter
 
         return $data->attributes
             ->reject(fn (Attribute $a) => $a->virtual)
-            ->map(function (Attribute $a) use ($fkMap): string {
+            ->map(function (Attribute $a) use ($fkMap, $data): string {
                 $parts = [$a->type ?? $a->phpType ?? 'mixed'];
 
                 if ($a->primary) {
@@ -88,13 +91,45 @@ class CompactPresenter
                     $parts[] = 'nullable';
                 }
                 if ($a->cast) {
-                    $parts[] = 'cast:'.class_basename($a->cast);
+                    $cast = 'cast:'.class_basename($a->cast);
+                    if (! empty($data->enumCasts[$a->name])) {
+                        $cast .= '('.$this->formatEnumCases($data->enumCasts[$a->name]).')';
+                    }
+                    $parts[] = $cast;
                 }
 
                 return $a->name.': '.implode(' ', $parts);
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Render an enum cast's cases inline. Backed enums show `Name=value`; pure
+     * enums show `Name`. Capped at self::ENUM_CASE_LIMIT cases followed by
+     * ` …+N more` so a wide enum can't blow the agent's token budget.
+     *
+     * @param  list<array{name: string, value: string|int|null}>  $cases
+     */
+    public function formatEnumCases(array $cases): string
+    {
+        $shown = array_slice($cases, 0, self::ENUM_CASE_LIMIT);
+
+        $rendered = array_map(
+            fn (array $case): string => $case['value'] === null
+                ? $case['name']
+                : $case['name'].'='.$case['value'],
+            $shown,
+        );
+
+        $joined = implode(', ', $rendered);
+
+        $overflow = count($cases) - count($shown);
+        if ($overflow > 0) {
+            $joined .= ' …+'.$overflow.' more';
+        }
+
+        return $joined;
     }
 
     /**

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->text('body');
             $table->string('secret_key')->nullable();
             $table->boolean('is_published')->default(false);
+            $table->string('status')->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
         });

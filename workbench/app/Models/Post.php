@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Workbench\App\Enums\PostStatus;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Concerns\HasPublishedState;
 
@@ -21,6 +22,7 @@ class Post extends Model
     protected $casts = [
         'published_at' => 'datetime',
         'is_published' => 'boolean',
+        'status' => PostStatus::class,
     ];
 
     protected $appends = ['summary', 'excerpt'];

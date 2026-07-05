@@ -44,7 +44,20 @@
                                 <span v-if="attr.unique" class="badge badge-ghost badge-xs">unique</span>
                             </div>
                         </td>
-                        <td class="font-mono text-xs text-base-content/50">{{ attr.cast ?? '—' }}</td>
+                        <td class="font-mono text-xs text-base-content/50">
+                            <template v-if="attr.enum_cases">
+                                <span class="text-base-content/70">{{ shortName(attr.cast) }}</span>
+                                <div class="flex gap-1 flex-wrap mt-1">
+                                    <span
+                                        v-for="c in attr.enum_cases"
+                                        :key="c.name"
+                                        class="badge badge-ghost badge-xs"
+                                        :title="c.value !== null ? `${c.name} = ${c.value}` : c.name"
+                                    >{{ c.value !== null ? `${c.name}=${c.value}` : c.name }}</span>
+                                </div>
+                            </template>
+                            <template v-else>{{ attr.cast ?? '—' }}</template>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -54,7 +67,7 @@
 </template>
 
 <script setup>
-import { encodeModel } from "../../utils/model.js"
+import { encodeModel, shortName } from "../../utils/model.js"
 
 const props = defineProps({
     columns: { type: Array, required: true },

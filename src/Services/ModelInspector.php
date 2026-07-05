@@ -66,7 +66,39 @@ class ModelInspector
             accessorSnippets: $this->extractAccessorSnippets($className, $modelAttributes),
             policyClass: $policies[$className] ?? null,
             members: MemberExtractor::forModel($className, $relations->pluck('name')->all()),
+            enumCasts: $this->extractEnumCasts($model->getCasts()),
         );
+    }
+
+    /**
+     * Expand any enum casts into their cases, keyed by column name. Backed enums
+     * carry their backing `value`; pure enums report `value: null`. Non-enum casts
+     * (datetime, boolean, custom cast classes, …) are skipped.
+     *
+     * @param  array<string, string>  $casts  Column name → cast target (from Model::getCasts()).
+     * @return array<string, list<array{name: string, value: string|int|null}>>
+     */
+    private function extractEnumCasts(array $casts): array
+    {
+        $enumCasts = [];
+
+        foreach ($casts as $column => $cast) {
+            // A cast may be suffixed with arguments (e.g. "encrypted:array"); the
+            // enum form is always the bare class string, so only that can match.
+            if (! is_string($cast) || ! enum_exists($cast)) {
+                continue;
+            }
+
+            $enumCasts[$column] = array_map(
+                fn (\UnitEnum $case): array => [
+                    'name' => $case->name,
+                    'value' => $case instanceof \BackedEnum ? $case->value : null,
+                ],
+                $cast::cases(),
+            );
+        }
+
+        return $enumCasts;
     }
 
     /**
