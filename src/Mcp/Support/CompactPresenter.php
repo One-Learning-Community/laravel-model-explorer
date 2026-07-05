@@ -40,14 +40,15 @@ class CompactPresenter
      * @param  list<string>  $sections
      * @param  array{kinds?: list<string>, file?: string}|null  $membersFilter  Narrows the
      *                                                                          `members` section to matching kinds and/or a declaring-file substring (ADR-012).
+     * @param  int  $enumCaseLimit  Max enum cases expanded inline per column (0 = omit enum cases). See ADR-014.
      * @return array<string, mixed>
      */
-    public function inspect(ModelData $data, array $sections, ?array $membersFilter = null): array
+    public function inspect(ModelData $data, array $sections, ?array $membersFilter = null, int $enumCaseLimit = self::ENUM_CASE_LIMIT): array
     {
         $out = $this->overview($data);
 
         $builders = [
-            'columns' => fn () => $this->columns($data),
+            'columns' => fn () => $this->columns($data, $enumCaseLimit),
             'relations' => fn () => $this->relations($data),
             'scopes' => fn () => $this->scopes($data),
             'accessors' => fn () => $this->accessors($data),
@@ -67,15 +68,16 @@ class CompactPresenter
     }
 
     /**
+     * @param  int  $enumCaseLimit  Max enum cases expanded inline per column (0 = omit enum cases).
      * @return list<string>
      */
-    public function columns(ModelData $data): array
+    public function columns(ModelData $data, int $enumCaseLimit = self::ENUM_CASE_LIMIT): array
     {
         $fkMap = $this->foreignKeyMap($data);
 
         return $data->attributes
             ->reject(fn (Attribute $a) => $a->virtual)
-            ->map(function (Attribute $a) use ($fkMap, $data): string {
+            ->map(function (Attribute $a) use ($fkMap, $data, $enumCaseLimit): string {
                 $parts = [$a->type ?? $a->phpType ?? 'mixed'];
 
                 if ($a->primary) {
@@ -96,7 +98,10 @@ class CompactPresenter
                 if ($a->cast) {
                     $cast = 'cast:'.class_basename($a->cast);
                     if (! empty($data->enumCasts[$a->name])) {
-                        $cast .= '('.$this->formatEnumCases($data->enumCasts[$a->name]).')';
+                        $cases = $this->formatEnumCases($data->enumCasts[$a->name], $enumCaseLimit);
+                        if ($cases !== '') {
+                            $cast .= '('.$cases.')';
+                        }
                     }
                     $parts[] = $cast;
                 }
@@ -109,14 +114,19 @@ class CompactPresenter
 
     /**
      * Render an enum cast's cases inline. Backed enums show `Name=value`; pure
-     * enums show `Name`. Capped at self::ENUM_CASE_LIMIT cases followed by
-     * ` …+N more` so a wide enum can't blow the agent's token budget.
+     * enums show `Name`. Capped at `$limit` cases followed by ` …+N more` so a
+     * wide enum can't blow the agent's token budget; a `$limit` of 0 renders
+     * nothing (the caller then omits the parenthetical entirely).
      *
      * @param  list<array{name: string, value: string|int|null}>  $cases
      */
-    public function formatEnumCases(array $cases): string
+    public function formatEnumCases(array $cases, int $limit = self::ENUM_CASE_LIMIT): string
     {
-        $shown = array_slice($cases, 0, self::ENUM_CASE_LIMIT);
+        if ($limit <= 0) {
+            return '';
+        }
+
+        $shown = array_slice($cases, 0, $limit);
 
         $rendered = array_map(
             fn (array $case): string => $case['value'] === null

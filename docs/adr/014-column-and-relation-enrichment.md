@@ -46,9 +46,10 @@ consistent with the resilient list/graph philosophy.
 ### Surfacing the data
 
 - **MCP** (`CompactPresenter`): column strings gain ` indexed` and inline
-  `cast:Enum(Name=value, …)` (capped at 12 cases, then ` …+N more`). Relation objects gain
-  compact `pivot` / `pivot_keys` / `pivot_columns` / `morph_type` / `through` / `through_key`
-  keys, omitted when not applicable.
+  `cast:Enum(Name=value, …)` (capped at `mcp.enum_case_limit` cases, default 12, then
+  ` …+N more`; `0` omits enum cases entirely). Relation objects gain compact `pivot` /
+  `pivot_keys` / `pivot_columns` / `morph_type` / `through` / `through_key` keys, omitted when
+  not applicable.
 - **Browser API** (`ModelsController::serialize`): each attribute gains `enum_cases` and
   `indexed`; each relation gains the snake_case pivot/morph/through fields.
 - **UI**: `ColumnsTable.vue` renders enum-case chips and an `indexed` badge;
@@ -75,8 +76,11 @@ cross-version stability: the has-\*-through intermediate model is read via `getP
 - The `indexed` flag reads the database schema (`getIndexes`) — one extra query per model
   inspect. Columns already require a DB connection, so no new assumption; on a driver that
   can't report indexes it silently degrades.
-- Enum expansion is capped at 12 inline cases in the MCP surface to protect the token
-  budget; `counts` and the UI are unaffected.
+- Enum expansion is capped in the MCP surface to protect the token budget, via
+  `mcp.enum_case_limit` (default 12; `0` disables it entirely). An `inspect-model` call may
+  override the cap per-request with an `enum_case_limit` parameter — the operator sets the
+  deployment default, the agent can trade cases for tokens on a broad survey. The browser API
+  and `counts` are unaffected (the UI receives the full, uncapped case list).
 
 ## Alternatives considered
 

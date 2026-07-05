@@ -21,6 +21,34 @@ it('returns overview + columns + relations by default', function () {
         ->assertSee('author');
 });
 
+it('expands enum cases in the column output by default', function () {
+    $response = ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Post']);
+
+    $response->assertOk()
+        ->assertSee('cast:PostStatus(Draft=draft');
+});
+
+it('omits enum cases when enum_case_limit is 0', function () {
+    $response = ModelExplorerServer::tool(InspectModelTool::class, [
+        'model' => 'Post',
+        'enum_case_limit' => 0,
+    ]);
+
+    $response->assertOk()
+        ->assertSee('cast:PostStatus')
+        ->assertDontSee('Draft=draft');
+});
+
+it('respects a configured enum_case_limit default of 0', function () {
+    config()->set('model-explorer.mcp.enum_case_limit', 0);
+
+    $response = ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Post']);
+
+    $response->assertOk()
+        ->assertSee('cast:PostStatus')
+        ->assertDontSee('Draft=draft');
+});
+
 it('honours an explicit include of a single section', function () {
     $response = ModelExplorerServer::tool(InspectModelTool::class, [
         'model' => 'Post',

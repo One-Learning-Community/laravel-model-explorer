@@ -43,6 +43,7 @@ class InspectModelTool extends Tool
         $include = $request->array('include');
         $sections = $this->normalizeInclude($include);
         $membersFilter = $this->membersFilter($include);
+        $enumCaseLimit = $this->enumCaseLimit($request);
         $useCache = (bool) config('model-explorer.mcp.cache.enabled', false);
 
         try {
@@ -55,7 +56,23 @@ class InspectModelTool extends Tool
             return Response::error($e->getMessage());
         }
 
-        return Response::structured($this->presenter->inspect($data, $sections, $membersFilter));
+        return Response::structured($this->presenter->inspect($data, $sections, $membersFilter, $enumCaseLimit));
+    }
+
+    /**
+     * Resolve how many enum cases to expand inline: the per-request `enum_case_limit`
+     * override when supplied (clamped to ≥ 0), otherwise the configured default. 0
+     * omits enum cases entirely.
+     */
+    private function enumCaseLimit(Request $request): int
+    {
+        $override = $request->get('enum_case_limit');
+
+        if ($override !== null && $override !== '') {
+            return max(0, (int) $override);
+        }
+
+        return max(0, (int) config('model-explorer.mcp.enum_case_limit', CompactPresenter::ENUM_CASE_LIMIT));
     }
 
     /**
@@ -119,6 +136,9 @@ class InspectModelTool extends Tool
             'include' => $schema->array()
                 ->description('Sections to include: '.implode(', ', CompactPresenter::SECTIONS).', or "all". Defaults to columns + relations. '.
                     'Narrow "members" with "members:<kind1>,<kind2>" (kinds: relation, scope, accessor, lifecycle, business, magic, method, config, constant, property) or "members:file=<substring>" to match a defined_in file substring.'),
+            'enum_case_limit' => $schema->integer()
+                ->min(0)
+                ->description('Max enum cases expanded inline per column (backed enums show Name=value). Set to 0 to omit enum cases entirely — useful for a low-token survey across many models. Omit to use the configured default (12).'),
         ];
     }
 }

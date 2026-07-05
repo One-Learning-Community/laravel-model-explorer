@@ -69,6 +69,27 @@ it('does not annotate the primary key or plain columns with "indexed"', function
         ->and($columns->first(fn ($c) => str_starts_with($c, 'title:')))->not->toContain('indexed');
 });
 
+it('omits the enum parenthetical entirely when the limit is 0', function () {
+    [$p, $data] = presentPost();
+    $status = collect($p->columns($data, 0))->first(fn ($c) => str_starts_with($c, 'status:'));
+
+    expect($status)->toEndWith('cast:PostStatus')
+        ->and($status)->not->toContain('(');
+});
+
+it('caps enum cases at an explicit limit', function () {
+    [$p, $data] = presentPost();
+    $status = collect($p->columns($data, 2))->first(fn ($c) => str_starts_with($c, 'status:'));
+
+    expect($status)->toContain('cast:PostStatus(Draft=draft, Published=published …+1 more');
+});
+
+it('formatEnumCases returns an empty string when the limit is 0', function () {
+    $p = app(CompactPresenter::class);
+
+    expect($p->formatEnumCases([['name' => 'Draft', 'value' => 'draft']], 0))->toBe('');
+});
+
 it('renders pure enum cases as names only', function () {
     $p = app(CompactPresenter::class);
 

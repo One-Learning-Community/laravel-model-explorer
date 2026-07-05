@@ -134,6 +134,12 @@ return [
             'enabled' => env('MODEL_EXPLORER_MCP_CACHE', false),
         ],
 
+        // Max number of enum cases `inspect-model` expands inline in a column
+        // string before truncating with " …+N more". Set to 0 to omit enum cases
+        // entirely (the column shows just `cast:Status`). An `inspect-model` call
+        // may override this per-request via the `enum_case_limit` parameter.
+        'enum_case_limit' => env('MODEL_EXPLORER_MCP_ENUM_CASES', 12),
+
         // Allow `inspect-model` / `model-source` to introspect an Eloquent model
         // *outside* the configured `model_paths` when given its fully-qualified
         // class name (e.g. a vendor package's model). Off by default so the agent

@@ -76,6 +76,7 @@ Returns one model's structure: an overview with section counts, then the section
 |---|---|
 | `model` | FQCN or short class name (required) |
 | `include` | Sections to return: `columns`, `relations`, `scopes`, `accessors`, `traits`, `mass-assignment`, `policy`, `members`, or `all`. Defaults to `columns` + `relations`. The `members` section can be narrowed — see below. |
+| `enum_case_limit` | Optional. Max enum cases expanded inline per column; `0` omits them entirely. Overrides the `mcp.enum_case_limit` config default (12) for this call. |
 
 **Output** (default sections)
 
@@ -99,7 +100,13 @@ Returns one model's structure: an overview with section counts, then the section
 }
 ```
 
-Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `indexed` (participates in a non-unique index), `nullable`, and `cast:{Type}`. When a cast is a **PHP enum**, its cases are expanded inline — backed enums as `cast:Enum(Name=value, …)`, pure enums as `cast:Enum(Name, …)` — capped at 12 cases with a ` …+N more` suffix so a wide enum can't blow the response budget.
+Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `indexed` (participates in a non-unique index), `nullable`, and `cast:{Type}`. When a cast is a **PHP enum**, its cases are expanded inline — backed enums as `cast:Enum(Name=value, …)`, pure enums as `cast:Enum(Name, …)` — capped at `mcp.enum_case_limit` cases (default 12) with a ` …+N more` suffix so a wide enum can't blow the response budget.
+
+To trade those cases for tokens on a broad survey, pass **`enum_case_limit`** on the call — an integer cap, or `0` to omit enum cases entirely (columns then show just `cast:Status`). It overrides the [configured default](#configuration) for that one call:
+
+```json
+{ "model": "Order", "include": ["columns"], "enum_case_limit": 0 }
+```
 
 Relation objects carry extra structural detail when it applies (absent otherwise): `pivot` (the join table) with `pivot_keys` and `pivot_columns` for many-to-many; `morph_type` (the `*_type` column) for polymorphic relations; and `through` (the intermediate model) with `through_key` for has-many/one-through. For example, a `belongsToMany` renders as:
 
@@ -230,6 +237,9 @@ The MCP server is configured under the `mcp` key of `config/model-explorer.php`:
         'enabled' => env('MODEL_EXPLORER_MCP_CACHE', false),
     ],
 
+    // Max enum cases `inspect-model` expands inline per column; 0 omits them.
+    'enum_case_limit' => env('MODEL_EXPLORER_MCP_ENUM_CASES', 12),
+
     'allow_undiscovered' => env('MODEL_EXPLORER_MCP_ALLOW_UNDISCOVERED', false),
 ],
 ```
@@ -243,6 +253,16 @@ Set `MODEL_EXPLORER_MCP_CACHE=true` only if you want to trade freshness for spee
 ```env
 MODEL_EXPLORER_MCP_CACHE=true
 ```
+
+### Enum-case verbosity
+
+Enum-cast columns expand their cases inline (`cast:Status(Draft=draft, …)`) — high value for writing correct code, but a cost when an agent inspects many models at once. `mcp.enum_case_limit` caps how many cases each column expands; set it to `0` to omit enum cases entirely across the whole surface:
+
+```env
+MODEL_EXPLORER_MCP_ENUM_CASES=0
+```
+
+This is the deployment-wide default. An individual `inspect-model` call can still override it with the [`enum_case_limit`](#inspect-model) parameter — e.g. keep the default on but pass `0` for a broad, low-token survey.
 
 ### Inspecting vendor / undiscovered models
 
