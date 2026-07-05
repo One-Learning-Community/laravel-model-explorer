@@ -39,7 +39,9 @@ it('omits enum cases when enum_case_limit is 0', function () {
         ->assertDontSee('Draft=draft');
 });
 
-it('respects a configured enum_case_limit default of 0', function () {
+it('respects a configured enum_case_limit default of 0 (the global env knob)', function () {
+    // MODEL_EXPLORER_MCP_ENUM_CASES feeds this config value; 0 disables expansion
+    // across the whole surface without a per-call parameter.
     config()->set('model-explorer.mcp.enum_case_limit', 0);
 
     $response = ModelExplorerServer::tool(InspectModelTool::class, ['model' => 'Post']);
@@ -47,6 +49,17 @@ it('respects a configured enum_case_limit default of 0', function () {
     $response->assertOk()
         ->assertSee('cast:PostStatus')
         ->assertDontSee('Draft=draft');
+});
+
+it('wires the MODEL_EXPLORER_MCP_ENUM_CASES env var into the config default', function () {
+    putenv('MODEL_EXPLORER_MCP_ENUM_CASES=0');
+
+    // Re-read the package config file so its env() call is re-evaluated.
+    $config = require dirname(__DIR__, 3).'/config/model-explorer.php';
+
+    expect((int) $config['mcp']['enum_case_limit'])->toBe(0);
+
+    putenv('MODEL_EXPLORER_MCP_ENUM_CASES');
 });
 
 it('honours an explicit include of a single section', function () {

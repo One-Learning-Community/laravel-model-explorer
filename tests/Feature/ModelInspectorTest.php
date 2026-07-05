@@ -79,6 +79,18 @@ it('expands a backed enum cast into its cases', function () {
         ]);
 });
 
+it('expands an int-backed enum cast with integer values', function () {
+    $inspector = new ModelInspector;
+    $data = $inspector->inspect(Post::class);
+
+    // Backing values must serialize as ints (1), not strings ("1").
+    expect($data->enumCasts['priority'])->toBe([
+        ['name' => 'Low', 'value' => 1],
+        ['name' => 'Medium', 'value' => 2],
+        ['name' => 'High', 'value' => 3],
+    ]);
+});
+
 it('leaves enumCasts empty for columns without an enum cast', function () {
     $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
