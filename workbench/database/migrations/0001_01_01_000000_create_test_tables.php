@@ -63,6 +63,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Index roles: a single-column index and a 3-column composite — exercises
+        // the leading vs non-leading composite annotation.
+        Schema::create('indexed_records', function (Blueprint $table) {
+            $table->id();
+            $table->string('a')->nullable();
+            $table->string('b')->nullable();
+            $table->string('c')->nullable();
+            $table->string('d')->nullable();
+            $table->index('a');
+            $table->index(['b', 'c', 'd'], 'bcd_composite');
+        });
+
         Schema::create('custom_table', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
@@ -84,5 +96,6 @@ return new class extends Migration
         Schema::dropIfExists('tag_video');
         Schema::dropIfExists('comments');
         Schema::dropIfExists('countries');
+        Schema::dropIfExists('indexed_records');
     }
 };

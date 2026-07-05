@@ -8,7 +8,7 @@ The Model Detail view gives you the full structure of a single Eloquent model ac
 
 A table of every column in the model's database table, showing:
 
-- **Name** — column name; foreign key columns are badged to signal the relationship. A `unique` or `indexed` badge marks columns backed by a database index (the `indexed` badge covers non-unique indexes; primary and unique keys have their own badges)
+- **Name** — column name; foreign key columns are badged to signal the relationship. Columns backed by a non-unique index get an `indexed` badge when a lone filter can use them (a single-column index or the leading column of a composite); a non-leading composite member instead gets a muted `composite N/M` badge, signalling it isn't independently filterable. Primary and unique keys have their own badges.
 - **Type** — the raw database type (e.g. `bigint`, `varchar`, `json`)
 - **Cast** — the Eloquent cast applied, if any (e.g. `datetime`, `array`, `encrypted`). When the cast is a **PHP enum**, its cases are expanded inline as `Name=value` chips (backed enums) or `Name` chips (pure enums) so you can see the valid values without opening the enum
 - **Nullable / Default** — whether the column accepts nulls and its default value

@@ -89,8 +89,9 @@ class CompactPresenter
                 if ($a->unique) {
                     $parts[] = 'unique';
                 }
-                if (! empty($data->indexedColumns[$a->name])) {
-                    $parts[] = 'indexed';
+                if (array_key_exists($a->name, $data->indexedColumns)) {
+                    $role = $data->indexedColumns[$a->name];
+                    $parts[] = $role === '' ? 'indexed' : 'indexed('.$role.')';
                 }
                 if ($a->nullable) {
                     $parts[] = 'nullable';

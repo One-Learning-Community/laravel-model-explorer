@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Gate;
 use Workbench\App\Models\BrokenModel;
 use Workbench\App\Models\Concerns\HasAuthor;
 use Workbench\App\Models\Country;
+use Workbench\App\Models\IndexedRecord;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\Tag;
 use Workbench\App\Models\User;
@@ -94,8 +95,21 @@ it('marks a non-unique indexed column as indexed', function () {
 
     $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
         ->assertOk()
-        ->assertJsonFragment(['name' => 'published_at', 'indexed' => true])
-        ->assertJsonFragment(['name' => 'title', 'indexed' => false]);
+        ->assertJsonFragment(['name' => 'published_at', 'indexed' => true, 'index_role' => 'single'])
+        ->assertJsonFragment(['name' => 'title', 'indexed' => false, 'index_role' => null]);
+});
+
+it('reports honest indexed boolean and index_role for composite members', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    // Leading columns are usable by a lone filter (indexed true); non-leading
+    // members are not (indexed false) but keep their composite position.
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(IndexedRecord::class))
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'a', 'indexed' => true, 'index_role' => 'single'])
+        ->assertJsonFragment(['name' => 'b', 'indexed' => true, 'index_role' => 'composite-leading'])
+        ->assertJsonFragment(['name' => 'c', 'indexed' => false, 'index_role' => 'composite-2of3'])
+        ->assertJsonFragment(['name' => 'd', 'indexed' => false, 'index_role' => 'composite-3of3']);
 });
 
 it('sets defined_in to null for relations on the model directly', function () {

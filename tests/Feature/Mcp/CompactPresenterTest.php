@@ -4,6 +4,7 @@ use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\CompactPresenter;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use Workbench\App\Models\Comment;
 use Workbench\App\Models\Country;
+use Workbench\App\Models\IndexedRecord;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\Tag;
 
@@ -67,6 +68,19 @@ it('does not annotate the primary key or plain columns with "indexed"', function
 
     expect($columns->first(fn ($c) => str_starts_with($c, 'id:')))->not->toContain('indexed')
         ->and($columns->first(fn ($c) => str_starts_with($c, 'title:')))->not->toContain('indexed');
+});
+
+it('annotates composite index position instead of blanket-indexed', function () {
+    $p = app(CompactPresenter::class);
+    $data = app(ModelInspector::class)->inspect(IndexedRecord::class);
+    $columns = collect($p->columns($data));
+
+    $col = fn (string $name) => $columns->first(fn ($c) => str_starts_with($c, $name.':'));
+
+    expect($col('a'))->toContain('indexed')->not->toContain('indexed(')
+        ->and($col('b'))->toContain('indexed(composite-leading)')
+        ->and($col('c'))->toContain('indexed(composite-2of3)')
+        ->and($col('d'))->toContain('indexed(composite-3of3)');
 });
 
 it('omits the enum parenthetical entirely when the limit is 0', function () {

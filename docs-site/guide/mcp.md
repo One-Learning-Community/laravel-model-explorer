@@ -100,7 +100,7 @@ Returns one model's structure: an overview with section counts, then the section
 }
 ```
 
-Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `indexed` (participates in a non-unique index), `nullable`, and `cast:{Type}`. When a cast is a **PHP enum**, its cases are expanded inline — backed enums as `cast:Enum(Name=value, …)`, pure enums as `cast:Enum(Name, …)` — capped at `mcp.enum_case_limit` cases (default 12) with a ` …+N more` suffix so a wide enum can't blow the response budget.
+Columns are rendered as terse strings annotated with `PK`, `FK→{Model}`, `unique`, `nullable`, and `cast:{Type}`, plus an index annotation for columns in a non-unique index: `indexed` when the column leads a single-column index (a lone filter can use it), `indexed(composite-leading)` when it leads a composite index, and `indexed(composite-2of3)` for a non-leading member of a composite (a lone filter on it *cannot* use the index — only a query that also constrains the leading column(s) can). Primary and unique columns are already flagged and omitted here. When a cast is a **PHP enum**, its cases are expanded inline — backed enums as `cast:Enum(Name=value, …)`, pure enums as `cast:Enum(Name, …)` — capped at `mcp.enum_case_limit` cases (default 12) with a ` …+N more` suffix so a wide enum can't blow the response budget.
 
 To trade those cases for tokens on a broad survey, pass **`enum_case_limit`** on the call — an integer cap, or `0` to omit enum cases entirely (columns then show just `cast:Status`). It overrides the [configured default](#configuration) for that one call:
 

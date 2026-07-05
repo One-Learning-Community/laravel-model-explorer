@@ -106,7 +106,10 @@ class ModelsController
                     'snippet' => $data->accessorSnippets[$attr->name] ?? null,
                     'defined_in' => $data->accessorSnippets[$attr->name]['defined_in'] ?? null,
                     'enum_cases' => $data->enumCasts[$attr->name] ?? null,
-                    'indexed' => $data->indexedColumns[$attr->name] ?? false,
+                    // `indexed`: usable by a lone filter (leads a single or composite index).
+                    // `index_role`: the full role, incl. non-leading composite members. See ADR-014.
+                    'indexed' => in_array($data->indexedColumns[$attr->name] ?? null, ['', 'composite-leading'], true),
+                    'index_role' => $this->indexRole($data->indexedColumns[$attr->name] ?? null),
                 ],
             ))->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [
@@ -127,5 +130,19 @@ class ModelsController
                 'through_foreign_key' => $rel->throughForeignKey,
             ])->values(),
         ];
+    }
+
+    /**
+     * The display role for a column's index membership: 'single' for a dedicated
+     * single-column index (stored as ''), the raw 'composite-*' label otherwise,
+     * or null when the column is not in any non-unique index.
+     */
+    private function indexRole(?string $role): ?string
+    {
+        return match ($role) {
+            null => null,
+            '' => 'single',
+            default => $role,
+        };
     }
 }

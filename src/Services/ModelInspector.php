@@ -76,12 +76,20 @@ class ModelInspector
     }
 
     /**
-     * Columns that participate in a non-unique database index, keyed by name.
-     * Primary and unique indexes are skipped — those columns are already flagged
-     * (`PK`/`unique`) and implicitly indexed. Best-effort: an unreadable schema
-     * (exotic driver, missing connection) degrades to no flags.
+     * Columns that participate in a non-unique database index, keyed by name, each
+     * mapped to a role label so a composite index doesn't imply every member is
+     * independently filterable:
+     *   ''                  → leads a single-column index (cheap to filter alone)
+     *   'composite-leading' → leads a composite index (a lone/prefix filter can use it)
+     *   'composite-{N}of{M}'→ non-leading member at 1-based position N of size M
+     *                         (a lone filter on it CANNOT use the index)
      *
-     * @return array<string, bool>
+     * A column in several indexes keeps its most favorable role. Primary and unique
+     * indexes are skipped — those columns are already flagged (`PK`/`unique`) and
+     * implicitly indexed. Best-effort: an unreadable schema (exotic driver, missing
+     * connection) degrades to no flags.
+     *
+     * @return array<string, string>
      */
     private function extractIndexedColumns(Model $model): array
     {
@@ -91,19 +99,36 @@ class ModelInspector
             return [];
         }
 
-        $indexed = [];
+        // Rank the roles so a column indexed several ways keeps the best one.
+        $best = []; // column => ['rank' => int, 'pos' => int, 'label' => string]
 
         foreach ($indexes as $index) {
             if (! empty($index['unique']) || ! empty($index['primary'])) {
                 continue;
             }
 
-            foreach ($index['columns'] ?? [] as $column) {
-                $indexed[$column] = true;
+            $columns = array_values($index['columns'] ?? []);
+            $size = count($columns);
+
+            foreach ($columns as $pos => $column) {
+                [$rank, $label] = match (true) {
+                    $size === 1 => [3, ''],
+                    $pos === 0 => [2, 'composite-leading'],
+                    default => [1, 'composite-'.($pos + 1).'of'.$size],
+                };
+
+                $current = $best[$column] ?? null;
+
+                // Higher rank wins; ties among non-leading members keep the lowest position.
+                if ($current === null
+                    || $rank > $current['rank']
+                    || ($rank === $current['rank'] && $rank === 1 && $pos < $current['pos'])) {
+                    $best[$column] = ['rank' => $rank, 'pos' => $pos, 'label' => $label];
+                }
             }
         }
 
-        return $indexed;
+        return array_map(fn (array $entry): string => $entry['label'], $best);
     }
 
     /**

@@ -37,7 +37,7 @@ fields are added directly.
 | Enrichment | Producer (`ModelInspector`) | Carrier |
 |---|---|---|
 | Enum cases | reflect the cast class: `enum_exists()` + `::cases()` (no DB) | `ModelData->enumCasts` |
-| `indexed` flag | the model connection's `Schema::getIndexes()`; skip primary/unique | `ModelData->indexedColumns` |
+| index role | the model connection's `Schema::getIndexes()`; skip primary/unique | `ModelData->indexedColumns` (role label per column) |
 | Relation detail | `extractRelationMeta()` — instantiate the live relation once | new nullable fields on `RelationData` |
 
 Every producer is wrapped in `try/catch` and degrades to "no annotation" on failure,
@@ -45,15 +45,27 @@ consistent with the resilient list/graph philosophy.
 
 ### Surfacing the data
 
-- **MCP** (`CompactPresenter`): column strings gain ` indexed` and inline
+- **MCP** (`CompactPresenter`): column strings gain the index annotation (`indexed` /
+  `indexed(composite-leading)` / `indexed(composite-Nof M)`) and inline
   `cast:Enum(Name=value, …)` (capped at `mcp.enum_case_limit` cases, default 12, then
   ` …+N more`; `0` omits enum cases entirely). Relation objects gain compact `pivot` /
   `pivot_keys` / `pivot_columns` / `morph_type` / `through` / `through_key` keys, omitted when
   not applicable.
-- **Browser API** (`ModelsController::serialize`): each attribute gains `enum_cases` and
-  `indexed`; each relation gains the snake_case pivot/morph/through fields.
-- **UI**: `ColumnsTable.vue` renders enum-case chips and an `indexed` badge;
-  `RelationsTable.vue` renders a muted detail sub-line under the relation name.
+- **Browser API** (`ModelsController::serialize`): each attribute gains `enum_cases`, an
+  `indexed` boolean (true only when usable by a lone filter), and an `index_role` string;
+  each relation gains the snake_case pivot/morph/through fields.
+- **UI**: `ColumnsTable.vue` renders enum-case chips, an `indexed` badge, and a muted
+  `composite N/M` badge for non-leading composite members; `RelationsTable.vue` renders a
+  muted detail sub-line under the relation name.
+
+### Index annotation reflects usability, not mere membership
+
+A composite index `(a, b, c)` can only serve a lone filter on its **leading** column `a`;
+`b`/`c` require the leading column(s) to also be constrained. Marking every member column a
+flat `indexed` over-reports "cheap to filter." So the role distinguishes a single-column
+index (`''`), a composite's leading column (`composite-leading`), and a non-leading member
+(`composite-Nof M`). The API's `indexed` boolean is true only for the first two; the MCP
+string and the UI badge carry the full role.
 
 ### Relation detail is best-effort
 

@@ -12,6 +12,7 @@ use Workbench\App\Models\Concerns\HasPublishedState;
 use Workbench\App\Models\Country;
 use Workbench\App\Models\CustomTableModel;
 use Workbench\App\Models\ExtendedPost;
+use Workbench\App\Models\IndexedRecord;
 use Workbench\App\Models\NoTimestampsModel;
 use Workbench\App\Models\Post;
 use Workbench\App\Models\Tag;
@@ -87,12 +88,12 @@ it('leaves enumCasts empty for columns without an enum cast', function () {
         ->and($data->enumCasts)->not->toHaveKey('title');
 });
 
-it('flags columns that participate in a non-unique index', function () {
+it('flags a single-column index with the empty (leading) role', function () {
     $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);
 
     expect($data->indexedColumns)->toHaveKey('published_at')
-        ->and($data->indexedColumns['published_at'])->toBeTrue();
+        ->and($data->indexedColumns['published_at'])->toBe('');
 });
 
 it('omits the primary key and un-indexed columns from indexedColumns', function () {
@@ -102,6 +103,18 @@ it('omits the primary key and un-indexed columns from indexedColumns', function 
     // `id` is the PK (implicitly indexed, already flagged); `title` has no index.
     expect($data->indexedColumns)->not->toHaveKey('id')
         ->and($data->indexedColumns)->not->toHaveKey('title');
+});
+
+it('annotates composite index members by position, not blanket-indexed', function () {
+    $data = (new ModelInspector)->inspect(IndexedRecord::class);
+
+    // `a` leads a dedicated single index; b/c/d form one composite (b, c, d).
+    expect($data->indexedColumns)->toMatchArray([
+        'a' => '',
+        'b' => 'composite-leading',
+        'c' => 'composite-2of3',
+        'd' => 'composite-3of3',
+    ])->and($data->indexedColumns)->not->toHaveKey('id');
 });
 
 it('captures pivot detail for a belongsToMany relation', function () {
