@@ -89,7 +89,7 @@ class MemberExtractor
             visibility: self::visibility($method),
             static: $method->isStatic(),
             signature: self::signature($method),
-            snippet: $snippet !== null ? ['file' => $snippet['file'], 'start_line' => $snippet['start_line']] : null,
+            snippet: $snippet !== null ? ['file' => $snippet['file'], 'start_line' => $snippet['start_line'], 'end_line' => $snippet['end_line']] : null,
         );
     }
 
@@ -104,7 +104,7 @@ class MemberExtractor
             kind: in_array($name, self::CONFIG_PROPS, true) ? 'config' : 'property',
             visibility: self::visibility($property),
             static: $property->isStatic(),
-            snippet: ['file' => $file, 'start_line' => $line],
+            snippet: ['file' => $file, 'start_line' => $line, 'end_line' => $line],
         );
     }
 
@@ -119,7 +119,7 @@ class MemberExtractor
             visibility: self::visibility($constant),
             static: false,
             value: self::renderValue($constant->getValue()),
-            snippet: ['file' => $file, 'start_line' => $line],
+            snippet: ['file' => $file, 'start_line' => $line, 'end_line' => $line],
         );
     }
 

@@ -301,9 +301,12 @@ class CompactPresenter
     }
 
     /**
-     * Format a snippet's location as a base_path-relative `path:line` pointer.
+     * Format a snippet's location as a base_path-relative pointer. Emits a
+     * `path:start-end` line range when the end line is known and spans more than
+     * one line, `path:line` for a single-line member, and a bare `path` when the
+     * line is unknown.
      *
-     * @param  array{file?:string, start_line?:int}|null  $snippet
+     * @param  array{file?:string, start_line?:int, end_line?:int}|null  $snippet
      */
     public function pointer(?array $snippet): ?string
     {
@@ -315,9 +318,19 @@ class CompactPresenter
         $base = base_path().DIRECTORY_SEPARATOR;
         $relative = str_starts_with($file, $base) ? substr($file, strlen($base)) : $file;
 
-        $line = $snippet['start_line'] ?? null;
+        $start = $snippet['start_line'] ?? null;
 
-        return $line ? $relative.':'.$line : $relative;
+        if (! $start) {
+            return $relative;
+        }
+
+        $end = $snippet['end_line'] ?? null;
+
+        if ($end && $end > $start) {
+            return $relative.':'.$start.'-'.$end;
+        }
+
+        return $relative.':'.$start;
     }
 
     /**

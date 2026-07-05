@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **MCP `defined_in` pointers now carry the full line range (`path:start-end`)** — every scope/relation/accessor/member pointer from `inspect-model`, `model-source`, and `model-neighbors` reports the snippet's start *and* end line (e.g. `app/Models/Post.php:42-58`) instead of just the start line, so an agent can do a targeted read of exactly the method it wants to edit without guessing where it ends. Single-line members (properties, constants) collapse to `path:line`, and a pointer with no known line stays a bare `path`. The range is the snippet's true extent, including any preceding PHPDoc block. Sourced from `Reflection` end lines already available during the scan — no extra work per model.
+
 ## v0.5.0 - 2026-07-05
 
 ### Added

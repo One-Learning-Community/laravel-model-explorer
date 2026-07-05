@@ -5,7 +5,7 @@ namespace OneLearningCommunity\LaravelModelExplorer\Data;
 readonly class RelationData
 {
     /**
-     * @param  array{code: string, file: string, start_line: int, doc_summary: ?string}|null  $snippet
+     * @param  array{code: string, file: string, start_line: int, end_line: int, doc_summary: ?string}|null  $snippet
      * @param  list<string>  $pivotColumns  Extra (withPivot) columns on a many-to-many join row, excluding the two pivot keys.
      */
     public function __construct(

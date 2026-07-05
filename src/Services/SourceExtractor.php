@@ -11,7 +11,7 @@ class SourceExtractor
      * location metadata for the given method, or null when the source is
      * unavailable (eval'd class, PHAR, unreadable file, etc.).
      *
-     * @return array{code: string, file: string, start_line: int, doc_summary: ?string}|null
+     * @return array{code: string, file: string, start_line: int, end_line: int, doc_summary: ?string}|null
      */
     public static function forMethod(ReflectionMethod $method): ?array
     {
@@ -63,6 +63,7 @@ class SourceExtractor
             'code' => self::dedent($codeLines),
             'file' => $file,
             'start_line' => $snippetStart,
+            'end_line' => $method->getEndLine(),
             'doc_summary' => $docComment !== false ? self::extractSummary($docComment) : null,
         ];
     }
@@ -72,7 +73,7 @@ class SourceExtractor
      * no reflectable body — just the source line at the given (best-effort,
      * regex-recovered) line number. Used by model-source to fetch non-method members.
      *
-     * @return array{code: string, file: string, start_line: int, doc_summary: ?string}|null
+     * @return array{code: string, file: string, start_line: int, end_line: int, doc_summary: ?string}|null
      */
     public static function forDeclarationLine(string $file, ?int $line): ?array
     {
@@ -90,6 +91,7 @@ class SourceExtractor
             'code' => trim($lines[$line - 1]),
             'file' => $file,
             'start_line' => $line,
+            'end_line' => $line,
             'doc_summary' => null,
         ];
     }

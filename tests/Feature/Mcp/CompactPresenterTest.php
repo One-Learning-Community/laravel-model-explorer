@@ -236,6 +236,27 @@ it('pointer renders paths relative to base_path', function () {
     expect($pointer)->toBe('app/Models/Foo.php:12');
 });
 
+it('pointer renders a start-end line range when the snippet spans multiple lines', function () {
+    [$p] = presentPost();
+    $pointer = $p->pointer(['file' => base_path('app/Models/Foo.php'), 'start_line' => 12, 'end_line' => 30]);
+
+    expect($pointer)->toBe('app/Models/Foo.php:12-30');
+});
+
+it('pointer collapses to a single line when start and end match', function () {
+    [$p] = presentPost();
+    $pointer = $p->pointer(['file' => base_path('app/Models/Foo.php'), 'start_line' => 12, 'end_line' => 12]);
+
+    expect($pointer)->toBe('app/Models/Foo.php:12');
+});
+
+it('carries a full line range through to a real relation defined_in pointer', function () {
+    [$p, $data] = presentPost();
+    $author = collect($p->relations($data))->firstWhere('name', 'author');
+
+    expect($author['defined_in'])->toMatch('/HasAuthor\.php:\d+-\d+$/');
+});
+
 it('pointer omits the line when the declaration line is unknown', function () {
     [$p] = presentPost();
     $pointer = $p->pointer(['file' => base_path('app/Models/Foo.php'), 'start_line' => null]);

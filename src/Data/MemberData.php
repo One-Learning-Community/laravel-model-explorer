@@ -17,7 +17,7 @@ readonly class MemberData
      * @param  'public'|'protected'|'private'  $visibility
      * @param  ?string  $signature  Method signature, e.g. "markPaid(Carbon $at): void"; null for properties/constants.
      * @param  ?string  $value  Rendered constant value; null otherwise.
-     * @param  array{file: string, start_line?: ?int}|null  $snippet  Pointer source for CompactPresenter::pointer().
+     * @param  array{file: string, start_line?: ?int, end_line?: ?int}|null  $snippet  Pointer source for CompactPresenter::pointer().
      */
     public function __construct(
         public string $name,

@@ -506,7 +506,7 @@ class ModelInspector
      * (foo(): Attribute) accessors.
      *
      * @param  Collection<int, Attribute>  $attributes
-     * @return array<string, array{code: string, file: string, start_line: int}>
+     * @return array<string, array{code: string, file: string, start_line: int, end_line: int}>
      */
     private function extractAccessorSnippets(string $className, Collection $attributes): array
     {

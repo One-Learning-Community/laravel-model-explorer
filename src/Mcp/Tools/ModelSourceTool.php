@@ -73,7 +73,7 @@ class ModelSourceTool extends Tool
      * the wider members list (business methods, lifecycle hooks, properties,
      * constants, …) — is searched in that order until `$name` matches.
      *
-     * @return array{0: ?array{code:string,file:string,start_line:int,doc_summary?:?string}, 1: list<string>}
+     * @return array{0: ?array{code:string,file:string,start_line:int,end_line?:int,doc_summary?:?string}, 1: list<string>}
      */
     private function locate(ModelData $data, ?string $kind, string $name): array
     {
@@ -139,7 +139,7 @@ class ModelSourceTool extends Tool
 
     /**
      * @param  class-string  $className
-     * @return array{code:string,file:string,start_line:int,doc_summary?:?string}|null
+     * @return array{code:string,file:string,start_line:int,end_line?:int,doc_summary?:?string}|null
      */
     private function snippetForMember(string $className, MemberData $member): ?array
     {

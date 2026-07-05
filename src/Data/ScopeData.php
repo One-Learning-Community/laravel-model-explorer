@@ -6,7 +6,7 @@ readonly class ScopeData
 {
     /**
      * @param  array<int, array{name: string, type: ?string, has_default: bool, default: ?string}>  $parameters
-     * @param  array{code: string, file: string, start_line: int, doc_summary: ?string}|null  $snippet
+     * @param  array{code: string, file: string, start_line: int, end_line: int, doc_summary: ?string}|null  $snippet
      */
     public function __construct(
         public string $name,

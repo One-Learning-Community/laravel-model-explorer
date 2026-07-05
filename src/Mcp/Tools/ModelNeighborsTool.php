@@ -156,7 +156,7 @@ class ModelNeighborsTool extends Tool
     }
 
     /**
-     * @param  array{file?:string, start_line?:int}|null  $snippet
+     * @param  array{file?:string, start_line?:int, end_line?:int}|null  $snippet
      * @return array{direction:string,from:string,to:string,type:string,name:string,defined_in:?string}
      */
     private function edge(string $direction, string $from, string $to, string $type, string $name, ?array $snippet): array

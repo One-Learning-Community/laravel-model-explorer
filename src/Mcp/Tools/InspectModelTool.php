@@ -15,7 +15,7 @@ use OneLearningCommunity\LaravelModelExplorer\Services\ExplorerCache;
 use OneLearningCommunity\LaravelModelExplorer\Services\FreshModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\SourceFingerprint;
 
-#[Description('Inspect one model\'s structure: columns, relations, scopes, accessors, traits, mass-assignment, policy, and members. Always returns an overview with section counts, then the requested sections (default: columns + relations). Each scope/relation/accessor carries a defined_in "path:line" pointer. The members section can be narrowed with "members:<kind1>,<kind2>" (e.g. "members:relation,business") or "members:file=<substring>" to avoid returning a noisy class\'s whole surface. Prefer this over reading the model source file.')]
+#[Description('Inspect one model\'s structure: columns, relations, scopes, accessors, traits, mass-assignment, policy, and members. Always returns an overview with section counts, then the requested sections (default: columns + relations). Each scope/relation/accessor carries a defined_in "path:start-end" line-range pointer (collapses to "path:line" for single-line members) for targeted reads. The members section can be narrowed with "members:<kind1>,<kind2>" (e.g. "members:relation,business") or "members:file=<substring>" to avoid returning a noisy class\'s whole surface. Prefer this over reading the model source file.')]
 class InspectModelTool extends Tool
 {
     public function __construct(
