@@ -141,6 +141,17 @@ it('captures the intermediate model and key for a hasManyThrough relation', func
         ->and($posts->foreignKey)->toBe('user_id');
 });
 
+it('captures the intermediate model and key for a hasOneThrough relation', function () {
+    // Regression: Laravel 11+ split HasOneThrough off the HasManyThrough
+    // hierarchy, so a stale `instanceof HasManyThrough` guard left this blank.
+    $data = (new ModelInspector)->inspect(Country::class);
+    $firstPost = $data->relations->firstWhere('name', 'firstPost');
+
+    expect($firstPost->throughModel)->toBe(User::class)
+        ->and($firstPost->throughForeignKey)->toBe('country_id')
+        ->and($firstPost->foreignKey)->toBe('user_id');
+});
+
 it('leaves pivot and morph detail null for a plain belongsTo relation', function () {
     $data = (new ModelInspector)->inspect(Post::class);
     $user = $data->relations->firstWhere('name', 'user');

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute as EloquentAttribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\HasOneOrManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -404,8 +404,10 @@ class ModelInspector
             return $meta;
         }
 
-        // HasOneThrough extends HasManyThrough.
-        if ($instance instanceof HasManyThrough) {
+        // Shared base for both through-relations. Laravel 11+ moved HasOneThrough
+        // and HasManyThrough under HasOneOrManyThrough (previously HasOneThrough
+        // extended HasManyThrough), so gate on the base to catch both.
+        if ($instance instanceof HasOneOrManyThrough) {
             $meta['foreignKey'] = $instance->getForeignKeyName();        // FK on the far/target table
             $meta['localKey'] = $instance->getLocalKeyName();            // PK on the origin model
             $meta['throughForeignKey'] = $instance->getFirstKeyName();   // FK on the intermediate table
