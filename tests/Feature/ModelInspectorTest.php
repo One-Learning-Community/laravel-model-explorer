@@ -83,6 +83,23 @@ it('leaves enumCasts empty for columns without an enum cast', function () {
         ->and($data->enumCasts)->not->toHaveKey('title');
 });
 
+it('flags columns that participate in a non-unique index', function () {
+    $inspector = new ModelInspector;
+    $data = $inspector->inspect(Post::class);
+
+    expect($data->indexedColumns)->toHaveKey('published_at')
+        ->and($data->indexedColumns['published_at'])->toBeTrue();
+});
+
+it('omits the primary key and un-indexed columns from indexedColumns', function () {
+    $inspector = new ModelInspector;
+    $data = $inspector->inspect(Post::class);
+
+    // `id` is the PK (implicitly indexed, already flagged); `title` has no index.
+    expect($data->indexedColumns)->not->toHaveKey('id')
+        ->and($data->indexedColumns)->not->toHaveKey('title');
+});
+
 it('returns usesTimestamps true and column names for a standard model', function () {
     $inspector = new ModelInspector;
     $data = $inspector->inspect(Post::class);

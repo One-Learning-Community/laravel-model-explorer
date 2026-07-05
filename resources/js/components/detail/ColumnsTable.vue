@@ -42,6 +42,7 @@
                                 <span v-if="attr.fillable" class="badge badge-success badge-xs">fillable</span>
                                 <span v-if="attr.hidden" class="badge badge-warning badge-xs">hidden</span>
                                 <span v-if="attr.unique" class="badge badge-ghost badge-xs">unique</span>
+                                <span v-if="attr.indexed" class="badge badge-ghost badge-xs" title="Participates in a non-unique index">indexed</span>
                             </div>
                         </td>
                         <td class="font-mono text-xs text-base-content/50">

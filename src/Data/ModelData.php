@@ -20,6 +20,7 @@ readonly class ModelData
      * @param  array<string, array{code: string, file: string, start_line: int}>  $accessorSnippets  Attribute name → source metadata.
      * @param  list<MemberData>  $members  Every first-party-defined method/property/constant, with provenance (ADR-012 §C).
      * @param  array<string, list<array{name: string, value: string|int|null}>>  $enumCasts  Column name → the cases of its enum cast (backed enums carry `value`; pure enums have `value: null`).
+     * @param  array<string, bool>  $indexedColumns  Column name → true when the column participates in a non-unique DB index (PK/unique columns are omitted — already flagged and implicitly indexed).
      */
     public function __construct(
         public string $className,
@@ -43,5 +44,6 @@ readonly class ModelData
         public ?string $policyClass = null,
         public array $members = [],
         public array $enumCasts = [],
+        public array $indexedColumns = [],
     ) {}
 }

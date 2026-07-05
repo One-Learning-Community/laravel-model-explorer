@@ -51,6 +51,21 @@ it('caps a wide enum at the case limit with an overflow suffix', function () {
         ->and($rendered)->toEndWith(' …+3 more');
 });
 
+it('annotates a non-unique indexed column with "indexed"', function () {
+    [$p, $data] = presentPost();
+    $publishedAt = collect($p->columns($data))->first(fn ($c) => str_starts_with($c, 'published_at:'));
+
+    expect($publishedAt)->toContain('indexed');
+});
+
+it('does not annotate the primary key or plain columns with "indexed"', function () {
+    [$p, $data] = presentPost();
+    $columns = collect($p->columns($data));
+
+    expect($columns->first(fn ($c) => str_starts_with($c, 'id:')))->not->toContain('indexed')
+        ->and($columns->first(fn ($c) => str_starts_with($c, 'title:')))->not->toContain('indexed');
+});
+
 it('renders pure enum cases as names only', function () {
     $p = app(CompactPresenter::class);
 

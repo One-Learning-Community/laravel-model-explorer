@@ -67,7 +67,39 @@ class ModelInspector
             policyClass: $policies[$className] ?? null,
             members: MemberExtractor::forModel($className, $relations->pluck('name')->all()),
             enumCasts: $this->extractEnumCasts($model->getCasts()),
+            indexedColumns: $this->extractIndexedColumns($model),
         );
+    }
+
+    /**
+     * Columns that participate in a non-unique database index, keyed by name.
+     * Primary and unique indexes are skipped — those columns are already flagged
+     * (`PK`/`unique`) and implicitly indexed. Best-effort: an unreadable schema
+     * (exotic driver, missing connection) degrades to no flags.
+     *
+     * @return array<string, bool>
+     */
+    private function extractIndexedColumns(Model $model): array
+    {
+        try {
+            $indexes = $model->getConnection()->getSchemaBuilder()->getIndexes($model->getTable());
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $indexed = [];
+
+        foreach ($indexes as $index) {
+            if (! empty($index['unique']) || ! empty($index['primary'])) {
+                continue;
+            }
+
+            foreach ($index['columns'] ?? [] as $column) {
+                $indexed[$column] = true;
+            }
+        }
+
+        return $indexed;
     }
 
     /**

@@ -87,6 +87,15 @@ it('sets enum_cases to null on a non-enum column', function () {
         ->assertJsonFragment(['name' => 'title', 'enum_cases' => null]);
 });
 
+it('marks a non-unique indexed column as indexed', function () {
+    app()->detectEnvironment(fn () => 'local');
+
+    $this->getJson('/_model-explorer/api/models/'.modelSlug(Post::class))
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'published_at', 'indexed' => true])
+        ->assertJsonFragment(['name' => 'title', 'indexed' => false]);
+});
+
 it('sets defined_in to null for relations on the model directly', function () {
     app()->detectEnvironment(fn () => 'local');
 

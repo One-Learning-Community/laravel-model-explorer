@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('status')->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
+
+            // A plain, non-unique index — exercises the `indexed` column flag.
+            $table->index('published_at');
         });
 
         Schema::create('users', function (Blueprint $table) {

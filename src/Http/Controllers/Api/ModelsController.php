@@ -106,6 +106,7 @@ class ModelsController
                     'snippet' => $data->accessorSnippets[$attr->name] ?? null,
                     'defined_in' => $data->accessorSnippets[$attr->name]['defined_in'] ?? null,
                     'enum_cases' => $data->enumCasts[$attr->name] ?? null,
+                    'indexed' => $data->indexedColumns[$attr->name] ?? false,
                 ],
             ))->values(),
             'relations' => $data->relations->map(fn (RelationData $rel) => [
