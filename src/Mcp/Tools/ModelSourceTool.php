@@ -18,7 +18,7 @@ use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\ModelResolver;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\SourceExtractor;
 
-#[Description('Return the source snippet for one defined member of a model — a scope, relation, accessor, or any other method/property/constant from inspect-model\'s members section — dedented and correctly attributed to the trait or parent class that defines it. Use the defined_in pointers from inspect-model to choose what to fetch.')]
+#[Description('Return the source snippet for one defined member of a model (parameters: model + name, optional kind) — a scope, relation, accessor, or any other method/property/constant from inspect-model\'s members section — dedented and correctly attributed to the trait or parent class that defines it. The member to fetch is passed as "name", not "member". Use the defined_in pointers from inspect-model to choose what to fetch. Prefer this over grepping the source for getXAttribute / scopeX / relation bodies: it resolves the definition through the class\'s real trait/parent chain, so it finds members that live in traits or base classes a file grep would miss.')]
 class ModelSourceTool extends Tool
 {
     public function __construct(
@@ -29,10 +29,21 @@ class ModelSourceTool extends Tool
 
     public function handle(Request $request): ResponseFactory|Response
     {
+        if (($unknown = $this->unknownParams($request)) !== []) {
+            return Response::error(
+                'Unknown parameter'.(count($unknown) === 1 ? '' : 's').' ['.implode(', ', $unknown).']. '.
+                'Accepted parameters: model (required), name (required), kind (optional). '.
+                'The member to fetch goes in "name", e.g. name="full_name".'
+            );
+        }
+
         $request->validate([
             'model' => 'required|string',
             'kind' => 'nullable|string',
             'name' => 'required|string',
+        ], [
+            'model.required' => 'Provide a model: a fully-qualified or short class name, e.g. "App\\Models\\Order" or "Order".',
+            'name.required' => 'Provide "name": the member to fetch, e.g. scope "active", relation "items", or accessor "full_name". (The parameter is "name", not "member".)',
         ]);
 
         $model = (string) $request->get('model');
@@ -63,6 +74,20 @@ class ModelSourceTool extends Tool
             'defined_in' => $this->presenter->pointer($snippet),
             'doc' => $snippet['doc_summary'] ?? null,
         ], fn ($v) => $v !== null));
+    }
+
+    /**
+     * Parameter keys the caller supplied that this tool does not accept.
+     * Catches near-misses like "member" (the correct key is "name") so the
+     * error can name the wrong key instead of a bare "name field is required".
+     *
+     * @return list<string>
+     */
+    private function unknownParams(Request $request): array
+    {
+        $accepted = ['model', 'kind', 'name'];
+
+        return array_values(array_diff(array_keys($request->all()), $accepted));
     }
 
     /**
@@ -170,7 +195,7 @@ class ModelSourceTool extends Tool
             'kind' => $schema->string()
                 ->description('Optional. Narrows the lookup: scope, relation, accessor, or any other members kind (business, lifecycle, magic, method, property, constant, config). Omit to resolve by name alone.'),
             'name' => $schema->string()
-                ->description('The definition name, e.g. scope "active", relation "items", accessor "full_name", or any other member name like "markPaid".')
+                ->description('The member to fetch, by its name — e.g. scope "active", relation "items", accessor "full_name", or any other member like "markPaid". This is the parameter to put the member in (it is "name", not "member").')
                 ->required(),
         ];
     }

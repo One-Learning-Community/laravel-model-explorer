@@ -86,3 +86,18 @@ it('errors with a members hint when an unknown member name is given without a ki
         'name' => 'nopeNotAMember',
     ])->assertHasErrors();
 });
+
+it('names the unknown parameter and points at "name" when "member" is used', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+        'member' => 'author',
+    ])->assertHasErrors()
+        ->assertSee('member')
+        ->assertSee('name');
+});
+
+it('names the "name" parameter when it is omitted', function () {
+    ModelExplorerServer::tool(ModelSourceTool::class, [
+        'model' => 'Post',
+    ])->assertHasErrors()->assertSee('name');
+});

@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **`model-source` self-corrects the "member" vs "name" mistake** — the tool's member argument is `name`, but the description's "one defined member" phrasing led agents to guess `member`, which failed with an unhelpful "The name field is required." The tool now rejects unrecognized parameters with an error that names the offending key and lists the accepted set (`Unknown parameter [member]. Accepted parameters: model (required), name (required), kind (optional). The member to fetch goes in "name"…`), the `name.required` message explicitly calls out that the parameter is `name` not `member`, and both the tool `#[Description]` and the `name` schema hint state the parameter name outright. The description also now recommends `model-source` over grepping the source for `getXAttribute`/`scopeX`/relation bodies, since it resolves through the real trait/parent chain.
+
 ## v0.5.1 - 2026-07-05
 
 ### Changed
