@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
-## Unreleased
+## v0.5.2 - 2026-07-06
 
 ### Changed
 
