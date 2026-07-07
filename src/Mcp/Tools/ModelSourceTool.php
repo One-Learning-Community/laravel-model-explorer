@@ -18,7 +18,7 @@ use OneLearningCommunity\LaravelModelExplorer\Mcp\Support\ModelResolver;
 use OneLearningCommunity\LaravelModelExplorer\Services\ModelInspector;
 use OneLearningCommunity\LaravelModelExplorer\Services\SourceExtractor;
 
-#[Description('Return the source snippet for one defined member of a model (parameters: model + name, optional kind) — a scope, relation, accessor, or any other method/property/constant from inspect-model\'s members section — dedented and correctly attributed to the trait or parent class that defines it. The member to fetch is passed as "name", not "member". Use the defined_in pointers from inspect-model to choose what to fetch. Prefer this over grepping the source for getXAttribute / scopeX / relation bodies: it resolves the definition through the class\'s real trait/parent chain, so it finds members that live in traits or base classes a file grep would miss.')]
+#[Description('Return the source snippet for one defined member of a model (parameters: model + name, optional kind) — a scope, relation, accessor, or any other method/property/constant from inspect-model\'s members section — dedented and correctly attributed to the trait or parent class that defines it. Use the defined_in pointers from inspect-model to choose what to fetch. Prefer this over grepping the source for getXAttribute / scopeX / relation bodies: it resolves the definition through the class\'s real trait/parent chain, so it finds members that live in traits or base classes a file grep would miss.')]
 class ModelSourceTool extends Tool
 {
     public function __construct(
@@ -195,7 +195,7 @@ class ModelSourceTool extends Tool
             'kind' => $schema->string()
                 ->description('Optional. Narrows the lookup: scope, relation, accessor, or any other members kind (business, lifecycle, magic, method, property, constant, config). Omit to resolve by name alone.'),
             'name' => $schema->string()
-                ->description('The member to fetch, by its name — e.g. scope "active", relation "items", accessor "full_name", or any other member like "markPaid". This is the parameter to put the member in (it is "name", not "member").')
+                ->description('The member to fetch, by its name — e.g. scope "active", relation "items", accessor "full_name", or any other member like "markPaid".')
                 ->required(),
         ];
     }
