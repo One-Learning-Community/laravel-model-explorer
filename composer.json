@@ -22,7 +22,7 @@
     "require": {
         "php": "^8.3",
         "illuminate/contracts": "^11.0||^12.0||^13.0",
-        "laravel/mcp": "^0.8.2",
+        "laravel/mcp": "^0.9.0",
         "spatie/laravel-model-info": "^2.0",
         "spatie/laravel-package-tools": "^1.16"
     },
