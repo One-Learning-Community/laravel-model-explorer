@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-model-explorer` will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **Supports `laravel/mcp` 1.0; requires 0.9 or later** — the constraint is now `^0.9.0||^1.0`, so apps can move to `laravel/ai` 1.0 (which requires `laravel/mcp` 1.0). `laravel/mcp` 0.8 is no longer supported (the Dependabot bump to `^0.9.0`, first released here). No code changes were needed: the full suite passes on `laravel/mcp` v1.0.0.
+
 ## v0.5.2 - 2026-07-06
 
 ### Changed
